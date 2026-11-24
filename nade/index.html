@@ -29,6 +29,13 @@
   #app.day.sleeping #night{opacity:.35}
   #top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;z-index:5;background:linear-gradient(rgba(30,20,12,.5),rgba(30,20,12,0))}
   #top::-webkit-scrollbar{display:none}
+  #scenes{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 56px);padding:0 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;z-index:5}
+  #scenes::-webkit-scrollbar{display:none}
+  #scenes .chip{font-size:12px;padding:7px 12px;background:rgba(255,248,239,.7)}
+  #scenes .chip.on{background:var(--ink);color:#fff8ef}
+  #app.inapp #scenes{top:calc(env(safe-area-inset-top) + 58px)}
+  #app.scene .trace{display:none!important}
+  #app.scene #seed{display:none}
   .chip{flex:0 0 auto;border:0;border-radius:999px;padding:8px 13px;font:inherit;font-size:13px;background:rgba(255,248,239,.82);color:var(--ink)}
   .chip.on{background:var(--accent);color:#fff;font-weight:700}
   #status{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 56px);display:flex;justify-content:space-between;align-items:center;z-index:5;pointer-events:none;color:#fff8ef;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
@@ -127,6 +134,7 @@
     <img id="hand" alt="">
   </div>
   <div id="top"></div>
+  <div id="scenes"></div>
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
   <div id="wearNote">なでるときは、服をぬいでるよ</div>
@@ -213,7 +221,18 @@ function save(){store.set("life",life);}
 
 // ---------- 体つき・毒ハム（WebGLで、ハムのまわりだけをゆがめる・色を変える） ----------
 // ハムの位置（動画の中の割合）。種類ちがいも同じ構図で撮っている
-const HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215];
+let HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215], POSE="stand";
+// ハムの位置と大きさ（動画の中の割合）。キンクマは四つ足の動画、場面ごとにも位置がちがう
+const GEO_STAND={C:[.54,.555],F:[.54,.75],R:[.30,.28],B:[.235,.215],pose:"stand"};
+const GEO_SP={kinkuma:{C:[.56,.64],F:[.56,.73],R:[.28,.16],B:[.21,.095],pose:"four"}};
+const SCENES=[["room","おへや"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
+const GEO_SCENE={palm:{C:[.5,.48],F:[.5,.62],R:[.27,.19],B:[.2,.14]},hug:{C:[.5,.51],F:[.5,.62],R:[.28,.15],B:[.21,.11]},lap:{C:[.48,.5],F:[.48,.63],R:[.23,.18],B:[.17,.13]},pouch:{C:[.5,.5],F:[.5,.6],R:[.24,.14],B:[.18,.1]},fence:{C:[.5,.41],F:[.5,.58],R:[.27,.23],B:[.2,.17]},greens:{C:[.5,.45],F:[.5,.62],R:[.24,.23],B:[.18,.17]}};
+let SCENE=null;
+function applyGeo(){
+  const g=SCENE?Object.assign({pose:"scene"},GEO_SCENE[SCENE]):(GEO_SP[sp]||GEO_STAND);
+  HC=g.C; HF=g.F; HR=g.R; HB=g.B; POSE=g.pose;
+  if(glOK&&gl){ try{ gl.uniform2f(U.C,HC[0],HC[1]); gl.uniform2f(U.F,HF[0],HF[1]); gl.uniform2f(U.R,HR[0],HR[1]); gl.uniform2f(U.HB2,HB[0],HB[1]); }catch(e){} }
+}
 const cv=$("#cv");
 let texD=null; const DW=36, DH=64, FIELD={x:new Float32Array(DW*DH),y:new Float32Array(DW*DH),buf:new Uint8Array(DW*DH*4).fill(128),live:false};
 let gl=null, U={}, texA=null, texB=null, glOK=false, fadeGL=null, glBad=0, glGood=false;
@@ -436,6 +455,7 @@ function tick(){
   if(v.currentTime>=v.duration-0.3 || v.ended){ ending=true; onClipEnd(); }
 }
 function onClipEnd(){
+  if(SCENE){ pending=null; play("scene_"+SCENE,{rate:0.95+Math.random()*0.08}); return; }
   if(pending){ const p=pending; pending=null; start(p); return; }
   if(shouldSleep()){
     app.classList.add("sleeping");
@@ -465,6 +485,7 @@ function onClipEnd(){
 // ---------- 反応 ----------
 const SOFT=new Set(["idle","look","groom","sleeploop","sleep"]); // 途中で切り替えてよい動き
 function request(k){
+  if(SCENE) return;
   if(k===state && k!=="startle") return;
   const t=cur.currentTime||0;
   if(SOFT.has(state)){
@@ -515,6 +536,12 @@ function zoneAt(cx,cy){
   const [u,v]=boxUV(cx,cy), B=life.body;
   const ex=(u-HC[0])/(HB[0]*B.s*B.c), ey=(v-HC[1])/(HB[1]*B.s);
   if(ex*ex+ey*ey>1.12) return null;
+  if(POSE==="four"){ // 四つ足（左むき）：頭・鼻先・背中・おしり・わき腹
+    if(ex<-.45) return ey<.15?"head":"nose";
+    if(ey<.1) return "back";
+    if(ex>.55) return "rear";
+    return "side"; }
+  if(POSE==="scene") return ey<-.35?"head":"back";
   if(ey<-.55) return "head";
   if(ey<-.05) return (Math.abs(ex)<.24 && ey>-.45)?"nose":"cheek";
   if(ey<.8) return "belly";
@@ -589,13 +616,16 @@ function goDoku(k){
 // 好きなところ・いやなところ（ハムスターは頭〜背中をなでられるのが好きで、おなかや足は苦手な子が多い）
 function zoneReact(z,fast,against){
   const b=life.bond, r=Math.random();
+  if(SCENE){ life.pets++; toApp({t:"pet",z}); addBond(z==="head"||z==="back"?1:.6); if(fast&&Math.random()<.3){ haptic("heavy"); sayText("……びくっ"); } return; } // 場面のときは動画を切り替えず、手ざわりだけ
   if(z==="feet"){ addBond(-1); request("startle"); return; }
+  if(z==="rear"){ if(b<60||fast||r<.4){ addBond(-.5); request("startle"); afterHappy=null; } else { afterHappy="groom"; request("happy"); } return; }
+  if(z==="side"){ if(b<35&&r<.4){ request("startle"); return; } }
   if(z==="belly"){ if(b<55 || fast || r<.35){ addBond(-.5); request("startle"); afterHappy=null; } else { addBond(.5); afterHappy="groom"; request("happy"); } return; }
   if(z==="nose"){ if(EXTRA[sp] && b>=20 && r<.75){ request("finger_sniff"); addBond(.8); } else request("look"); return; }
   if(fast){ const p=b<30?.6:b<60?.3:.1; if(r<p){ addBond(-1); request("startle"); return; } }
   life.pets++; toApp({t:"pet",z});
   if(against){ addBond(.4); afterHappy="groom"; request("happy"); return; } // 毛を逆なで → あとで毛づくろいして直す
-  addBond(z==="head"?(b<40?1.6:1.1):(b<40?1.1:.8));
+  addBond(z==="head"||z==="back"?(b<40?1.6:1.1):(b<40?1.1:.8));
   if(Math.random()<.25) afterHappy="groom";
   request("happy");
 }
@@ -610,7 +640,7 @@ function onStroke(s,dt){
     if(sleepStrokes.length>=5){ sleepStrokes=[]; if(Math.random()<.5){ addBond(-1); manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); pending=null; start("startle",{fade:.3}); } else wake(); }
     return;
   }
-  const fast=dt<70, against=s.dy < -Math.abs(s.dx)*.6 && (z==="head"||z==="cheek"||z==="belly");
+  const fast=dt<70, against=(POSE==="four"?s.dx>Math.abs(s.dy)*.6:s.dy < -Math.abs(s.dx)*.6) && (z==="head"||z==="cheek"||z==="belly"||z==="back"); // 四つ足は頭→おしりが毛の流れ
   // 同じ反応を連打しない：反応中は毛が動くだけで、切り替えはひと呼吸おく
   if((state==="happy"||state==="finger_sniff") && !fast && z!=="feet" && z!=="belly"){ addBond(.3); life.pets++; toApp({t:"pet",z}); if(against) afterHappy="groom"; return; }
   zoneReact(z,fast,against);
@@ -695,6 +725,8 @@ $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play()
 // ---------- 種類 ----------
 async function loadSpecies(id){
   const my=++reqId; sp=id; $("#loading").classList.remove("hide");
+  if(SCENE && !GEO_SP[id]){ SCENE=null; app.classList.remove("scene"); }
+  applyGeo(); renderScenes();
   poster.src=`v/${id}/poster.jpg`;
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.id===id));
   if(!INAPP) store.set("sp",id);
@@ -714,9 +746,26 @@ async function loadSpecies(id){
   life.visit=Date.now(); save(); renderAll();
 }
 const topBar=$("#top");
+// ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
+const sceneBar=$("#scenes");
+SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
+function renderScenes(){ sceneBar.style.display=GEO_SP[sp]?"flex":"none"; sceneBar.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); }
+async function setScene(id){
+  if(id===SCENE) return;
+  const k="scene_"+id;
+  if(id && !urls[k]){ $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
+  SCENE=id; app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
+  FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
+  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":"指で、ゆっくりなでてみて"; }
+  else { play("idle",{fade:.45}); }
+  toApp({t:"scene",id:id||"room"});
+}
 if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
 
 // アプリへの案内は、しばらく触ってからそっと出す
+// Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
+const ANDROID=/Android/i.test(navigator.userAgent);
+if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
 if(!INAPP) setTimeout(()=>$("#applink").classList.add("show"),20000);
 if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
