@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ハムスターを撫でられるページ</title>
+<meta name="description" content="指でなでると、ハムスターがうっとりする。夜は起きて、昼はすやすや。">
+<meta property="og:title" content="ハムスターを撫でられるページ">
+<meta property="og:description" content="指でなでると、ハムスターがうっとりする。">
+<meta property="og:image" content="https://oaiko-app.github.io/nade/og.jpg">
+<meta property="og:url" content="https://oaiko-app.github.io/nade/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="apple-itunes-app" content="app-id=6836835986">
+<style>
+  :root{--ink:#3b2a20;--paper:#fff8ef;--accent:#e8924a}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;min-width:0}
+  html,body{margin:0;height:100%;background:#1d1611;color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none}
+  #app{position:relative;width:100%;height:100%;max-width:520px;margin:0 auto;background:#2a1f17;overflow:hidden}
+  #stage{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+  #box{position:absolute}
+  #box video,#box img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+  #box video{opacity:0}
+  #box video.on{opacity:1}
+  .trace{position:absolute;height:auto;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+  .trace.show{opacity:1}
+  #night{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 55%,rgba(30,34,80,.12),rgba(8,10,30,.6));opacity:0;transition:opacity 1.6s}
+  #app.night #night{opacity:1}
+  #app.sleeping #night{opacity:.7}
+  #app.day.sleeping #night{opacity:.35}
+  #top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;z-index:5;background:linear-gradient(rgba(30,20,12,.5),rgba(30,20,12,0))}
+  #top::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:0;border-radius:999px;padding:8px 13px;font:inherit;font-size:13px;background:rgba(255,248,239,.82);color:var(--ink)}
+  .chip.on{background:var(--accent);color:#fff;font-weight:700}
+  #status{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 56px);display:flex;justify-content:space-between;align-items:center;z-index:5;pointer-events:none;color:#fff8ef;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  #hearts{letter-spacing:1px;font-size:13px}
+  .pill{background:rgba(40,26,16,.55);padding:4px 10px;border-radius:999px}
+  #gear{pointer-events:auto;margin-left:8px;border:0;border-radius:50%;width:34px;height:34px;background:rgba(255,248,239,.85);font-size:15px;vertical-align:middle}
+  #hand{position:absolute;left:0;top:0;width:58%;max-width:330px;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3;will-change:transform;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+  #hand.show{opacity:1}
+  #applink{pointer-events:auto;margin-left:8px;display:inline-block;background:#e8924a;color:#fff;text-decoration:none;font-weight:700;padding:7px 12px;border-radius:999px;font-size:12px;vertical-align:middle}
+  #gear{display:none}
+  #app.test #gear{display:inline-block}
+  #say{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 86px);transform:translateX(-50%);background:rgba(255,248,239,.92);padding:6px 14px;border-radius:14px;font-size:14px;opacity:0;transition:opacity .35s;white-space:nowrap;z-index:4;pointer-events:none}
+  #say.show{opacity:1}
+  #bar{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:5;background:linear-gradient(rgba(30,20,12,0),rgba(30,20,12,.55))}
+  .btn{border:0;border-radius:18px;min-height:44px;padding:10px 11px;font:inherit;font-size:13px;white-space:nowrap;background:rgba(255,248,239,.93);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .btn:active{transform:scale(.96)}
+  .btn.on{background:#3d4470;color:#fff}
+  #hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 80px);text-align:center;color:rgba(255,248,239,.95);font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff8ef;font-size:14px;z-index:6;background:rgba(30,20,12,.35);transition:opacity .4s;pointer-events:none}
+  #loading.hide{opacity:0}
+  #tap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(30,20,12,.6);color:#fff8ef;font-size:16px;border:0;width:100%;font-family:inherit}
+  #sheet{position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 100px);background:rgba(255,248,239,.97);border-radius:18px;padding:14px;z-index:8;display:none;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  #sheet.open{display:block}
+  #sheet h3{margin:0 0 8px;font-size:14px}
+  #sheet .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+  #sheet .row button{border:1px solid #d9c6b4;background:#fff;border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;min-height:40px}
+  #sheet .row button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  #sheet p{margin:4px 0;color:#7a6252;line-height:1.5}
+  #dbg{font-size:11px;color:#9b8573}
+  @media (prefers-reduced-motion:reduce){.trace{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="box">
+      <img class="poster" id="poster" alt="">
+      <video id="va" muted playsinline preload="auto"></video>
+      <video id="vb" muted playsinline preload="auto"></video>
+      <img class="trace" id="tr-nest" src="t/nest.png" alt="">
+      <img class="trace" id="tr-dish" src="t/dish.png" alt="">
+      <img class="trace" id="tr-hoard" src="t/hoard.png" alt="">
+      <img class="trace" id="tr-mess1" src="t/mess1.png" alt="">
+      <img class="trace" id="tr-mess2" src="t/mess2.png" alt="">
+      <img class="trace" id="tr-mess3" src="t/mess3.png" alt="">
+    </div>
+    <div id="night"></div>
+    <img id="hand" alt="">
+  </div>
+  <div id="top"></div>
+  <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button><a id="applink" href="https://apps.apple.com/jp/app/id6836835986" target="_blank" rel="noopener">アプリで暮らす</a></span></div>
+  <div id="say"></div>
+  <div id="hint">なでる・つつく・長押しで反応するよ</div>
+  <div id="bar">
+    <button class="btn" id="seed">🌻 種</button>
+    <button class="btn" id="clean">🧹 そうじ</button>
+    <button class="btn" id="moon">🌙 おやすみ</button>
+    <button class="btn" id="snd">🔇 音</button>
+  </div>
+  <div id="sheet">
+    <h3>テスト用の設定</h3>
+    <p>時間（ハムは夜行性。昼は基本寝てる）</p>
+    <div class="row" id="timeRow">
+      <button data-m="real">本物の時計</button><button data-m="day">昼にする</button><button data-m="night">夜にする</button>
+    </div>
+    <p>暮らしの痕跡</p>
+    <div class="row">
+      <button id="age">半日たったことにする</button><button id="reset">なつき度・痕跡をリセット</button>
+    </div>
+    <p id="dbg"></p>
+  </div>
+  <div id="loading">よみこみ中…</div>
+  <button id="tap">タップしてはじめる</button>
+</div>
+<script>
+{
+const SPECIES=[["kinkuma","キンクマ"],["normal","ノーマル"],["cream","クリーム"],["black","ブラック"],["panda","パンダ"],["satin","サテン"],["longhair","ロングヘアー"],["djungarian","ジャンガリアン"],["pearl","パールホワイト"],["robo","ロボロフスキー"],["campbell","キャンベル"]];
+const BASE=["idle","groom","look","eat","sleep","happy","yawn","startle","sleeploop"];
+const EXTRA={kinkuma:["finger_sniff","finger_seed"]};
+const SAY={happy:"うっとり…",look:"なあに？",startle:"びくっ！",eat:"もぐもぐ",yawn:"ふわぁ",groom:"けづくろい中",sleep:"すやすや…",finger_sniff:"くんくん…",finger_seed:"手からもらえた！",welcome:"おかえり"};
+const TRACE_POS={"nest":{"l":11.48,"t":42.92,"w":27.78},"dish":{"l":0.74,"t":54.37,"w":23.7},"hoard":{"l":73.7,"t":45.83,"w":17.04},"mess1":{"l":73.7,"t":67.71,"w":19.26},"mess2":{"l":9.63,"t":72.92,"w":18.15},"mess3":{"l":70.37,"t":79.17,"w":22.22}};
+const H=3600e3;
+const $=s=>document.querySelector(s);
+const app=$("#app"),stage=$("#stage"),box=$("#box"),va=$("#va"),vb=$("#vb"),poster=$("#poster"),sayEl=$("#say");
+let META={}, sp=null, urls={}, cur=va, nxt=vb, state="idle", pending=null, reqId=0, sayT=0, switchAt=null, sound=false, lastAuto="idle", wakeUntil=0, manualSleep=false, ending=false;
+
+// ---------- 保存 ----------
+const store={get(k,d){try{const v=localStorage.getItem("oaiko_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("oaiko_"+k,JSON.stringify(v))}catch(e){}}};
+function freshLife(){const n=Date.now();return{bond:12,fed:n-8*H,cleaned:n-10*H,visit:n,pets:0,timeMode:"real"};}
+let life=store.get("life",null)||freshLife();
+function save(){store.set("life",life);}
+
+// ---------- 時間 ----------
+function hourNow(){ if(life.timeMode==="day") return 13; if(life.timeMode==="night") return 22; return new Date().getHours(); }
+function isDaytime(){ const h=hourNow(); return h>=6 && h<17; }
+function shouldSleep(){ if(manualSleep) return true; if(Date.now()<wakeUntil) return false; return isDaytime(); }
+
+// ---------- 表示まわり ----------
+function layout(){
+  const W=stage.clientWidth,Hh=stage.clientHeight, s=Math.max(W/540,Hh/960), w=540*s, h=960*s;
+  box.style.width=w+"px"; box.style.height=h+"px"; box.style.left=(W-w)/2+"px"; box.style.top=(Hh-h)/2+"px";
+}
+const ro=new ResizeObserver(layout); ro.observe(stage);
+Object.entries(TRACE_POS).forEach(([k,p])=>{const el=$("#tr-"+k); el.style.left=p.l+"%"; el.style.top=p.t+"%"; el.style.width=p.w+"%";});
+function sayText(t){ sayEl.textContent=t; sayEl.classList.add("show"); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),1700); }
+function say(k){ if(SAY[k]) sayText(SAY[k]); }
+function haptic(kind){
+  try{ if(window.ReactNativeWebView){ window.ReactNativeWebView.postMessage(JSON.stringify({type:"haptic",kind})); return; } }catch(e){}
+  try{ if(navigator.vibrate) navigator.vibrate(kind==="heavy"?30:kind==="medium"?15:8); }catch(e){}
+}
+function renderHearts(){ const n=Math.round(life.bond/20); $("#hearts").textContent="なつき "+"♥".repeat(n)+"♡".repeat(5-n); }
+function renderClock(){ $("#clock").textContent=(isDaytime()?"☀️ 昼 ":"🌙 夜 ")+(life.timeMode==="real"?new Date().toTimeString().slice(0,5):"（テスト）"); app.classList.toggle("night",!isDaytime()); app.classList.toggle("day",isDaytime()); }
+function renderTraces(){
+  const n=Date.now(), sinceFed=n-life.fed, sinceClean=n-life.cleaned;
+  const show=(k,v)=>$("#tr-"+k).classList.toggle("show",!!v);
+  show("dish", sinceFed>6*H && state!=="eat" && state!=="finger_seed");
+  show("hoard", sinceFed<12*H && sinceFed>0.05*H);
+  show("mess1", sinceClean>3*H); show("mess2", sinceClean>7*H); show("mess3", sinceClean>14*H);
+  show("nest", sinceClean>5*H || isDaytime());
+}
+function renderAll(){ renderHearts(); renderClock(); renderTraces(); document.querySelectorAll("#timeRow button").forEach(b=>b.classList.toggle("on",b.dataset.m===life.timeMode)); $("#dbg").textContent=`いまの動き:${state} / なつき${Math.round(life.bond)} / ごはんから${((Date.now()-life.fed)/H).toFixed(1)}時間 / そうじから${((Date.now()-life.cleaned)/H).toFixed(1)}時間`; }
+setInterval(renderAll,15000);
+
+// ---------- 再生エンジン ----------
+function diffAt(clip,t){ const d=META[sp]&&META[sp][clip]; if(!d) return 0; const i=Math.min(d.length-1,Math.max(0,Math.round(t*12))); return d[i]; }
+function nextCalmTime(clip,from,limit,thr){ // 最初のポーズに近いタイミングを探す
+  const d=META[sp]&&META[sp][clip]; if(!d) return null;
+  for(let i=Math.ceil(from*12); i<d.length && i/12<=from+limit; i++){ if(d[i]<=thr) return i/12; }
+  return null;
+}
+let loading=null; // 切り替え中の動画（読み込みが終わるまで次の切り替えをしない）
+function play(clip,opt={}){
+  if(!urls[clip]) clip="idle";
+  if(!urls[clip]) return;
+  if(loading){ loading.cancel(); }
+  state=clip; switchAt=null;
+  const v=nxt, old=cur, fade=opt.fade||0.22, token={dead:false,cancel(){this.dead=true;}};
+  loading=token;
+  v.pause(); v.muted=true; v.src=urls[clip]; v.playbackRate=opt.rate||1;
+  let swapped=false;
+  const swap=()=>{
+    if(token.dead||swapped) return; swapped=true; loading=null;
+    v.removeEventListener("playing",swap); clearTimeout(fb);
+    v.muted=!sound; v.volume=sound?0.85:0;
+    v.style.transition=`opacity ${fade}s linear`; old.style.transition=`opacity ${fade}s linear`;
+    v.classList.add("on"); old.classList.remove("on");
+    setTimeout(()=>{ if(!old.classList.contains("on")){ old.pause(); old.muted=true; } },fade*1000+60);
+    cur=v; nxt=old; ending=false; renderAll();
+  };
+  const begin=()=>{
+    v.removeEventListener("loadedmetadata",begin);
+    if(token.dead) return;
+    try{ if(opt.at) v.currentTime=opt.at; }catch(e){}
+    const p=v.play(); if(p&&p.catch) p.catch(()=>{ if(!token.dead){ $("#tap").style.display="flex"; } });
+  };
+  v.addEventListener("playing",swap);
+  token.cancel=()=>{ token.dead=true; v.removeEventListener("playing",swap); v.removeEventListener("loadedmetadata",begin); clearTimeout(fb); };
+  const fb=setTimeout(()=>{ if(!token.dead && v.readyState>=2) swap(); },2500);
+  if(v.readyState>=1) begin(); else v.addEventListener("loadedmetadata",begin);
+}
+function tick(){
+  requestAnimationFrame(tick);
+  const v=cur; if(!v.duration||ending||loading) return;
+  if(switchAt && v.currentTime>=switchAt.t){ const s=switchAt; switchAt=null; start(s.clip,s.opt); return; }
+  if(v.currentTime>=v.duration-0.3 || v.ended){ ending=true; onClipEnd(); }
+}
+function onClipEnd(){
+  if(pending){ const p=pending; pending=null; start(p); return; }
+  if(shouldSleep()){
+    app.classList.add("sleeping");
+    if(state==="sleep"||state==="sleeploop"){ play("sleeploop",{rate:0.94+Math.random()*0.1}); return; }
+    if(state!=="yawn" && Math.random()<0.5){ play("yawn"); return; }
+    play("sleep"); return;
+  }
+  app.classList.remove("sleeping");
+  // ふだんの暮らし：だいたいidle、ときどき毛づくろい・きょろきょろ・あくび
+  const r=Math.random(); let n="idle";
+  if(lastAuto==="idle"){ if(r<0.20) n="groom"; else if(r<0.33) n="look"; else if(r<0.40) n="yawn"; }
+  lastAuto=n; if(n!=="idle") say(n);
+  // idleが続くときは最初のポーズに近いところから始めて、速さも少し揺らす
+  const at=(n==="idle"&&state==="idle")?(nextCalmTime("idle",0.4,2.5,9)||0):0;
+  play(n,{rate:0.93+Math.random()*0.14,at});
+}
+
+// ---------- 反応 ----------
+const SOFT=new Set(["idle","look","groom","sleeploop","sleep"]); // 途中で切り替えてよい動き
+function request(k){
+  if(k===state && k!=="startle") return;
+  const t=cur.currentTime||0;
+  if(SOFT.has(state)){
+    const base=state==="sleeploop"?"sleep":state, thr=state==="look"?14:13;
+    if(state==="sleeploop" || diffAt(base,t)<=thr){ start(k); return; }
+    const when=nextCalmTime(base,t,k==="startle"?0.4:1.2,thr);
+    if(when!=null){ switchAt={t:when,clip:k}; return; }
+    if(k==="startle"){ start(k,{fade:0.35}); return; }
+  }
+  pending=k; // 今の動きが終わってから
+}
+function start(k,opt){
+  pending=null; say(k);
+  haptic(k==="startle"?"heavy":"light");
+  if(k==="eat"||k==="finger_seed"){ life.fed=Date.now(); save(); }
+  play(k,opt||{});
+}
+function addBond(v){ life.bond=Math.max(0,Math.min(100,life.bond+v)); save(); renderHearts(); }
+
+
+// ---------- 画面に重なる手 ----------
+const HAND={point:{src:"t/hand_point.png",ax:180,ay:180},stroke:{src:"t/hand_stroke.png",ax:200,ay:220},seed:{src:"t/hand_seed.png",ax:170,ay:170}};
+const handEl=$("#hand"), handOK={};
+Object.entries(HAND).forEach(([k,h])=>{ const im=new Image(); im.onload=()=>{handOK[k]=true;}; im.src=h.src; });
+let handKind=null, handTarget=null, handPos=null, handHideT=0;
+function handScale(){ return handEl.getBoundingClientRect().width/1000 || (Math.min(330,stage.clientWidth*0.58)/1000); }
+function showHand(kind,x,y){
+  if(!handOK[kind]) return;
+  clearTimeout(handHideT);
+  if(handKind!==kind){ handKind=kind; handEl.src=HAND[kind].src; }
+  handTarget={x,y}; if(!handPos||!handEl.classList.contains("show")) handPos={x,y};
+  handEl.classList.add("show");
+}
+function hideHand(delay){ clearTimeout(handHideT); handHideT=setTimeout(()=>{ handEl.classList.remove("show"); },delay||0); }
+(function handLoop(){
+  requestAnimationFrame(handLoop);
+  if(!handTarget||!handKind) return;
+  handPos.x+=(handTarget.x-handPos.x)*0.45; handPos.y+=(handTarget.y-handPos.y)*0.45;
+  const k=handScale(), h=HAND[handKind];
+  handEl.style.transform=`translate(${handPos.x-h.ax*k}px,${handPos.y-h.ay*k}px)`;
+})();
+function stageXY(e){ const r=stage.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; }
+function mouthXY(){ const r=box.getBoundingClientRect(), s=stage.getBoundingClientRect(); return [r.left-s.left+r.width*0.56, r.top-s.top+r.height*0.50]; }
+
+// ---------- タッチ ----------
+let ptr=new Map(), taps=[], holdT=0, strokeDist=0, strokeT=0, lookT=0;
+stage.addEventListener("pointerdown",e=>{
+  try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+  ptr.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now(),moved:0});
+  if(ptr.size===1){ const [hx,hy]=stageXY(e); showHand("point",hx,hy); }
+  $("#hint").style.opacity=0; $("#sheet").classList.remove("open");
+  clearTimeout(holdT);
+  holdT=setTimeout(()=>{ const p=ptr.get(e.pointerId); if(p&&p.moved<14) onHold(); },850);
+});
+stage.addEventListener("pointermove",e=>{
+  const p=ptr.get(e.pointerId); if(!p) return;
+  const d=Math.min(18,Math.hypot(e.clientX-p.x,e.clientY-p.y)); // 1回の移動量に上限
+  p.moved+=d; p.x=e.clientX; p.y=e.clientY;
+  if(ptr.size>1 && e.pointerId!==[...ptr.keys()][0]) return; // 2本指でも1本分として扱う
+  strokeDist+=d;
+  { const [hx,hy]=stageXY(e); showHand(p.moved>24?"stroke":"point",hx,hy); }
+  const now=performance.now();
+  if(now-strokeT>260 && strokeDist>20){ strokeT=now; haptic("light"); }
+  if(strokeDist>80){ strokeDist=0; clearTimeout(holdT); onStroke(); }
+});
+function up(e){
+  const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
+  if(p && p.moved<12 && performance.now()-p.t<300) onTap();
+  if(ptr.size===0){ strokeDist=0; hideHand(220); }
+}
+stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
+
+function asleep(){ return state==="sleep"||state==="sleeploop"; }
+function onStroke(){
+  if(asleep()){ say("sleep"); addBond(0.3); return; } // 寝ているときはそっとなでるだけ
+  life.pets++; addBond(life.bond<40?1.5:1); request("happy");
+}
+function onHold(){
+  if(asleep()) return;
+  if(EXTRA[sp] && life.bond>=25 && Math.random()<0.7){ request("finger_sniff"); addBond(1); return; }
+  request("happy"); addBond(0.5);
+}
+function onTap(){
+  const now=performance.now(); taps=taps.filter(t=>now-t<900); taps.push(now);
+  if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
+  if(taps.length>=3){ taps=[]; clearTimeout(lookT); addBond(-2); request("startle"); return; }
+  clearTimeout(lookT);
+  lookT=setTimeout(()=>{
+    if(taps.length!==1) return;
+    // なつき度が低いと、つつかれるとびくっとしやすい
+    const scare=life.bond<20?0.45:life.bond<50?0.15:0.03;
+    if(Math.random()<scare) request("startle");
+    else if(EXTRA[sp] && life.bond>=50 && Math.random()<0.35) request("finger_sniff");
+    else request("look");
+  },320);
+}
+
+// ---------- ボタン ----------
+function wake(){ manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); $("#moon").classList.remove("on"); $("#moon").textContent="🌙 おやすみ"; pending=null; say("yawn"); play("yawn"); }
+function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="☀️ おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
+$("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
+$("#seed").onclick=()=>{
+  const hand=EXTRA[sp] && life.bond>=35 && Math.random()<0.6, k=hand?"finger_seed":"eat";
+  if(asleep()){ wake(); pending=k; return; }
+  if(k==="eat" && handOK.seed){ const [mx,my]=mouthXY(); showHand("seed",mx+40,my+30); handTarget={x:mx,y:my}; setTimeout(()=>{ hideHand(0); request("eat"); },900); return; }
+  request(k);
+};
+$("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
+$("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
+$("#gear").onclick=()=>$("#sheet").classList.toggle("open");
+document.querySelectorAll("#timeRow button").forEach(b=>b.onclick=()=>{ life.timeMode=b.dataset.m; wakeUntil=0; manualSleep=false; $("#moon").classList.remove("on"); $("#moon").textContent="🌙 おやすみ"; save(); renderAll(); pending=null; onClipEnd(); });
+$("#age").onclick=()=>{ life.fed-=12*H; life.cleaned-=12*H; save(); renderAll(); };
+$("#reset").onclick=()=>{ const m=life.timeMode; life=freshLife(); life.timeMode=m; save(); renderAll(); };
+$("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play().catch(()=>{}); };
+
+// ---------- 種類 ----------
+async function loadSpecies(id){
+  const my=++reqId; sp=id; $("#loading").classList.remove("hide");
+  poster.src=`v/${id}/poster.jpg`;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.id===id));
+  store.set("sp",id);
+  const list=BASE.concat(EXTRA[id]||[]), next={};
+  await Promise.all(list.map(async c=>{
+    try{ const r=await fetch(`v/${id}/${c}.mp4`); if(!r.ok) throw 0; next[c]=URL.createObjectURL(await r.blob()); }catch(e){ next[c]=`v/${id}/${c}.mp4`; }
+  }));
+  if(my!==reqId){ Object.values(next).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)); return; }
+  const old=urls; urls=next; setTimeout(()=>Object.values(old).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)),1500);
+  $("#loading").classList.add("hide"); pending=null;
+  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").textContent="いまはお昼寝中。2回つつくと起きるよ"; }
+  else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
+  else play("idle");
+  life.visit=Date.now(); save(); renderAll();
+}
+const topBar=$("#top");
+SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
+
+// テスト用の設定は #test のときだけ出す
+if(location.hash==="#test") app.classList.add("test");
+// はじめて来た人には、昼でも少しのあいだ起きて待っている
+if(!store.get("seen",false)){ wakeUntil=Date.now()+4*60e3; store.set("seen",true); }
+else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
+// 会えない日が続くと、なつき度が少しずつ戻る
+{ const days=(Date.now()-life.visit)/(24*H); if(days>1){ life.bond=Math.max(5,life.bond-Math.floor(days)*2); save(); } }
+
+fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); loadSpecies(store.get("sp","kinkuma")); tick(); });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
+}
+</script>
+</body>
+</html>
