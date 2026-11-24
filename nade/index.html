@@ -63,6 +63,27 @@
   #sheet .row button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   #sheet p{margin:4px 0;color:#7a6252;line-height:1.5}
   #dbg{font-size:11px;color:#9b8573}
+  #cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .25s}
+  #box.drawn #cv{opacity:1}
+  #box.drawn video{opacity:0!important;transition:none!important}
+  #box.doku video{filter:hue-rotate(250deg) saturate(1.5)}
+  #box.doku.game video{animation:gaming 1.1s linear infinite}
+  @keyframes gaming{from{filter:hue-rotate(0deg) saturate(1.6)}to{filter:hue-rotate(360deg) saturate(1.6)}}
+  #close{position:absolute;left:10px;top:calc(env(safe-area-inset-top) + 10px);z-index:7;border:0;border-radius:999px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;background:rgba(255,248,239,.9);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.2);display:none}
+  #app.inapp #close{display:block}
+  #app.inapp #top,#app.inapp #applink{display:none!important}
+  #bodySheet{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:8;background:rgba(255,248,239,.96);border-radius:20px;padding:16px 18px 14px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:none;font-size:14px}
+  #bodySheet.open{display:block}
+  #bodySheet h3{margin:0 0 10px;font-size:15px}
+  #bodySheet label{display:block;font-weight:700;margin-top:8px}
+  #bodySheet input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--accent);height:28px}
+  #bodySheet .ends{display:flex;justify-content:space-between;font-size:11px;color:#8a7262}
+  #bodySheet .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+  #bodySheet .foot button{border:0;border-radius:14px;min-height:42px;padding:8px 18px;font:inherit;font-size:14px}
+  #bOk{background:var(--accent);color:#fff;font-weight:700}
+  #bReset{background:transparent;color:#8a7262}
+  #bNote{margin:6px 0 0;font-size:11px;color:#9b8573;line-height:1.5}
+  #app.sheetopen #bar,#app.sheetopen #hint{opacity:0;pointer-events:none}
   @media (prefers-reduced-motion:reduce){.trace{transition:none}}
 </style>
 </head>
@@ -73,6 +94,7 @@
       <img class="poster" id="poster" alt="">
       <video id="va" muted playsinline preload="auto"></video>
       <video id="vb" muted playsinline preload="auto"></video>
+      <canvas id="cv"></canvas>
       <img class="trace" id="tr-nest" src="t/nest.png" alt="">
       <img class="trace" id="tr-dish" src="t/dish.png" alt="">
       <img class="trace" id="tr-hoard" src="t/hoard.png" alt="">
@@ -88,9 +110,22 @@
   <div id="say"></div>
   <a id="applink" href="https://apps.apple.com/jp/app/id6836835986" target="_blank" rel="noopener">この子と毎日くらす → おあいこ</a>
   <div id="hint">指でそっとなでてみて</div>
+  <button id="close">‹ もどる</button>
   <div id="bar">
     <button class="btn" id="seed">🌻 種をあげる</button>
+    <button class="btn" id="bodyBtn">からだ</button>
     <button class="btn" id="snd">🔇 音</button>
+  </div>
+  <div id="bodySheet" role="dialog" aria-label="この子のからだ">
+    <h3>この子のからだ</h3>
+    <label for="bS">大きさ</label>
+    <input type="range" id="bS" min="86" max="114" step="1" value="100">
+    <div class="ends"><span>小さめ</span><span>大きめ</span></div>
+    <label for="bC">体つき</label>
+    <input type="range" id="bC" min="88" max="122" step="1" value="100">
+    <div class="ends"><span>ほっそり</span><span>ぽっちゃり</span></div>
+    <p id="bNote"></p>
+    <div class="foot"><button id="bReset">もとにもどす</button><button id="bOk">できた</button></div>
   </div>
   <div id="sheet">
     <h3>テスト用の設定</h3>
@@ -119,11 +154,106 @@ const $=s=>document.querySelector(s);
 const app=$("#app"),stage=$("#stage"),box=$("#box"),va=$("#va"),vb=$("#vb"),poster=$("#poster"),sayEl=$("#say");
 let META={}, sp=null, urls={}, cur=va, nxt=vb, state="idle", pending=null, reqId=0, sayT=0, switchAt=null, sound=false, lastAuto="idle", wakeUntil=0, manualSleep=false, ending=false;
 
+// ---------- アプリ（おあいこ）の中で開いたとき ----------
+const Q=new URLSearchParams(location.search);
+const INAPP=Q.get("app")==="1";
+function toApp(m){ if(!INAPP) return; try{ parent.postMessage(Object.assign({src:"nade"},m),"*"); }catch(e){} }
+
 // ---------- 保存 ----------
 const store={get(k,d){try{const v=localStorage.getItem("oaiko_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("oaiko_"+k,JSON.stringify(v))}catch(e){}}};
 function freshLife(){const n=Date.now();return{bond:12,fed:n-8*H,cleaned:n-10*H,visit:n,pets:0,timeMode:"real"};}
 let life=store.get("life",null)||freshLife();
+const clampN=(v,a,b,d)=>{ v=parseFloat(v); return isFinite(v)?Math.max(a,Math.min(b,v)):d; };
+life.body=life.body||{s:1,c:1};
+if(INAPP){ // なかよし度・からだは、アプリの記録に合わせる
+  app.classList.add("inapp");
+  if(Q.has("b")) life.bond=clampN(Q.get("b"),0,100,life.bond);
+  if(Q.has("s")||Q.has("c")) life.body={s:clampN(Q.get("s"),.86,1.14,1),c:clampN(Q.get("c"),.88,1.22,1)};
+}
 function save(){store.set("life",life);}
+
+// ---------- 体つき・毒ハム（WebGLで、ハムのまわりだけをゆがめる・色を変える） ----------
+// ハムの位置（動画の中の割合）。種類ちがいも同じ構図で撮っている
+const HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215];
+const cv=$("#cv");
+let gl=null, U={}, texA=null, texB=null, glOK=false, fadeGL=null, glBad=0, glGood=false;
+let dokuKind=0, dokuUntil=0, dokuAmt=0, MO=0;
+const MOFF={eat:.07,finger_seed:.07,sleep:.05,sleeploop:.06}; // しゃがむ動きは、ハムが下にいる
+function initGL(){
+  try{
+    gl=cv.getContext("webgl",{alpha:false,antialias:false,premultipliedAlpha:false,powerPreference:"low-power"});
+    if(!gl) return false;
+    const sh=(t,src)=>{ const s=gl.createShader(t); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const p=gl.createProgram();
+    gl.attachShader(p,sh(gl.VERTEX_SHADER,"attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}"));
+    gl.attachShader(p,sh(gl.FRAGMENT_SHADER,`precision mediump float;
+varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO;
+vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
+  float s=1.+(sz-1.)*w; vec2 q=F+(p-F)/s;
+  float cw=1.+(ch-1.)*w; q.x=C.x+(q.x-C.x)/cw;
+  float cy=1.-(ch-1.)*.28*w; q.y=F.y+(q.y-F.y)/cy; return q; }
+vec3 hr(vec3 c,float a){ mat3 toY=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.322,.312); mat3 toR=mat3(1.,1.,1.,.956,-.272,-1.106,.621,-.647,1.703);
+  vec3 y=toY*c; float cs=cos(a),sn=sin(a); y=vec3(y.x,y.y*cs-y.z*sn,y.y*sn+y.z*cs); return toR*y; }
+// 指の下の毛：指の動きの向きに毛を寄せ、指先はすこし押しこむ（ハムの体の中だけ）
+vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
+  vec2 d=(p-T)*vec2(1.,AS); float r2=dot(d,d); float g=exp(-r2/.0065);
+  vec2 q=p-V*g*body;
+  q+= (p-T)*.16*TP*exp(-r2/.0016)*body;
+  return q; }
+void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rgb,mx);
+  if(dk>.001){ vec2 d=(uv-vec2(C.x,C.y+.01+MO))/(HB2*vec2(ch*sz,sz)); float m=dk*(1.-smoothstep(.62,1.04,length(d)));
+    // 床材はザラザラ（細かい明暗が多い）、毛はなめらか。ザラザラしたところには色をのせない
+    float gs=0.; for(int i=0;i<4;i++){ vec2 o=PX*2.5*vec2(i==0?1.:i==1?-1.:0., i==2?1.:i==3?-1.:0.);
+      vec3 n=mix(texture2D(A,q+o).rgb,texture2D(B,q+o).rgb,mx); gs+=abs(dot(n-c,vec3(.33))); }
+    m*=1.-smoothstep(.05,.115,gs);
+    float l=dot(c,vec3(.3,.59,.11)); vec3 pu;
+    if(dm<.5) pu=mix(hr(c,hue)*vec3(1.02,.82,1.18), l*vec3(1.,.62,1.36)+vec3(.05,0.,.1), .5);
+    else if(dm<1.5) pu=hr(c,hue)*1.12;
+    else pu=l*vec3(.62,.34,1.)*.85+vec3(.06,0.,.12);
+    c=mix(c,clamp(pu,0.,1.),m); }
+  gl_FragColor=vec4(c,1.); }`));
+    gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error("link");
+    gl.useProgram(p);
+    const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(p,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE)); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); return t; };
+    texA=mk(); texB=mk();
+    gl.uniform1i(U.A,0); gl.uniform1i(U.B,1);
+    gl.uniform2f(U.C,HC[0],HC[1]); gl.uniform2f(U.F,HF[0],HF[1]); gl.uniform2f(U.R,HR[0],HR[1]); gl.uniform2f(U.HB2,HB[0],HB[1]);
+    cv.addEventListener("webglcontextlost",e=>{ e.preventDefault(); glOff(); });
+    return true;
+  }catch(e){ gl=null; return false; }
+}
+function glOff(){ glOK=false; box.classList.remove("gl","drawn"); if(Date.now()<dokuUntil) box.classList.add("doku"); }
+function glDraw(){
+  if(!glOK) return;
+  const now=performance.now();
+  let a=null, b=cur, m=1;
+  if(fadeGL){ const t=(now-fadeGL.t0)/fadeGL.d; if(t>=1) fadeGL=null; else { a=fadeGL.from; b=fadeGL.to; m=t; } }
+  if(!b || b.readyState<2 || !b.videoWidth) return;
+  try{
+    if(cv.width!==b.videoWidth||cv.height!==b.videoHeight){ cv.width=b.videoWidth; cv.height=b.videoHeight; gl.viewport(0,0,cv.width,cv.height); }
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,texB); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,b);
+    if(a && a.readyState>=2){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,texA); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,a); } else m=1;
+    const want=Date.now()<dokuUntil?1:0; dokuAmt+=(want-dokuAmt)*0.07; if(Math.abs(want-dokuAmt)<.002) dokuAmt=want;
+    const hue=dokuKind===1?(now/1100*Math.PI*2)%(Math.PI*2):4.35;
+    gl.uniform1f(U.mx,m); gl.uniform1f(U.sz,life.body.s); gl.uniform1f(U.ch,life.body.c); gl.uniform1f(U.dk,dokuAmt); gl.uniform1f(U.hue,hue); gl.uniform1f(U.dm,dokuKind);
+    // 毛の寄り：指についていき、離すとばねのように戻る
+    FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
+    gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); MO+=((MOFF[state]||0)-MO)*0.05; gl.uniform1f(U.MO,MO);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    if(!glGood){ // 端末によっては動画を描けない（真っ黒になる）。そのときはふつうの動画に戻す
+      const px=new Uint8Array(4); gl.readPixels(cv.width>>1,cv.height>>2,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+      if(px[0]+px[1]+px[2]>6){ glGood=true; box.classList.add("drawn"); } else if(++glBad>45){ glOff(); }
+    }
+  }catch(e){ glOff(); }
+}
+const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false};
+function boxUV(cx,cy){ const r=box.getBoundingClientRect(); return [(cx-r.left)/r.width,(cy-r.top)/r.height]; }
+function furMove(cx,cy,dx,dy){ const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
+  if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
+function bodyActive(){ return Math.abs(life.body.s-1)>.004 || Math.abs(life.body.c-1)>.004; }
 
 // ---------- 時間 ----------
 function hourNow(){ if(life.timeMode==="day") return 13; if(life.timeMode==="night") return 22; return new Date().getHours(); }
@@ -140,7 +270,7 @@ Object.entries(TRACE_POS).forEach(([k,p])=>{const el=$("#tr-"+k); el.style.left=
 function sayText(t){ sayEl.textContent=t; sayEl.classList.add("show"); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),1700); }
 function say(k){ if(SAY[k]) sayText(SAY[k]); }
 function haptic(kind){
-  try{ if(window.ReactNativeWebView){ window.ReactNativeWebView.postMessage(JSON.stringify({type:"haptic",kind})); return; } }catch(e){}
+  if(INAPP){ toApp({t:"haptic",ms:kind==="heavy"?40:kind==="medium"?20:8}); return; }
   try{ if(navigator.vibrate) navigator.vibrate(kind==="heavy"?30:kind==="medium"?15:8); }catch(e){}
 }
 function renderHearts(){ const n=Math.round(life.bond/20); $("#hearts").textContent="なつき "+"♥".repeat(n)+"♡".repeat(5-n); }
@@ -181,6 +311,7 @@ function play(clip,opt={}){
     v.style.transition=`opacity ${fade}s linear`; old.style.transition=`opacity ${fade}s linear`;
     v.classList.add("on"); old.classList.remove("on");
     setTimeout(()=>{ if(!old.classList.contains("on")){ old.pause(); old.muted=true; } },fade*1000+60);
+    fadeGL={from:old,to:v,t0:performance.now(),d:fade*1000};
     cur=v; nxt=old; ending=false; renderAll();
   };
   const begin=()=>{
@@ -196,6 +327,7 @@ function play(clip,opt={}){
 }
 function tick(){
   requestAnimationFrame(tick);
+  glDraw();
   const v=cur; if(!v.duration||ending||loading) return;
   if(switchAt && v.currentTime>=switchAt.t){ const s=switchAt; switchAt=null; start(s.clip,s.opt); return; }
   if(v.currentTime>=v.duration-0.3 || v.ended){ ending=true; onClipEnd(); }
@@ -209,9 +341,18 @@ function onClipEnd(){
     play("sleep"); return;
   }
   app.classList.remove("sleeping");
-  // ふだんの暮らし：だいたいidle、ときどき毛づくろい・きょろきょろ・あくび
+  // 反応のあとのしぐさ：なでられたあとは毛づくろいで整える／食べたら顔を洗う／びくっとしたら、しばらくあたりを警戒する
+  if(state==="happy" && afterHappy){ const a=afterHappy; afterHappy=null; say(a); play(a,{rate:0.95+Math.random()*0.1}); return; }
+  if(state==="eat" && Math.random()<0.35){ say("groom"); play("groom"); return; }
+  if(state==="startle"){ lastAuto="look"; play("look"); return; }
+  // ふだんの暮らし：だいたいidle。夜のはじめは活発、明け方はねむそう
+  const h=hourNow(), active=(h>=18||h<2), late=(h>=2&&h<6);
+  let pg=.20,pl=.13,py=.07,pe=0;
+  if(active){ pg=.24; pl=.18; py=.04; }
+  if(late){ py=.15; }
+  if(!isDaytime() && Date.now()-life.fed<12*H && Date.now()-life.fed>H) pe=.05; // 夜、ためこんだ種をつまむ
   const r=Math.random(); let n="idle";
-  if(lastAuto==="idle"){ if(r<0.20) n="groom"; else if(r<0.33) n="look"; else if(r<0.40) n="yawn"; }
+  if(lastAuto==="idle"){ if(r<pg) n="groom"; else if(r<pg+pl) n="look"; else if(r<pg+pl+py) n="yawn"; else if(r<pg+pl+py+pe) n="eat"; }
   lastAuto=n; if(n!=="idle") say(n);
   // idleが続くときは最初のポーズに近いところから始めて、速さも少し揺らす
   const at=(n==="idle"&&state==="idle")?(nextCalmTime("idle",0.4,2.5,9)||0):0;
@@ -266,41 +407,88 @@ function stageXY(e){ const r=stage.getBoundingClientRect(); return [e.clientX-r.
 function mouthXY(){ const r=box.getBoundingClientRect(), s=stage.getBoundingClientRect(); return [r.left-s.left+r.width*0.56, r.top-s.top+r.height*0.50]; }
 
 // ---------- タッチ ----------
-let ptr=new Map(), taps=[], holdT=0, strokeDist=0, strokeT=0, lookT=0;
+// さわった場所（ハムの体のどこか）。動画の構図は種類ちがいも同じ
+function zoneAt(cx,cy){
+  const [u,v]=boxUV(cx,cy), B=life.body;
+  const ex=(u-HC[0])/(HB[0]*B.s*B.c), ey=(v-HC[1])/(HB[1]*B.s);
+  if(ex*ex+ey*ey>1.12) return null;
+  if(ey<-.55) return "head";
+  if(ey<-.05) return (Math.abs(ex)<.24 && ey>-.45)?"nose":"cheek";
+  if(ey<.8) return "belly";
+  return "feet";
+}
+let ptr=new Map(), taps=[], holdT=0, strokeDist=0, strokeT=0, lookT=0, seg=null, zoneHits={}, strokeLog=[], sleepStrokes=[], dokuTaps=[], afterHappy=null, lastZoneReact=0;
 stage.addEventListener("pointerdown",e=>{
   try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   ptr.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now(),moved:0});
-  if(ptr.size===1){ const [hx,hy]=stageXY(e); showHand("point",hx,hy); }
+  if(ptr.size===1){ const [hx,hy]=stageXY(e); showHand("point",hx,hy); FUR.down=!!zoneAt(e.clientX,e.clientY); furMove(e.clientX,e.clientY); }
+  seg={dx:0,dy:0,t:performance.now(),z:{}};
   $("#hint").style.opacity=0; $("#sheet").classList.remove("open");
   clearTimeout(holdT);
-  holdT=setTimeout(()=>{ const p=ptr.get(e.pointerId); if(p&&p.moved<14) onHold(); },850);
+  holdT=setTimeout(()=>{ const p=ptr.get(e.pointerId); if(p&&p.moved<14) onHold(zoneAt(p.x,p.y)); },850);
 });
 stage.addEventListener("pointermove",e=>{
   const p=ptr.get(e.pointerId); if(!p) return;
-  const d=Math.min(18,Math.hypot(e.clientX-p.x,e.clientY-p.y)); // 1回の移動量に上限
+  const rdx=e.clientX-p.x, rdy=e.clientY-p.y;
+  const d=Math.min(18,Math.hypot(rdx,rdy)); // 1回の移動量に上限
   p.moved+=d; p.x=e.clientX; p.y=e.clientY;
   if(ptr.size>1 && e.pointerId!==[...ptr.keys()][0]) return; // 2本指でも1本分として扱う
-  strokeDist+=d;
+  const z=zoneAt(e.clientX,e.clientY);
+  FUR.down=!!z; furMove(e.clientX,e.clientY, z?rdx:0, z?rdy:0);
+  strokeDist+=d; seg.dx+=rdx; seg.dy+=rdy; if(z) seg.z[z]=(seg.z[z]||0)+d;
   { const [hx,hy]=stageXY(e); showHand(p.moved>24?"stroke":"point",hx,hy); }
   const now=performance.now();
-  if(now-strokeT>260 && strokeDist>20){ strokeT=now; haptic("light"); }
-  if(strokeDist>80){ strokeDist=0; clearTimeout(holdT); onStroke(); }
+  if(z && now-strokeT>220 && strokeDist>18){ strokeT=now; haptic("light"); }
+  if(strokeDist>80){ clearTimeout(holdT); const s=seg; strokeDist=0; seg={dx:0,dy:0,t:now,z:{}}; onStroke(s,now-s.t); }
 });
 function up(e){
   const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
-  if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(); }
-  if(ptr.size===0){ strokeDist=0; hideHand(220); }
+  if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(zoneAt(e.clientX,e.clientY)); }
+  if(ptr.size===0){ strokeDist=0; FUR.down=false; hideHand(220); }
 }
 stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
 
 function asleep(){ return state==="sleep"||state==="sleeploop"; }
-function onStroke(){
-  if(asleep()){ say("sleep"); addBond(0.3); return; } // 寝ているときはそっとなでるだけ
-  life.pets++; addBond(life.bond<40?1.5:1); request("happy");
+function dokuOn(){ return Date.now()<dokuUntil; }
+function goDoku(k){
+  dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(k===1?"……ゲーミング":"なですぎて、紫になった");
+  toApp({t:"doku",kind:["","game","yami"][k]});
+  if(!glOK){ box.classList.add("doku"); box.classList.toggle("game",k===1); }
+  clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game"),60e3);
 }
-function onHold(){
-  if(asleep()) return;
-  if(EXTRA[sp] && life.bond>=25 && Math.random()<0.7){ request("finger_sniff"); addBond(1); return; }
+// 好きなところ・いやなところ（ハムスターは頭〜背中をなでられるのが好きで、おなかや足は苦手な子が多い）
+function zoneReact(z,fast,against){
+  const b=life.bond, r=Math.random();
+  if(z==="feet"){ addBond(-1); request("startle"); return; }
+  if(z==="belly"){ if(b<55 || fast || r<.35){ addBond(-.5); request("startle"); afterHappy=null; } else { addBond(.5); afterHappy="groom"; request("happy"); } return; }
+  if(z==="nose"){ if(EXTRA[sp] && b>=20 && r<.75){ request("finger_sniff"); addBond(.8); } else request("look"); return; }
+  if(fast){ const p=b<30?.6:b<60?.3:.1; if(r<p){ addBond(-1); request("startle"); return; } }
+  life.pets++; toApp({t:"pet",z});
+  if(against){ addBond(.4); afterHappy="groom"; request("happy"); return; } // 毛を逆なで → あとで毛づくろいして直す
+  addBond(z==="head"?(b<40?1.6:1.1):(b<40?1.1:.8));
+  if(Math.random()<.25) afterHappy="groom";
+  request("happy");
+}
+function onStroke(s,dt){
+  const now=Date.now();
+  const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
+  if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
+  strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
+  if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(new Date().getHours()<4?2:0); else if(dokuKind!==1) goDoku(1); return; }
+  if(asleep()){
+    sleepStrokes=sleepStrokes.filter(t=>now-t<8e3); sleepStrokes.push(now); addBond(.2);
+    if(sleepStrokes.length>=5){ sleepStrokes=[]; if(Math.random()<.5){ addBond(-1); manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); pending=null; start("startle",{fade:.3}); } else wake(); }
+    return;
+  }
+  const fast=dt<70, against=s.dy < -Math.abs(s.dx)*.6 && (z==="head"||z==="cheek"||z==="belly");
+  // 同じ反応を連打しない：反応中は毛が動くだけで、切り替えはひと呼吸おく
+  if((state==="happy"||state==="finger_sniff") && !fast && z!=="feet" && z!=="belly"){ addBond(.3); life.pets++; toApp({t:"pet",z}); if(against) afterHappy="groom"; return; }
+  zoneReact(z,fast,against);
+}
+function onHold(z){
+  if(asleep()||!z) return;
+  if(z==="nose"||(EXTRA[sp] && life.bond>=25 && Math.random()<0.5)){ if(EXTRA[sp]){ request("finger_sniff"); addBond(1); return; } request("look"); return; }
+  if(z==="feet"||z==="belly"){ zoneReact(z,false,false); return; }
   request("happy"); addBond(0.5);
 }
 function tidyAt(x,y){ // 散らかった床材を指でならす
@@ -308,17 +496,21 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
     const r=el.getBoundingClientRect(), pad=14; if(x>r.left-pad&&x<r.right+pad&&y>r.top-pad&&y<r.bottom+pad){ life.cl=life.cl||{}; life.cl[k]=Date.now(); save(); el.classList.remove("show"); haptic("light"); return true; } }
   return false;
 }
-function onTap(){
-  const now=performance.now(); taps=taps.filter(t=>now-t<900); taps.push(now);
+function onTap(z){
+  const now=performance.now();
+  if(z){ dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
+    if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(new Date().getHours()<4?2:0); else if(dokuKind!==1) goDoku(1); return; } }
+  taps=taps.filter(t=>now-t<900); taps.push(now);
   if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
+  if(!z){ clearTimeout(lookT); lookT=setTimeout(()=>{ if(Math.random()<.5) request("look"); },320); return; } // 床をトントン → 音のほうを見る
   if(taps.length>=3){ taps=[]; clearTimeout(lookT); addBond(-2); request("startle"); return; }
   clearTimeout(lookT);
   lookT=setTimeout(()=>{
     if(taps.length!==1) return;
-    // なつき度が低いと、つつかれるとびくっとしやすい
-    const scare=life.bond<20?0.45:life.bond<50?0.15:0.03;
+    // なつき度が低いと、つつかれるとびくっとしやすい。足・おなかは特に
+    const scare=(life.bond<20?0.45:life.bond<50?0.15:0.03)*(z==="feet"||z==="belly"?2.2:1);
     if(Math.random()<scare) request("startle");
-    else if(EXTRA[sp] && life.bond>=50 && Math.random()<0.35) request("finger_sniff");
+    else if(z==="nose" && EXTRA[sp] && life.bond>=20) request("finger_sniff");
     else request("look");
   },320);
 }
@@ -335,6 +527,18 @@ $("#seed").onclick=()=>{
 };
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
 $("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
+// からだ（大きさ・体つき）
+function openBody(){ const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
+  $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
+  $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); }
+function closeBody(){ $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
+$("#bodyBtn").onclick=openBody;
+$("#bS").oninput=e=>{ life.body.s=e.target.value/100; };
+$("#bC").oninput=e=>{ life.body.c=e.target.value/100; };
+$("#bOk").onclick=closeBody;
+$("#bReset").onclick=()=>{ life.body={s:1,c:1}; $("#bS").value=100; $("#bC").value=100; };
+$("#bodySheet").addEventListener("pointerdown",e=>e.stopPropagation());
+$("#close").onclick=()=>{ save(); toApp({t:"close"}); };
 $("#gear").onclick=()=>$("#sheet").classList.toggle("open");
 document.querySelectorAll("#timeRow button").forEach(b=>b.onclick=()=>{ life.timeMode=b.dataset.m; wakeUntil=0; manualSleep=false;  save(); renderAll(); pending=null; onClipEnd(); });
 $("#age").onclick=()=>{ life.fed-=12*H; life.cleaned-=12*H; save(); renderAll(); };
@@ -346,7 +550,7 @@ async function loadSpecies(id){
   const my=++reqId; sp=id; $("#loading").classList.remove("hide");
   poster.src=`v/${id}/poster.jpg`;
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.id===id));
-  store.set("sp",id);
+  if(!INAPP) store.set("sp",id);
   const list=BASE.concat(EXTRA[id]||[]), next={};
   const get=async c=>{ try{ const r=await fetch(`v/${id}/${c}.mp4`); if(!r.ok) throw 0; return URL.createObjectURL(await r.blob()); }catch(e){ return `v/${id}/${c}.mp4`; } };
   // 最初に必要な1本だけ先に読んで、残りは後ろで読む（通信量と待ち時間を減らす）
@@ -363,10 +567,10 @@ async function loadSpecies(id){
   life.visit=Date.now(); save(); renderAll();
 }
 const topBar=$("#top");
-SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
+if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
 
 // アプリへの案内は、しばらく触ってからそっと出す
-setTimeout(()=>$("#applink").classList.add("show"),20000);
+if(!INAPP) setTimeout(()=>$("#applink").classList.add("show"),20000);
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test") app.classList.add("test");
 // はじめて来た人には、昼でも少しのあいだ起きて待っている
@@ -375,7 +579,10 @@ else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
 // 会えない日が続くと、なつき度が少しずつ戻る
 { const days=(Date.now()-life.visit)/(24*H); if(days>1){ life.bond=Math.max(5,life.bond-Math.floor(days)*2); save(); } }
 
-fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); loadSpecies(store.get("sp","kinkuma")); tick(); });
+glOK=initGL(); if(glOK) box.classList.add("gl");
+const startSp=(INAPP && SPECIES.some(x=>x[0]===Q.get("sp")))?Q.get("sp"):store.get("sp","kinkuma");
+fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); loadSpecies(startSp); tick(); });
+window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
 </script>
