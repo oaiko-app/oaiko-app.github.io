@@ -257,6 +257,10 @@ vec3 hr(vec3 c,float a){ mat3 toY=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.32
 vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
   vec2 d=(p-T)*vec2(1.,AS); float r2=dot(d,d); float g=exp(-r2/.0065);
   vec2 fd=(texture2D(D,p).rg-.5)*.1; // 指でなでた跡（毛の流れ）。ゆっくり戻る
+  // 目・鼻のまわり（暗いところ）はゆがめない：近くに暗い点があれば、毛の動きを弱める
+  float dkm=1.; for(int i=0;i<6;i++){ float a=float(i)*1.047; vec2 o=vec2(cos(a),sin(a)*AS)*.022; float l=dot(texture2D(B,p+o).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l)); }
+  { float l0=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l0)); }
+  body*=dkm;
   vec2 q=p-(V*g*.4+fd)*body;
   q+= (p-T)*.16*TP*exp(-r2/.0016)*body;
   return q; }
@@ -323,7 +327,7 @@ function glDraw(){
 const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false};
 function boxUV(cx,cy){ const r=box.getBoundingClientRect(); return [(cx-r.left)/r.width,(cy-r.top)/r.height]; }
 function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウスでにじませる）
-  const cx=u*DW, cy=v*DH, rad=2.8, lim=.026;
+  const cx=u*DW, cy=v*DH, rad=2.8, lim=.02;
   for(let j=Math.max(0,Math.floor(cy-rad*2));j<=Math.min(DH-1,Math.ceil(cy+rad*2));j++) for(let i=Math.max(0,Math.floor(cx-rad*2));i<=Math.min(DW-1,Math.ceil(cx+rad*2));i++){
     const dx=i+.5-cx, dy=(j+.5-cy)*(DW/DH)*(cv.height/cv.width||1.78), g=Math.exp(-(dx*dx+dy*dy)/(rad*rad)), k=j*DW+i;
     FIELD.x[k]=Math.max(-lim,Math.min(lim,FIELD.x[k]+du*g*.4)); FIELD.y[k]=Math.max(-lim,Math.min(lim,FIELD.y[k]+dv*g*.4)); }
