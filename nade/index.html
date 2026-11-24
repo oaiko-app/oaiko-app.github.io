@@ -161,8 +161,8 @@ function nextCalmTime(clip,from,limit,thr){ // 最初のポーズに近いタイ
 }
 let loading=null; // 切り替え中の動画（読み込みが終わるまで次の切り替えをしない）
 function play(clip,opt={}){
-  if(!urls[clip]) clip="idle";
-  if(!urls[clip]) return;
+  if(!urls[clip]) clip=urls.idle?"idle":Object.keys(urls)[0];
+  if(!clip||!urls[clip]) return;
   if(loading){ loading.cancel(); }
   state=clip; switchAt=null;
   const v=nxt, old=cur, fade=opt.fade||0.22, token={dead:false,cancel(){this.dead=true;}};
@@ -237,7 +237,7 @@ function addBond(v){ life.bond=Math.max(0,Math.min(100,life.bond+v)); save(); re
 
 
 // ---------- 画面に重なる手 ----------
-const HAND={point:{src:"t/hand_point.png",ax:180,ay:180},stroke:{src:"t/hand_stroke.png",ax:200,ay:220},seed:{src:"t/hand_seed.png",ax:170,ay:170}};
+const HAND={point:{src:"t/hand_point.webp",ax:180,ay:180},stroke:{src:"t/hand_stroke.webp",ax:200,ay:220},seed:{src:"t/hand_seed.webp",ax:170,ay:170}};
 const handEl=$("#hand"), handOK={};
 Object.entries(HAND).forEach(([k,h])=>{ const im=new Image(); im.onload=()=>{handOK[k]=true;}; im.src=h.src; });
 let handKind=null, handTarget=null, handPos=null, handHideT=0;
@@ -338,11 +338,14 @@ async function loadSpecies(id){
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.id===id));
   store.set("sp",id);
   const list=BASE.concat(EXTRA[id]||[]), next={};
-  await Promise.all(list.map(async c=>{
-    try{ const r=await fetch(`v/${id}/${c}.mp4`); if(!r.ok) throw 0; next[c]=URL.createObjectURL(await r.blob()); }catch(e){ next[c]=`v/${id}/${c}.mp4`; }
-  }));
-  if(my!==reqId){ Object.values(next).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)); return; }
+  const get=async c=>{ try{ const r=await fetch(`v/${id}/${c}.mp4`); if(!r.ok) throw 0; return URL.createObjectURL(await r.blob()); }catch(e){ return `v/${id}/${c}.mp4`; } };
+  // 最初に必要な1本だけ先に読んで、残りは後ろで読む（通信量と待ち時間を減らす）
+  const first=shouldSleep()?"sleeploop":(Date.now()-life.visit>3*H?"look":"idle");
+  next[first]=await get(first);
+  if(my!==reqId){ return; }
   const old=urls; urls=next; setTimeout(()=>Object.values(old).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)),1500);
+  (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
+    for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
   $("#loading").classList.add("hide"); pending=null;
   if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").textContent="いまはお昼寝中。2回つつくと起きるよ"; }
   else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
