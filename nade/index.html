@@ -77,6 +77,7 @@
   #bodySheet.open{display:block}
   #bodySheet h3{margin:0 0 10px;font-size:15px}
   #bodySheet label{display:block;font-weight:700;margin-top:8px}
+  #bodySheet input[type=text]{width:100%;margin-top:6px;border:1.5px solid #e3d3c3;border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
   #bodySheet input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--accent);height:28px}
   #bodySheet .ends{display:flex;justify-content:space-between;font-size:11px;color:#8a7262}
   #bodySheet .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
@@ -96,7 +97,12 @@
   .scard .slv small{display:block;font-size:13px;font-weight:400;color:#8a7262;margin-top:6px;line-height:1.6}
   .scard button{border:0;border-radius:16px;min-height:48px;font:inherit;font-size:15px;font-weight:700}
   #sShare{background:var(--accent);color:#fff}
-  #sClose{background:transparent;color:#8a7262;font-weight:400}
+  #app.inapp #bN,#app.inapp label[for=bN]{display:none}
+  #sClose,#mvClose{background:transparent;color:#8a7262;font-weight:400}
+  #mvCopy{background:var(--accent);color:#fff}
+  #move{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px}
+  #move[hidden]{display:none}
+  .mvsteps{margin:0;padding:0 0 0 20px;font-size:13px;line-height:1.7;color:var(--ink)}
   @media (prefers-reduced-motion:reduce){.trace{transition:none}}
 </style>
 </head>
@@ -121,16 +127,18 @@
   <div id="top"></div>
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
-  <a id="applink" href="https://apps.apple.com/jp/app/id6836835986" target="_blank" rel="noopener">この子に毎日会えるアプリ → おあいこ<small>自分をいたわる習慣づくりアプリです。この子は「ちかくで見る」から</small></a>
+  <a id="applink" href="#" role="button">この子を、アプリでつづける → おあいこ<small>自分をいたわる習慣づくりアプリ。名前・からだ・図鑑をそのまま引き継げます</small></a>
   <div id="hint">指でそっとなでてみて</div>
   <button id="close">‹ もどる</button>
   <div id="bar">
     <button class="btn" id="seed">🌻 種をあげる</button>
-    <button class="btn" id="bodyBtn">からだ</button>
+    <button class="btn" id="bodyBtn">この子のこと</button>
     <button class="btn" id="snd">🔇 音</button>
   </div>
-  <div id="bodySheet" role="dialog" aria-label="この子のからだ">
-    <h3>この子のからだ</h3>
+  <div id="bodySheet" role="dialog" aria-label="この子のこと">
+    <h3>この子のこと</h3>
+    <label for="bN">名前</label>
+    <input type="text" id="bN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
     <label for="bS">大きさ</label>
     <input type="range" id="bS" min="86" max="114" step="1" value="100">
     <div class="ends"><span>小さめ</span><span>大きめ</span></div>
@@ -159,12 +167,20 @@
     <button id="sShare">カードにする</button>
     <button id="sClose">とじる</button>
   </div></div>
+  <div id="move" hidden role="dialog" aria-label="アプリでつづける"><div class="scard">
+    <p class="smuted">アプリ「おあいこ」でつづける</p>
+    <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・かくし図鑑を、アプリにそのまま引き継げます。おあいこは、自分をいたわると、この子も元気になる習慣づくりアプリです。</small></p>
+    <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこを入れて、最初の「どの子？」で<br>「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
+    <button id="mvCopy">コードをコピーして、App Storeへ</button>
+    <button id="mvClose">あとで</button>
+  </div></div>
   <div id="loading">よみこみ中…</div>
   <button id="tap">タップしてはじめる</button>
 </div>
 <script>
 {
-const SPECIES=[["kinkuma","キンクマ"],["normal","ノーマル"],["cream","クリーム"],["black","ブラック"],["panda","パンダ"],["satin","サテン"],["longhair","ロングヘアー"],["djungarian","ジャンガリアン"],["pearl","パールホワイト"],["robo","ロボロフスキー"],["campbell","キャンベル"]];
+// アプリ（おあいこ）で選べる種類と同じにする（ウェブとアプリで、会える子をそろえる）
+const SPECIES=[["kinkuma","キンクマ"],["djungarian","ジャンガリアン"],["robo","ロボロフスキー"],["campbell","キャンベル"],["longhair","長毛"],["pearl","パールホワイト"]];
 const BASE=["idle","groom","look","eat","sleep","happy","yawn","startle","sleeploop"];
 const EXTRA={kinkuma:["finger_sniff","finger_seed"]};
 const SAY={happy:"うっとり…",look:"なあに？",startle:"びくっ！",eat:"もぐもぐ",yawn:"ふわぁ",groom:"けづくろい中",sleep:"すやすや…",finger_sniff:"くんくん…",finger_seed:"手からもらえた！",welcome:"おかえり"};
@@ -602,7 +618,24 @@ function openBody(){ const B=life.body; $("#bS").value=Math.round(B.s*100); $("#
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
   $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); }
 function closeBody(){ $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
-$("#bodyBtn").onclick=openBody;
+$("#bodyBtn").onclick=()=>{ openBody(); $("#bN").value=life.name||""; };
+$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); };
+// アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
+function moveCode(){
+  const d={v:1,sp,n:life.name||"",s:+life.body.s.toFixed(2),c:+life.body.c.toFixed(2),b:Math.round(life.bond),p:life.pets||0,sec:[...secSeen]};
+  const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
+  return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+$("#applink").onclick=e=>{ e.preventDefault(); $("#mvName").textContent=life.name||"この子"; $("#move").hidden=false; };
+$("#mvClose").onclick=()=>{ $("#move").hidden=true; };
+$("#move").addEventListener("pointerdown",e=>e.stopPropagation());
+$("#mvCopy").onclick=async()=>{
+  const code=moveCode(); let ok=false;
+  try{ await navigator.clipboard.writeText(code); ok=true; }catch(e){}
+  if(!ok){ try{ const t=document.createElement("textarea"); t.value=code; document.body.appendChild(t); t.select(); ok=document.execCommand("copy"); t.remove(); }catch(e){} }
+  $("#mvCopy").textContent=ok?"コピーしました。App Storeをひらきます":"コピーできませんでした";
+  setTimeout(()=>{ location.href="https://apps.apple.com/jp/app/id6836835986"; },ok?700:1500);
+};
 $("#bS").oninput=e=>{ life.body.s=e.target.value/100; };
 $("#bC").oninput=e=>{ life.body.c=e.target.value/100; };
 $("#bOk").onclick=closeBody;
@@ -650,7 +683,8 @@ else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
 { const days=(Date.now()-life.visit)/(24*H); if(days>1){ life.bond=Math.max(5,life.bond-Math.floor(days)*2); save(); } }
 
 glOK=initGL(); if(glOK) box.classList.add("gl");
-const startSp=(INAPP && SPECIES.some(x=>x[0]===Q.get("sp")))?Q.get("sp"):store.get("sp","kinkuma");
+const okSp=x=>SPECIES.some(y=>y[0]===x);
+const startSp=(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); loadSpecies(startSp); tick(); });
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
