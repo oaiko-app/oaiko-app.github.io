@@ -48,6 +48,8 @@
   #app.test #gear{display:inline-block}
   #say{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 86px);transform:translateX(-50%);background:rgba(255,248,239,.92);padding:6px 14px;border-radius:14px;font-size:14px;opacity:0;transition:opacity .35s;white-space:nowrap;z-index:4;pointer-events:none}
   #say.show{opacity:1}
+  #wearNote{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);background:rgba(255,248,239,.92);color:var(--ink);padding:7px 14px;border-radius:999px;font-size:12px;z-index:6;opacity:0;transition:opacity .5s;pointer-events:none;white-space:nowrap}
+  #wearNote.show{opacity:1}
   #bar{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(env(safe-area-inset-bottom) + 24px);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:5;background:linear-gradient(rgba(30,20,12,0),rgba(30,20,12,.55))}
   .btn{border:0;border-radius:18px;min-height:44px;padding:10px 11px;font:inherit;font-size:13px;white-space:nowrap;background:rgba(255,248,239,.93);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .btn:active{transform:scale(.96)}
@@ -127,6 +129,7 @@
   <div id="top"></div>
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
+  <div id="wearNote">なでるときは、服をぬいでるよ</div>
   <a id="applink" href="#" role="button">この子を、アプリでつづける → おあいこ<small>自分をいたわる習慣づくりアプリ。名前・からだ・図鑑をそのまま引き継げます</small></a>
   <div id="hint">指で、ゆっくりなでてみて<br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
   <button id="close">‹ もどる</button>
@@ -212,6 +215,7 @@ function save(){store.set("life",life);}
 // ハムの位置（動画の中の割合）。種類ちがいも同じ構図で撮っている
 const HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215];
 const cv=$("#cv");
+let texD=null; const DW=36, DH=64, FIELD={x:new Float32Array(DW*DH),y:new Float32Array(DW*DH),buf:new Uint8Array(DW*DH*4).fill(128),live:false};
 let gl=null, U={}, texA=null, texB=null, glOK=false, fadeGL=null, glBad=0, glGood=false;
 let dokuKind=0, dokuUntil=0, dokuAmt=0, MO=0;
 const MOFF={eat:.07,finger_seed:.07,sleep:.05,sleeploop:.06}; // しゃがむ動きは、ハムが下にいる
@@ -223,9 +227,9 @@ function initGL(){
     const p=gl.createProgram();
     gl.attachShader(p,sh(gl.VERTEX_SHADER,"attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}"));
     gl.attachShader(p,sh(gl.FRAGMENT_SHADER,`precision mediump float;
-varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO;
+varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform sampler2D D;
 vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
-  float s=1.+(sz-1.)*w; vec2 q=F+(p-F)/s;
+  float s=(1.+(sz-1.)*w)*(1.+BR*w); vec2 q=F+(p-F)/s;
   float cw=1.+(ch-1.)*w; q.x=C.x+(q.x-C.x)/cw;
   float cy=1.-(ch-1.)*.28*w; q.y=F.y+(q.y-F.y)/cy; return q; }
 vec3 hr(vec3 c,float a){ mat3 toY=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.322,.312); mat3 toR=mat3(1.,1.,1.,.956,-.272,-1.106,.621,-.647,1.703);
@@ -233,10 +237,16 @@ vec3 hr(vec3 c,float a){ mat3 toY=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.32
 // 指の下の毛：指の動きの向きに毛を寄せ、指先はすこし押しこむ（ハムの体の中だけ）
 vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
   vec2 d=(p-T)*vec2(1.,AS); float r2=dot(d,d); float g=exp(-r2/.0065);
-  vec2 q=p-V*g*body;
+  vec2 fd=(texture2D(D,p).rg-.5)*.1; // 指でなでた跡（毛の流れ）。ゆっくり戻る
+  vec2 q=p-(V*g*.4+fd)*body;
   q+= (p-T)*.16*TP*exp(-r2/.0016)*body;
   return q; }
 void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rgb,mx);
+  { // 毛なみのつや：流れにそってなでると明るく、逆なでると少し暗く。指の下には、うすい影
+    vec2 e=(uv-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
+    vec2 fd=(texture2D(D,uv).rg-.5)*.1; float sh=clamp(1.+fd.y*3.2-abs(fd.x)*.8,.9,1.06);
+    vec2 dd=(uv-T)*vec2(1.,AS); float cs=TP*.14*exp(-dot(dd,dd)/.0011);
+    c*=mix(1.,sh*(1.-cs),body); }
   if(dk>.001){ vec2 d=(uv-vec2(C.x,C.y+.01+MO))/(HB2*vec2(ch*sz,sz)); float m=dk*(1.-smoothstep(.62,1.04,length(d)));
     // 床材はザラザラ（細かい明暗が多い）、毛はなめらか。ザラザラしたところには色をのせない
     float gs=0.; for(int i=0;i<4;i++){ vec2 o=PX*2.5*vec2(i==0?1.:i==1?-1.:0., i==2?1.:i==3?-1.:0.);
@@ -252,10 +262,11 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     gl.useProgram(p);
     const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     const loc=gl.getAttribLocation(p,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
     const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE)); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); return t; };
-    texA=mk(); texB=mk();
-    gl.uniform1i(U.A,0); gl.uniform1i(U.B,1);
+    texA=mk(); texB=mk(); texD=mk();
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,DW,DH,0,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf);
+    gl.uniform1i(U.A,0); gl.uniform1i(U.B,1); gl.uniform1i(U.D,2);
     gl.uniform2f(U.C,HC[0],HC[1]); gl.uniform2f(U.F,HF[0],HF[1]); gl.uniform2f(U.R,HR[0],HR[1]); gl.uniform2f(U.HB2,HB[0],HB[1]);
     cv.addEventListener("webglcontextlost",e=>{ e.preventDefault(); glOff(); });
     return true;
@@ -276,6 +287,10 @@ function glDraw(){
     const hue=dokuKind===1?(now/1100*Math.PI*2)%(Math.PI*2):4.35;
     gl.uniform1f(U.mx,m); gl.uniform1f(U.sz,life.body.s); gl.uniform1f(U.ch,life.body.c); gl.uniform1f(U.dk,dokuAmt); gl.uniform1f(U.hue,hue); gl.uniform1f(U.dm,dokuKind);
     // 毛の寄り：指についていき、離すとばねのように戻る
+    // 毛の流れの場：毎フレーム少しずつ戻る（指を止めているあいだは戻りがゆっくり）
+    if(FIELD.live){ const k=FUR.down?0.985:0.955; let mx2=0; for(let i=0;i<DW*DH;i++){ const a=FIELD.x[i]*=k, b=FIELD.y[i]*=k; const m=Math.abs(a)+Math.abs(b); if(m>mx2) mx2=m; FIELD.buf[i*4]=128+Math.max(-127,Math.min(127,a*2540))|0; FIELD.buf[i*4+1]=128+Math.max(-127,Math.min(127,b*2540))|0; }
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,DW,DH,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf); if(mx2<.0004) FIELD.live=false; }
+    { const asl=state==="sleep"||state==="sleeploop", f=asl?0.75:(state==="startle"?3.2:1.6), a=asl?0.009:(state==="startle"?0.008:0.005); gl.uniform1f(U.BR,a*Math.sin(now/1000*Math.PI*2*f)); }
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
     gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); MO+=((MOFF[state]||0)-MO)*0.05; gl.uniform1f(U.MO,MO);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
@@ -288,7 +303,15 @@ function glDraw(){
 }
 const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false};
 function boxUV(cx,cy){ const r=box.getBoundingClientRect(); return [(cx-r.left)/r.width,(cy-r.top)/r.height]; }
+function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウスでにじませる）
+  const cx=u*DW, cy=v*DH, rad=2.8, lim=.026;
+  for(let j=Math.max(0,Math.floor(cy-rad*2));j<=Math.min(DH-1,Math.ceil(cy+rad*2));j++) for(let i=Math.max(0,Math.floor(cx-rad*2));i<=Math.min(DW-1,Math.ceil(cx+rad*2));i++){
+    const dx=i+.5-cx, dy=(j+.5-cy)*(DW/DH)*(cv.height/cv.width||1.78), g=Math.exp(-(dx*dx+dy*dy)/(rad*rad)), k=j*DW+i;
+    FIELD.x[k]=Math.max(-lim,Math.min(lim,FIELD.x[k]+du*g*.4)); FIELD.y[k]=Math.max(-lim,Math.min(lim,FIELD.y[k]+dv*g*.4)); }
+  FIELD.live=true;
+}
 function furMove(cx,cy,dx,dy){ const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
+  if(dx) furSplat(u,v,dx/r.width,dy/r.height);
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
 function snapHam(done){
@@ -539,7 +562,7 @@ stage.addEventListener("pointermove",e=>{
   strokeDist+=d; seg.dx+=rdx; seg.dy+=rdy; if(z) seg.z[z]=(seg.z[z]||0)+d;
   { const [hx,hy]=stageXY(e); showHand(p.moved>24?"stroke":"point",hx,hy); }
   const now=performance.now();
-  if(z && now-strokeT>220 && strokeDist>18){ strokeT=now; haptic("light"); }
+  if(z && now-strokeT>Math.max(70,190-d*8) && strokeDist>10){ strokeT=now; haptic("light"); } // 毛の手ざわり：速くなでるほど細かく
   if(strokeDist>80){ clearTimeout(holdT); const s=seg; strokeDist=0; seg={dx:0,dy:0,t:now,z:{}}; onStroke(s,now-s.t); }
 });
 function up(e){
@@ -695,6 +718,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 
 // アプリへの案内は、しばらく触ってからそっと出す
 if(!INAPP) setTimeout(()=>$("#applink").classList.add("show"),20000);
+if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test") app.classList.add("test");
 // はじめて来た人には、昼でも少しのあいだ起きて待っている
