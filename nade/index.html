@@ -85,6 +85,18 @@
   #bReset{background:transparent;color:#8a7262}
   #bNote{margin:6px 0 0;font-size:11px;color:#9b8573;line-height:1.5}
   #app.sheetopen #bar,#app.sheetopen #hint{opacity:0;pointer-events:none}
+  #secret{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px;opacity:0;transition:opacity .35s}
+  #secret.show{opacity:1}
+  #secret[hidden]{display:none}
+  .scard{width:100%;max-width:360px;background:#fffdf9;border-radius:24px;padding:20px 20px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.35);transform:translateY(14px) scale(.97);transition:transform .45s cubic-bezier(.2,1.4,.5,1)}
+  #secret.show .scard{transform:none}
+  .scard .smuted{margin:0;text-align:center;font-size:12px;color:#8a7262}
+  .scard img{display:block;width:62%;margin:0 auto;border-radius:18px;aspect-ratio:1;object-fit:cover}
+  .scard .slv{margin:0;font-size:28px;text-align:center;line-height:1.25;font-weight:800;color:var(--ink)}
+  .scard .slv small{display:block;font-size:13px;font-weight:400;color:#8a7262;margin-top:6px;line-height:1.6}
+  .scard button{border:0;border-radius:16px;min-height:48px;font:inherit;font-size:15px;font-weight:700}
+  #sShare{background:var(--accent);color:#fff}
+  #sClose{background:transparent;color:#8a7262;font-weight:400}
   @media (prefers-reduced-motion:reduce){.trace{transition:none}}
 </style>
 </head>
@@ -140,6 +152,13 @@
     </div>
     <p id="dbg"></p>
   </div>
+  <div id="secret" hidden role="dialog" aria-label="かくし図鑑"><div class="scard">
+    <p class="smuted" id="sNo"></p>
+    <img id="sImg" alt="">
+    <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
+    <button id="sShare">カードにする</button>
+    <button id="sClose">とじる</button>
+  </div></div>
   <div id="loading">よみこみ中…</div>
   <button id="tap">タップしてはじめる</button>
 </div>
@@ -244,6 +263,7 @@ function glDraw(){
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
     gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); MO+=((MOFF[state]||0)-MO)*0.05; gl.uniform1f(U.MO,MO);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    if(capReq){ const f=capReq; capReq=null; f(cv); }
     if(!glGood){ // 端末によっては動画を描けない（真っ黒になる）。そのときはふつうの動画に戻す
       const px=new Uint8Array(4); gl.readPixels(cv.width>>1,cv.height>>2,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
       if(px[0]+px[1]+px[2]>6){ glGood=true; box.classList.add("drawn"); } else if(++glBad>45){ glOff(); }
@@ -254,6 +274,49 @@ const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false};
 function boxUV(cx,cy){ const r=box.getBoundingClientRect(); return [(cx-r.left)/r.width,(cy-r.top)/r.height]; }
 function furMove(cx,cy,dx,dy){ const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
+// いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
+function snapHam(done){
+  const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=W*.62, x=W*(HC[0]-.31), y=Hh*(HC[1]+.02)-side/2;
+      const c=document.createElement("canvas"); c.width=c.height=520; const g=c.getContext("2d");
+      if(!glOK && Date.now()<dokuUntil){ try{ g.filter=dokuKind===1?"hue-rotate(120deg) saturate(1.6)":"hue-rotate(250deg) saturate(1.5)"; }catch(e){} }
+      g.drawImage(src,x,y,side,side,0,0,520,520); done(c.toDataURL("image/jpeg",.9)); }catch(e){ done(null); } };
+  if(glOK && glGood){ capReq=grab; setTimeout(()=>{ if(capReq===grab){ capReq=null; grab(cur); } },600); } else grab(cur);
+}
+function showSecret(x,img){
+  secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
+  const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
+  const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
+}
+function hideSecret(){ const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
+// 図鑑のカード（シェア用の画像）
+function secretCard(x,img){
+  return new Promise(res=>{
+    const c=document.createElement("canvas"); c.width=1080; c.height=1350; const g=c.getContext("2d");
+    g.fillStyle="#fbf5ec"; g.fillRect(0,0,1080,1350);
+    const fin=()=>{
+      g.fillStyle="#8a7262"; g.textAlign="center"; g.font="500 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`かくし図鑑 No.${x.no}`,540,150);
+      g.fillStyle="#3b2a20"; g.font="800 92px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.name,540,1040);
+      g.fillStyle="#8a7262"; g.font="400 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.desc,540,1120);
+      g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-app.github.io/nade",540,1260);
+      res(c.toDataURL("image/png"));
+    };
+    if(!img){ fin(); return; }
+    const im=new Image(); im.onload=()=>{ g.save(); const r=60,X=190,Y=210,S=700; g.beginPath(); g.moveTo(X+r,Y); g.arcTo(X+S,Y,X+S,Y+S,r); g.arcTo(X+S,Y+S,X,Y+S,r); g.arcTo(X,Y+S,X,Y,r); g.arcTo(X,Y,X+S,Y,r); g.closePath(); g.clip(); g.drawImage(im,X,Y,S,S); g.restore(); fin(); }; im.onerror=fin; im.src=img;
+  });
+}
+async function shareSecret(){
+  if(!secCur) return; const {x,img}=secCur;
+  const text=`ハムスターをなですぎたら「${x.name}」になった。 ${x.tag}`, url="https://oaiko-app.github.io/nade/";
+  const png=await secretCard(x,img);
+  if(INAPP){ toApp({t:"share",img:png,text:`${text} #おあいこ ${url}`}); return; }
+  try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-nade.png",{type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:`${text} ${url}`}); return; }
+    if(navigator.share){ await navigator.share({text,url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+  window.open("https://x.com/intent/post?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank","noopener");
+}
+$("#sShare").onclick=shareSecret;
+$("#sClose").onclick=hideSecret;
+$("#secret").addEventListener("pointerdown",e=>e.stopPropagation());
 function bodyActive(){ return Math.abs(life.body.s-1)>.004 || Math.abs(life.body.c-1)>.004; }
 
 // ---------- 時間 ----------
@@ -451,9 +514,15 @@ stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",u
 
 function asleep(){ return state==="sleep"||state==="sleeploop"; }
 function dokuOn(){ return Date.now()<dokuUntil; }
+// かくし図鑑（アプリと同じ番号・名前・ことば）
+const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫になった。1分で元に戻る。",tag:"#毒ハム"},
+              1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム"}};
+const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.get("sec",[]));
+let capReq=null, secCur=null;
 function goDoku(k){
   dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(k===1?"……ゲーミング":"なですぎて、紫になった");
-  toApp({t:"doku",kind:["","game","yami"][k]});
+  toApp({t:"doku",kind:["","game"][k]});
+  const x=SECRET[k]; if(x && !secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); setTimeout(()=>snapHam(img=>showSecret(x,img)),1700); }
   if(!glOK){ box.classList.add("doku"); box.classList.toggle("game",k===1); }
   clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game"),60e3);
 }
@@ -475,7 +544,7 @@ function onStroke(s,dt){
   const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
-  if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(new Date().getHours()<4?2:0); else if(dokuKind!==1) goDoku(1); return; }
+  if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; }
   if(asleep()){
     sleepStrokes=sleepStrokes.filter(t=>now-t<8e3); sleepStrokes.push(now); addBond(.2);
     if(sleepStrokes.length>=5){ sleepStrokes=[]; if(Math.random()<.5){ addBond(-1); manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); pending=null; start("startle",{fade:.3}); } else wake(); }
@@ -500,7 +569,7 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
 function onTap(z){
   const now=performance.now();
   if(z){ dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
-    if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(new Date().getHours()<4?2:0); else if(dokuKind!==1) goDoku(1); return; } }
+    if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; } }
   taps=taps.filter(t=>now-t<900); taps.push(now);
   if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
   if(!z){ clearTimeout(lookT); lookT=setTimeout(()=>{ if(Math.random()<.5) request("look"); },320); return; } // 床をトントン → 音のほうを見る
