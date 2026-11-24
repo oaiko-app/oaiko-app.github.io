@@ -35,14 +35,19 @@
   #hearts{letter-spacing:1px;font-size:13px}
   .pill{background:rgba(40,26,16,.55);padding:4px 10px;border-radius:999px}
   #gear{pointer-events:auto;margin-left:8px;border:0;border-radius:50%;width:34px;height:34px;background:rgba(255,248,239,.85);font-size:15px;vertical-align:middle}
-  #hand{position:absolute;left:0;top:0;width:58%;max-width:330px;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3;will-change:transform;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+  #hand{position:absolute;left:0;top:0;width:50%;max-width:290px;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3;will-change:transform;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
   #hand.show{opacity:1}
-  #applink{pointer-events:auto;margin-left:8px;display:inline-block;background:#e8924a;color:#fff;text-decoration:none;font-weight:700;padding:7px 12px;border-radius:999px;font-size:12px;vertical-align:middle}
+  #applink{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4px);text-align:center;z-index:6;color:rgba(255,248,239,.72);font-size:11px;text-decoration:none;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.5);opacity:0;transition:opacity 1.5s}
+  #applink.show{opacity:1}
   #gear{display:none}
+  #status .pill{display:none}
+  #app.test #status .pill{display:inline-block}
+  #say{display:none}
+  #app.test #say{display:block}
   #app.test #gear{display:inline-block}
   #say{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 86px);transform:translateX(-50%);background:rgba(255,248,239,.92);padding:6px 14px;border-radius:14px;font-size:14px;opacity:0;transition:opacity .35s;white-space:nowrap;z-index:4;pointer-events:none}
   #say.show{opacity:1}
-  #bar{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:5;background:linear-gradient(rgba(30,20,12,0),rgba(30,20,12,.55))}
+  #bar{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(env(safe-area-inset-bottom) + 24px);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:5;background:linear-gradient(rgba(30,20,12,0),rgba(30,20,12,.55))}
   .btn{border:0;border-radius:18px;min-height:44px;padding:10px 11px;font:inherit;font-size:13px;white-space:nowrap;background:rgba(255,248,239,.93);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .btn:active{transform:scale(.96)}
   .btn.on{background:#3d4470;color:#fff}
@@ -79,13 +84,12 @@
     <img id="hand" alt="">
   </div>
   <div id="top"></div>
-  <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button><a id="applink" href="https://apps.apple.com/jp/app/id6836835986" target="_blank" rel="noopener">アプリで暮らす</a></span></div>
+  <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
-  <div id="hint">なでる・つつく・長押しで反応するよ</div>
+  <a id="applink" href="https://apps.apple.com/jp/app/id6836835986" target="_blank" rel="noopener">この子と毎日くらす → おあいこ</a>
+  <div id="hint">指でそっとなでてみて</div>
   <div id="bar">
-    <button class="btn" id="seed">🌻 種</button>
-    <button class="btn" id="clean">🧹 そうじ</button>
-    <button class="btn" id="moon">🌙 おやすみ</button>
+    <button class="btn" id="seed">🌻 種をあげる</button>
     <button class="btn" id="snd">🔇 音</button>
   </div>
   <div id="sheet">
@@ -146,8 +150,9 @@ function renderTraces(){
   const show=(k,v)=>$("#tr-"+k).classList.toggle("show",!!v);
   show("dish", sinceFed>6*H && state!=="eat" && state!=="finger_seed");
   show("hoard", sinceFed<12*H && sinceFed>0.05*H);
-  show("mess1", sinceClean>3*H); show("mess2", sinceClean>7*H); show("mess3", sinceClean>14*H);
-  show("nest", sinceClean>5*H || isDaytime());
+  const cl=life.cl||{}, since=k=>n-Math.max(life.cleaned,cl[k]||0);
+  show("mess1", since("mess1")>3*H); show("mess2", since("mess2")>7*H); show("mess3", since("mess3")>14*H);
+  show("nest", since("nest")>5*H);
 }
 function renderAll(){ renderHearts(); renderClock(); renderTraces(); document.querySelectorAll("#timeRow button").forEach(b=>b.classList.toggle("on",b.dataset.m===life.timeMode)); $("#dbg").textContent=`いまの動き:${state} / なつき${Math.round(life.bond)} / ごはんから${((Date.now()-life.fed)/H).toFixed(1)}時間 / そうじから${((Date.now()-life.cleaned)/H).toFixed(1)}時間`; }
 setInterval(renderAll,15000);
@@ -283,7 +288,7 @@ stage.addEventListener("pointermove",e=>{
 });
 function up(e){
   const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
-  if(p && p.moved<12 && performance.now()-p.t<300) onTap();
+  if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(); }
   if(ptr.size===0){ strokeDist=0; hideHand(220); }
 }
 stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
@@ -297,6 +302,11 @@ function onHold(){
   if(asleep()) return;
   if(EXTRA[sp] && life.bond>=25 && Math.random()<0.7){ request("finger_sniff"); addBond(1); return; }
   request("happy"); addBond(0.5);
+}
+function tidyAt(x,y){ // 散らかった床材を指でならす
+  for(const k of ["mess1","mess2","mess3","nest"]){ const el=$("#tr-"+k); if(!el.classList.contains("show")) continue;
+    const r=el.getBoundingClientRect(), pad=14; if(x>r.left-pad&&x<r.right+pad&&y>r.top-pad&&y<r.bottom+pad){ life.cl=life.cl||{}; life.cl[k]=Date.now(); save(); el.classList.remove("show"); haptic("light"); return true; } }
+  return false;
 }
 function onTap(){
   const now=performance.now(); taps=taps.filter(t=>now-t<900); taps.push(now);
@@ -314,19 +324,19 @@ function onTap(){
 }
 
 // ---------- ボタン ----------
-function wake(){ manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); $("#moon").classList.remove("on"); $("#moon").textContent="🌙 おやすみ"; pending=null; say("yawn"); play("yawn"); }
+function wake(){ manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping");  pending=null; say("yawn"); play("yawn"); }
 function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="☀️ おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
-$("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
+if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
 $("#seed").onclick=()=>{
   const hand=EXTRA[sp] && life.bond>=35 && Math.random()<0.6, k=hand?"finger_seed":"eat";
   if(asleep()){ wake(); pending=k; return; }
   if(k==="eat" && handOK.seed){ const [mx,my]=mouthXY(); showHand("seed",mx+40,my+30); handTarget={x:mx,y:my}; setTimeout(()=>{ hideHand(0); request("eat"); },900); return; }
   request(k);
 };
-$("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
+if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
 $("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 $("#gear").onclick=()=>$("#sheet").classList.toggle("open");
-document.querySelectorAll("#timeRow button").forEach(b=>b.onclick=()=>{ life.timeMode=b.dataset.m; wakeUntil=0; manualSleep=false; $("#moon").classList.remove("on"); $("#moon").textContent="🌙 おやすみ"; save(); renderAll(); pending=null; onClipEnd(); });
+document.querySelectorAll("#timeRow button").forEach(b=>b.onclick=()=>{ life.timeMode=b.dataset.m; wakeUntil=0; manualSleep=false;  save(); renderAll(); pending=null; onClipEnd(); });
 $("#age").onclick=()=>{ life.fed-=12*H; life.cleaned-=12*H; save(); renderAll(); };
 $("#reset").onclick=()=>{ const m=life.timeMode; life=freshLife(); life.timeMode=m; save(); renderAll(); };
 $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play().catch(()=>{}); };
@@ -355,6 +365,8 @@ async function loadSpecies(id){
 const topBar=$("#top");
 SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
 
+// アプリへの案内は、しばらく触ってからそっと出す
+setTimeout(()=>$("#applink").classList.add("show"),20000);
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test") app.classList.add("test");
 // はじめて来た人には、昼でも少しのあいだ起きて待っている
