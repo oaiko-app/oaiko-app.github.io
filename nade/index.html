@@ -52,7 +52,7 @@
   .btn{border:0;border-radius:18px;min-height:44px;padding:10px 11px;font:inherit;font-size:13px;white-space:nowrap;background:rgba(255,248,239,.93);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .btn:active{transform:scale(.96)}
   .btn.on{background:#3d4470;color:#fff}
-  #hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 80px);text-align:center;color:rgba(255,248,239,.95);font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
+  #hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 84px);text-align:center;color:#fff8ef;font-size:15px;font-weight:700;line-height:1.5;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff8ef;font-size:14px;z-index:6;background:rgba(30,20,12,.35);transition:opacity .4s;pointer-events:none}
   #loading.hide{opacity:0}
   #tap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(30,20,12,.6);color:#fff8ef;font-size:16px;border:0;width:100%;font-family:inherit}
@@ -128,7 +128,7 @@
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
   <a id="applink" href="#" role="button">この子を、アプリでつづける → おあいこ<small>自分をいたわる習慣づくりアプリ。名前・からだ・図鑑をそのまま引き継げます</small></a>
-  <div id="hint">指でそっとなでてみて</div>
+  <div id="hint">指で、ゆっくりなでてみて<br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
   <button id="close">‹ もどる</button>
   <div id="bar">
     <button class="btn" id="seed">🌻 種をあげる</button>
@@ -498,6 +498,27 @@ function zoneAt(cx,cy){
   return "feet";
 }
 let ptr=new Map(), taps=[], holdT=0, strokeDist=0, strokeT=0, lookT=0, seg=null, zoneHits={}, strokeLog=[], sleepStrokes=[], dokuTaps=[], afterHappy=null, lastZoneReact=0;
+// まだ一度もさわっていない人には、手がそっとなでて見せる（毛なみが動くところを見せる）
+let touched=false;
+(function demo(){
+  let t0=0, cyc=0;
+  function step(ts){
+    if(touched || cyc>=6){ if(!touched) hideHand(0); return; }
+    if(!t0) t0=ts; const t=(ts-t0)/1000;
+    const r=box.getBoundingClientRect(), sr=stage.getBoundingClientRect(), B=life.body;
+    if(asleep() || $("#loading").classList.contains("hide")===false){ requestAnimationFrame(step); return; }
+    if(t<1.6){ const k=t/1.6, e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      const u=HC[0]-.11*B.s*B.c+.22*B.s*B.c*e, v=HC[1]-.165*B.s+.025*Math.sin(e*Math.PI);
+      const x=r.left+r.width*u, y=r.top+r.height*v;
+      showHand("stroke",x-sr.left,y-sr.top); FUR.down=true;
+      const px=FUR.x>0?(x-(r.left+r.width*FUR.x)):0, py=FUR.y>0?(y-(r.top+r.height*FUR.y)):0; furMove(x,y,px,py);
+    } else if(t<1.7){ FUR.down=false; hideHand(150); }
+    else if(t>4.2){ t0=ts; cyc++; FUR.x=-1; FUR.y=-1; }
+    requestAnimationFrame(step);
+  }
+  setTimeout(()=>requestAnimationFrame(step),2200);
+})();
+stage.addEventListener("pointerdown",e=>{ touched=true; });
 stage.addEventListener("pointerdown",e=>{
   try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   ptr.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now(),moved:0});
