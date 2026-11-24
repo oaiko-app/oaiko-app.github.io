@@ -258,7 +258,7 @@ vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float 
   vec2 d=(p-T)*vec2(1.,AS); float r2=dot(d,d); float g=exp(-r2/.0065);
   vec2 fd=(texture2D(D,p).rg-.5)*.1; // 指でなでた跡（毛の流れ）。ゆっくり戻る
   // 目・鼻のまわり（暗いところ）はゆがめない：近くに暗い点があれば、毛の動きを弱める
-  float dkm=1.; for(int i=0;i<6;i++){ float a=float(i)*1.047; vec2 o=vec2(cos(a),sin(a)*AS)*.022; float l=dot(texture2D(B,p+o).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l)); }
+  float dkm=1.; for(int i=0;i<12;i++){ float a=float(i)*.5236; vec2 o=vec2(cos(a),sin(a)/AS)*(i<6?.02:.042); float l=dot(texture2D(B,p+o).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l)); }
   { float l0=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l0)); }
   body*=dkm;
   vec2 q=p-(V*g*.4+fd)*body;
