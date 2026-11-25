@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="apple-itunes-app" content="app-id=6836835986">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>ハムスターを撫でられるページ</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🐹%3C/text%3E%3C/svg%3E">
@@ -174,6 +175,9 @@
   #mvQR{display:none;text-align:center;margin:4px 0}
   #mvQR canvas{width:156px;height:156px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #e3d3c3}
   #mvQR p{margin:4px 0 0;font-size:11px;color:#8a7262}
+  #sApp{border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
+  #app.inapp #sApp{display:none}
+  .mvwhat{margin:2px 0 4px;padding:8px 10px;background:#f6efe6;border-radius:12px;font-size:12px;text-align:left;line-height:1.7}
 </style>
 </head>
 <body>
@@ -243,11 +247,13 @@
     <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
     <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
     <button id="sShare">カードにする</button>
+    <button id="sApp">アプリで、のこりのかくし図鑑を集める →</button>
     <button id="sClose">とじる</button>
   </div></div>
   <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
-    <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・かくし図鑑を、アプリにそのまま引き継げます。おあいこは、自分をいたわると、この子も元気になる習慣づくりアプリです。</small></p>
+    <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
+    <div class="mvwhat">アプリでは…<br>🌱 自分にやさしくできた日は、この子の暮らしも育つ<br>👕 きせかえ・おでかけ・お部屋づくり<br>🔍 かくし図鑑は全49種。ここでは見つからない子も</div>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
     <input id="mvCode" readonly aria-label="ひきつぎコード" style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
@@ -441,7 +447,7 @@ function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($(
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
 }
-function hideSecret(){ closeDlg(); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
+function hideSecret(){ closeDlg(); if(!INAPP) setTimeout(showAL,1500); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
 // 図鑑のカード（シェア用の画像）
 function secretCard(x,img){
   return new Promise(res=>{
@@ -471,6 +477,7 @@ async function shareSecret(){
   window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener");
 }
 $("#sShare").onclick=shareSecret;
+$("#sApp").onclick=()=>{ hideSecret(); setTimeout(()=>$("#applink").onclick(new Event("click")),380); };
 $("#sClose").onclick=hideSecret;
 $("#secret").addEventListener("pointerdown",e=>e.stopPropagation());
 ["#pad","#padBtn"].forEach(q=>$(q).addEventListener("pointerdown",e=>e.stopPropagation()));
@@ -1475,11 +1482,11 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
-function countNade(){ life.nade=(life.nade||0)+1; save(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===15) setTimeout(showAL,2000); }
+function countNade(){ life.nade=(life.nade||0)+1; save(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
 function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
-if(!INAPP) setTimeout(showAL,90000);
+if(!INAPP) setTimeout(showAL,45000);
 if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test") app.classList.add("test");
