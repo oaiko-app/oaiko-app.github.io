@@ -259,7 +259,7 @@
   <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
     <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
-    <div class="mvwhat">アプリでは…<br>🌱 自分にやさしくできた日は、この子の暮らしも育つ<br>👕 きせかえ・おでかけ・お部屋づくり<br>🔍 かくし図鑑は全49種。ここでは見つからない子も</div>
+    <div class="mvwhat">アプリでは…<br>🌱 自分にやさしくできた日は、この子の暮らしも育つ<br>👕 きせかえ・おでかけ・お部屋づくり<br>🔍 かくし図鑑は全53種。ここでは見つからない子も</div>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
     <input id="mvCode" readonly aria-label="ひきつぎコード" style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
@@ -450,7 +450,7 @@ function snapHam(done0,fx){ const done=u=>fxImg(u,fx,done0);
 }
 function showPill(x){
   const el=$("#pill"); el.textContent=`${lastN}回なでて${x.name}に。シェアする`; el.hidden=false; requestAnimationFrame(()=>el.classList.add("show"));
-  el.onclick=()=>{ el.classList.remove("show"); snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
+  el.onclick=()=>{ el.classList.remove("show"); if(x.img){ secCur={x,img:x.img}; shareSecret(); return; } snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
   clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
 }
 function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
@@ -1282,6 +1282,10 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               asa:{id:"asa",no:35,name:"朝いちばん",desc:"夜行性なのに、つきあって起きてくれた。眠そう。",tag:"#朝いちばん",how:"朝5〜6時になでたら",hint:"朝はやく（5〜6時）に、なでると"},
               nadenade:{id:"nadenade",no:31,name:"なでられ上手",desc:"なでられるのが、うまくなった。目を細める角度が完璧。",tag:"#なでられ上手",how:"100回なでたら",hint:"たくさん、なでると"},
               aizu:{id:"aizu",no:41,name:"ひみつの合図",desc:"その順番でさわると、合図だとわかってくれる。",tag:"#ひみつの合図",how:"ひみつの順番でさわったら",hint:"あたま→ほっぺ→からだ→ほっぺ→あたま の順にトン"},
+              dopa:{id:"dopa",no:50,name:"ドパハム",desc:"種をもらうたびに、脳がよろこぶ。もう1こ、もう1こ……。",tag:"#ドパハム",how:"種を立て続けにあげたら",hint:"種を、立て続けにあげると",img:"img/sec_dopa.jpg"},
+              hamnemy:{id:"hamnemy",no:51,name:"ハムネミー",desc:"なかよしのふり。種は、うしろにかくしてある。",tag:"#ハムネミー",how:"なでたあとに、いやなところをつついたら",hint:"なでたあとに、いやがるところをつつくと",img:"img/sec_hamnemy.jpg"},
+              squeeze:{id:"squeeze",no:52,name:"スクイーズハム",desc:"ぎゅっとすると、ゆっくりもどる。ストレスがへる（あなたの）。",tag:"#スクイーズハム",how:"何度もぎゅーっと長押ししたら",hint:"ぎゅーっと長押しを、何度も",img:"img/sec_squeeze.jpg"},
+              yuki:{id:"yuki",no:53,name:"これ毒かもハム",desc:"はじめて雪にさわった。つめたすぎて、毒だと思った。角刈りは、気合いのあらわれ。",tag:"#これ毒かも",how:"ひみつのコマンドを入れたら",hint:"🎮で、Bからはじまる もうひとつのコマンドを",img:"img/sec_yuki.jpg"},
               kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"🎮で、ひみつのコマンドを"}};
 const SEC_ALL=Object.values(SECRET).sort((a,b)=>a.no-b.no);
 const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","……からい！","……にがい","……闇"];
@@ -1289,7 +1293,7 @@ const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","�
 function unlock(x,opt={}){
   if(!x) return; if(!opt.nade) lastN=0;
   if(!x.tint) toApp({t:"secret",id:x.id});
-  if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>snapHam(img=>showSecret(x,img),opt.fx),opt.wait||1700); }
+  if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>{ if(x.img) showSecret(x,x.img); else snapHam(img=>showSecret(x,img),opt.fx); },opt.wait||1700); }
   else if(opt.nade) setTimeout(()=>showPill(x),1400);
 }
 function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_ALL.filter(x=>secSeen.has(x.id)).length;
@@ -1297,11 +1301,13 @@ function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_AL
 function sceneKey(){ return "scene_"+SCENE; }
 // かくしコマンド：コントローラーで「← → A B」と入れると、本物の鏡餅になる
 let padLog=[];
+const PAD_CMDS=["LRAB","BABA"];
 function padPress(k){
   haptic("light"); const now=Date.now(); padLog=padLog.filter(x=>now-x.t<5000); padLog.push({k,t:now});
-  let q=padLog.map(x=>x.k).join(""); while(q && !"LRAB".startsWith(q)) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
+  let q=padLog.map(x=>x.k).join(""); while(q && !PAD_CMDS.some(c=>c.startsWith(q))) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
   $("#padShow").textContent=padLog.map(x=>({L:"←",R:"→",A:"A",B:"B"})[x.k]).join(" ")||"…";
   if(q==="LRAB"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); }
+  else if(q==="BABA"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); sayText("……これ、毒かも"); haptic("heavy"); request("startle"); unlock(SECRET.yuki,{wait:1200}); },500); }
 }
 
 function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
@@ -1322,7 +1328,7 @@ function secOnNade(){ const h=new Date().getHours();
   if(awayLong){ awayLong=false; request("startle"); unlock(SECRET.bikkuri,{wait:500}); } }
 function aizuTap(z){ const now=Date.now(), m=z==="head"?"h":(z==="cheek"||z==="nose")?"f":"b"; aizuLog=aizuLog.filter(t=>now-t.t<9000); aizuLog.push({m,t:now}); if(aizuLog.length>5) aizuLog.shift();
   if(aizuLog.map(t=>t.m).join("")==="hfbfh"){ aizuLog=[]; sayText("……合図、わかった"); request("happy"); unlock(SECRET.aizu,{wait:1200}); return true; } return false; }
-let cheekTaps=[];
+let cheekTaps=[], likedAt=0, badTaps=[];
 function nextDoku(){ if(!dokuOn()){ const h=new Date().getHours(); goDoku(SCENE==="greens"?3:(h<5&&secSeen.has("doku"))?4:0); } else if(dokuKind===0) goDoku(1); }
 function goDoku(k){
   lastN=nadeCount+(gStroke?1:0); nadeCount=0; gStroke=false;
@@ -1333,7 +1339,7 @@ function goDoku(k){
   clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game","aka","mido","yami"),60e3);
 }
 // 好きなところ・いやなところ（ハムスターは頭〜背中をなでられるのが好きで、おなかや足は苦手な子が多い）
-function zoneReact(z,fast,against){
+function zoneReact(z,fast,against){ if(z==="head"||z==="back") likedAt=Date.now();
   const b=life.bond, r=Math.random();
   if(SCENE){ life.pets++; toApp({t:"pet",z}); addBond(z==="head"||z==="back"?1:.6); if(fast&&Math.random()<.3){ haptic("heavy"); sayText("……びくっ"); } return; } // 場面のときは動画を切り替えず、手ざわりだけ
   if(z==="feet"){ addBond(-1); request("startle"); return; }
@@ -1353,7 +1359,7 @@ function onStroke(s,dt){
   const now=Date.now();
   const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
-  gStroke=true;
+  gStroke=true; if(z==="head"||z==="back") likedAt=now;
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
   if(strokeLog.length>=18){ strokeLog=[]; nextDoku(); return; }
   if(asleep()){
@@ -1367,8 +1373,10 @@ function onStroke(s,dt){
   if((state==="happy"||state==="finger_sniff") && !fast && z!=="feet" && z!=="belly"){ addBond(.3); life.pets++; toApp({t:"pet",z}); if(against) afterHappy="groom"; return; }
   zoneReact(z,fast,against);
 }
+let holdLog=[];
 function onHold(z){
   if(asleep()||!z) return;
+  { const now=Date.now(); holdLog=holdLog.filter(t=>now-t<20000); holdLog.push(now); if(holdLog.length>=3){ holdLog=[]; sayText("……むぎゅ"); haptic("heavy"); unlock(SECRET.squeeze,{wait:1200}); } }
   if(z==="nose"||(EXTRA[sp] && life.bond>=25 && Math.random()<0.5)){ if(EXTRA[sp]){ request("finger_sniff"); addBond(1); return; } request("look"); return; }
   if(z==="feet"||z==="belly"){ zoneReact(z,false,false); return; }
   request("happy"); addBond(0.5);
@@ -1381,6 +1389,7 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
 function onTap(z){
   const now=performance.now();
   if(z){ nadeCount++; countNade(); if(aizuTap(z)) return;
+    if(/^(belly|feet|rear|side)$/.test(z) && Date.now()-likedAt<12000){ badTaps=badTaps.filter(t=>now-t<6000); badTaps.push(now); if(badTaps.length>=3){ badTaps=[]; likedAt=0; sayText("……なかよし、だよね？"); unlock(SECRET.hamnemy,{wait:1500}); return; } }
     if(dokuOn() && dokuKind===0 && (z==="cheek"||z==="nose")){ cheekTaps=cheekTaps.filter(t=>now-t<5000); cheekTaps.push(now); if(cheekTaps.length>=6){ cheekTaps=[]; dokuTaps=[]; taps=[]; goDoku(2); return; } }
     dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
     if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; nextDoku(); return; } }
@@ -1403,6 +1412,8 @@ function onTap(z){
 function wake(){ { const h=new Date().getHours(); if(h>=23||h<4) unlock(SECRET.yofukashi,{wait:2200,fx:"night"}); } manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping");  pending=null; say("yawn"); play("yawn"); }
 function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="☀️ おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
 if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
+let seedLog=[];
+$("#seed").addEventListener("click",()=>{ const now=Date.now(); seedLog=seedLog.filter(t=>now-t<10000); seedLog.push(now); if(seedLog.length>=5){ seedLog=[]; sayText("……もう1こ"); unlock(SECRET.dopa,{wait:1500}); } });
 $("#seed").onclick=()=>{
   const hand=EXTRA[sp] && life.bond>=35 && Math.random()<0.6, k=hand?"finger_seed":"eat";
   if(asleep()){ wake(); pending=k; return; }
