@@ -659,6 +659,7 @@ stage.addEventListener("pointermove",e=>{
 function up(e){
   const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
   if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(zoneAt(e.clientX,e.clientY)); }
+  if(ptr.size===0 && gStroke){ gStroke=false; nadeCount++; countNade(); }
   if(ptr.size===0){ strokeDist=0; FUR.down=false; hideHand(220); $("#glow").classList.remove("on"); }
 }
 stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
@@ -688,9 +689,9 @@ async function goKagami(){
 }
 const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.get("sec",[]));
 let capReq=null, secCur=null;
-let nadeCount=0, lastN=0;
+let nadeCount=0, lastN=0, gStroke=false; // 1回＝指を置いてから離すまで（タップも1回）
 function goDoku(k){
-  lastN=nadeCount; nadeCount=0;
+  lastN=nadeCount+(gStroke?1:0); nadeCount=0; gStroke=false;
   dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(k===1?"……ゲーミング":"なですぎて、紫になった");
   toApp({t:"doku",kind:["","game"][k]});
   const x=SECRET[k]; if(x && !secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); setTimeout(()=>snapHam(img=>showSecret(x,img)),1700); }
@@ -719,7 +720,7 @@ function onStroke(s,dt){
   const now=Date.now();
   const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
-  nadeCount++; life.nade=(life.nade||0)+1; if(life.nade===40) setTimeout(showAL,2500);
+  gStroke=true;
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
   if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; }
   if(asleep()){
@@ -745,7 +746,7 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
 }
 function onTap(z){
   const now=performance.now();
-  if(z){ nadeCount++; dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
+  if(z){ nadeCount++; countNade(); dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
     if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; } }
   taps=taps.filter(t=>now-t<900); taps.push(now);
   if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
@@ -775,7 +776,7 @@ $("#seed").onclick=()=>{
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
 $("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
-function openBody(){ touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
+function openBody(){ openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
   $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); liftStage(); openDlg($("#bodySheet"),$("#bodyBtn"),closeBody); }
 let DLG=null;
@@ -787,9 +788,9 @@ function liftStage(){ const st=$("#stage"); st.style.transform=""; const R=st.ge
   const cx=b.left+b.width*(HC[0]+HF[0])/2-R.left, cy=b.top+b.height*(HC[1]+HF[1])/2-R.top;
   if(R.width>R.height){ const sl=sh.left-R.left; st.style.transform=`translate(${Math.min(0,sl/2-cx)}px,${Math.min(0,R.height*.62-cy)}px)`; return; }
   const free=sh.top-R.top; st.style.transform=`translate(0px,${Math.min(0,free*.64-cy)}px)`; }
-function closeBody(){ $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); $("#stage").style.transform=""; closeDlg(); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
+function closeBody(){ if(life.name && life.name!==openBody._n) setTimeout(showAL,1800); $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); $("#stage").style.transform=""; closeDlg(); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
 $("#bodyBtn").onclick=()=>{ openBody(); $("#bN").value=life.name||""; };
-$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); }; $("#bN").onchange=()=>{ if(life.name) setTimeout(showAL,1500); };
+$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); }; 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
   const d={v:1,sp,n:life.name||"",s:+life.body.s.toFixed(2),c:+life.body.c.toFixed(2),b:Math.round(life.bond),p:life.pets||0,sec:[...secSeen]};
@@ -824,7 +825,7 @@ $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play()
 // ---------- 種類 ----------
 async function loadSpecies(id){
   const my=++reqId; sp=id; $("#loading").classList.remove("hide");
-  if(SCENE && !GEO_SP[id]){ SCENE=null; app.classList.remove("scene"); }
+  if(!GEO_SP[id]){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
   applyGeo(); renderScenes();
   poster.src=`v/${id}/poster.jpg`;
   document.querySelectorAll("#top .chip").forEach(c=>{ c.classList.toggle("on",c.dataset.id===id); c.setAttribute("aria-pressed",String(c.dataset.id===id)); if(c.dataset.id===id) c.scrollIntoView({inline:"nearest",block:"nearest"}); });
@@ -867,6 +868,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
+function countNade(){ life.nade=(life.nade||0)+1; save(); if(life.nade===15) setTimeout(showAL,2000); }
 function showAL(){ if(INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
