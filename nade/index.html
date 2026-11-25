@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>ハムスターを撫でられるページ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🐹%3C/text%3E%3C/svg%3E">
 <meta name="description" content="指でなでると、ハムスターがうっとりする。夜は起きて、昼はすやすや。">
 <meta property="og:title" content="ハムスターを撫でられるページ">
 <meta property="og:description" content="指でなでると、ハムスターがうっとりする。">
@@ -384,7 +385,7 @@ function furMove(cx,cy,dx,dy){ { const g=$("#glow"); if(g){ g.style.transform=`t
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
 function snapHam(done){
-  const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=W*.62, x=W*(HC[0]-.31), y=Hh*(HC[1]+.02)-side/2;
+  const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=Math.min(W,Hh)*.82, x=Math.max(0,Math.min(W-side,W*HC[0]-side/2)), y=Math.max(0,Math.min(Hh-side,Hh*(HC[1]-.06)-side/2));
       const c=document.createElement("canvas"); c.width=c.height=520; const g=c.getContext("2d");
       if(!glOK && Date.now()<dokuUntil){ try{ g.filter=dokuKind===1?"hue-rotate(120deg) saturate(1.6)":"hue-rotate(250deg) saturate(1.5)"; }catch(e){} }
       g.drawImage(src,x,y,side,side,0,0,520,520); done(c.toDataURL("image/jpeg",.9)); }catch(e){ done(null); } };
@@ -395,13 +396,13 @@ function showPill(x){
   el.onclick=()=>{ el.classList.remove("show"); snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
   clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
 }
-function showSecret(x,img){ setTimeout(()=>openDlg($("#secret"),null,()=>$("#sClose").click()),50);
+function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
   $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:"";
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
 }
-function hideSecret(){ const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
+function hideSecret(){ closeDlg(); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
 // 図鑑のカード（シェア用の画像）
 function secretCard(x,img){
   return new Promise(res=>{
@@ -449,6 +450,7 @@ function layout(){
 }
 const ro=new ResizeObserver(layout); ro.observe(stage);
 Object.entries(TRACE_POS).forEach(([k,p])=>{const el=$("#tr-"+k); el.style.left=p.l+"%"; el.style.top=p.t+"%"; el.style.width=p.w+"%";});
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const TOUCH=matchMedia("(pointer:coarse)").matches;
 const NM=()=>life.name||"この子";
 const nadeHint=()=>TOUCH?"指で、ゆっくりなでてみて":"ドラッグして、ゆっくりなでてみて";
@@ -675,10 +677,11 @@ function sceneKey(){ return "scene_"+SCENE; }
 let padLog=[];
 function padPress(k){
   haptic("light"); const now=Date.now(); padLog=padLog.filter(x=>now-x.t<5000); padLog.push({k,t:now});
-  const seq=padLog.map(x=>x.k).join(""); $("#padShow").textContent=padLog.map(x=>({L:"←",R:"→",A:"A",B:"B"})[x.k]).join(" ");
-  if(seq.endsWith("LRAB")){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); return; }
-  if(!"LRAB".startsWith(seq.slice(-Math.min(seq.length,4))) && !"LRAB".startsWith(k)){ padLog=[]; }
+  let q=padLog.map(x=>x.k).join(""); while(q && !"LRAB".startsWith(q)) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
+  $("#padShow").textContent=padLog.map(x=>({L:"←",R:"→",A:"A",B:"B"})[x.k]).join(" ")||"…";
+  if(q==="LRAB"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); }
 }
+
 function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
 function closePad(){ closeDlg(); $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
 async function goKagami(){
@@ -776,7 +779,7 @@ $("#seed").onclick=()=>{
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
 $("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
-function openBody(){ openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
+function openBody(){ if(!$("#pad").hidden) closePad(); openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
   $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); liftStage(); openDlg($("#bodySheet"),$("#bodyBtn"),closeBody); }
 let DLG=null;
@@ -797,7 +800,7 @@ function moveCode(){
   const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
   return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
-$("#applink").onclick=e=>{ e.preventDefault(); $("#mvName").textContent=NM(); $("#move").hidden=false; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
+$("#applink").onclick=e=>{ e.preventDefault(); if(!$("#pad").hidden) closePad(); $("#mvName").textContent=NM(); $("#move").hidden=false; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(!ios){ $("#mvDev").style.display="block"; $("#mvDev").textContent="おあいこはiPhoneのアプリです。コードをコピーしたら、iPhoneで App Store の「おあいこ」を入れて貼りつけてください（コードはこの画面でいつでも見られます）。"; } };
 $("#mvClose").onclick=()=>{ $("#move").hidden=true; closeDlg(); };
@@ -840,7 +843,7 @@ async function loadSpecies(id){
   (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
     for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
   $("#loading").classList.add("hide"); pending=null;
-  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").textContent=`${NM()}は、お昼寝中。`+(TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ"); }
+  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").innerHTML=`${esc(NM())}は、お昼寝中<br><span style="font-size:12px;font-weight:400">${TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ"}</span>`; }
   else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
   else play("idle");
   life.visit=Date.now(); save(); renderAll();
@@ -869,7 +872,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
 function countNade(){ life.nade=(life.nade||0)+1; save(); if(life.nade===15) setTimeout(showAL,2000); }
-function showAL(){ if(INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
+function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
 if(!INAPP) setTimeout(showAL,90000);
