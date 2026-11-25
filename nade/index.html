@@ -162,9 +162,22 @@
   #bodySheet{max-height:min(58%,420px);overflow-y:auto;overscroll-behavior:contain}
   #app.sheetopen #applink{display:none}
   @media (orientation:landscape) and (max-height:520px){ #bodySheet{max-height:none} }
+  #loading.soft{background:transparent;align-items:flex-end;padding-bottom:calc(env(safe-area-inset-bottom) + 140px);font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  #bgblur{position:fixed;inset:-60px;z-index:0;background:#1d1611 center/cover no-repeat;filter:blur(34px) brightness(.5) saturate(1.1);display:none;transition:background-image .6s}
+  @media (min-width:600px){ #bgblur{display:block} }
+  #app{z-index:1}
+  #app.calm #top,#app.calm #scenes,#app.calm #bar,#app.calm #padBtn,#app.calm #hint,#app.calm #status,#app.calm #applink{opacity:0!important;pointer-events:none;transition:opacity 1.2s}
+  #top,#scenes,#bar,#padBtn,#status{transition:opacity .4s}
+  #sndTip{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:7;background:rgba(255,248,239,.96);color:var(--ink);font-size:12px;font-weight:700;border-radius:12px;padding:8px 12px;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transition:opacity .4s;pointer-events:none}
+  #sndTip.show{opacity:1}
+  #sndTip:after{content:"";position:absolute;right:24px;bottom:-6px;border:6px solid transparent;border-top-color:rgba(255,248,239,.96);border-bottom:0}
+  #mvQR{display:none;text-align:center;margin:4px 0}
+  #mvQR canvas{width:156px;height:156px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #e3d3c3}
+  #mvQR p{margin:4px 0 0;font-size:11px;color:#8a7262}
 </style>
 </head>
 <body>
+<div id="bgblur"></div>
 <div id="app">
   <div id="stage">
     <div id="box">
@@ -172,12 +185,12 @@
       <video id="va" muted playsinline preload="auto"></video>
       <video id="vb" muted playsinline preload="auto"></video>
       <canvas id="cv"></canvas>
-      <img class="trace" id="tr-nest" src="t/nest.png" alt="">
-      <img class="trace" id="tr-dish" src="t/dish.png" alt="">
-      <img class="trace" id="tr-hoard" src="t/hoard.png" alt="">
-      <img class="trace" id="tr-mess1" src="t/mess1.png" alt="">
-      <img class="trace" id="tr-mess2" src="t/mess2.png" alt="">
-      <img class="trace" id="tr-mess3" src="t/mess3.png" alt="">
+      <img class="trace" id="tr-nest" data-src="t/nest.png" alt="">
+      <img class="trace" id="tr-dish" data-src="t/dish.png" alt="">
+      <img class="trace" id="tr-hoard" data-src="t/hoard.png" alt="">
+      <img class="trace" id="tr-mess1" data-src="t/mess1.png" alt="">
+      <img class="trace" id="tr-mess2" data-src="t/mess2.png" alt="">
+      <img class="trace" id="tr-mess3" data-src="t/mess3.png" alt="">
     </div>
     <div id="night"></div>
     <img id="hand" alt="">
@@ -239,6 +252,7 @@
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
     <input id="mvCode" readonly aria-label="ひきつぎコード" style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
     <p id="mvDev" style="display:none;margin:4px 0;font-size:12px;color:#8a7262"></p>
+    <div id="mvQR"><canvas id="mvQRc" aria-label="iPhoneで読み取るQRコード" role="img"></canvas><p>iPhoneのカメラで読み取ると、このコードのままiPhoneで開けます</p></div>
     <a id="mvStore" href="https://apps.apple.com/jp/app/id6836835986" style="display:none;text-align:center;background:#3d4470;color:#fff;border-radius:14px;padding:12px;text-decoration:none;font-weight:700;margin:6px 0">App Storeでおあいこをひらく</a>
     <button id="mvCopy">ひきつぎコードをコピー</button>
     <button id="mvClose">あとで</button>
@@ -253,6 +267,7 @@
     </div>
     <button id="padClose">とじる</button>
   </div>
+  <div id="sndTip" role="status">🔈 音をオンにすると、もぐもぐ音も聞こえるよ</div>
   <div id="loading">よみこみ中…</div>
   <button id="tap">準備できたよ。タップしてはじめる</button>
 </div>
@@ -306,6 +321,9 @@ let texD=null; const DW=36, DH=64, FIELD={x:new Float32Array(DW*DH),y:new Float3
 let gl=null, U={}, texA=null, texB=null, glOK=false, fadeGL=null, glBad=0, glGood=false;
 let dokuKind=0, dokuUntil=0, dokuAmt=0, MO=0;
 const MOFF={eat:.07,finger_seed:.07,sleep:.05,sleeploop:.06}; // しゃがむ動きは、ハムが下にいる
+// 四つ足の子が立ち上がる動き：毒ハムの色をぬる範囲を、上に・縦長にする [上下のずれ, 横の倍率, 縦の倍率]
+const MUP={look:[-.13,.7,2.1],yawn:[-.16,.75,2.8],eat:[-.08,.6,1.6],groom:[-.08,.6,1.6],sleep:[-.08,.85,2],sleeploop:[-.08,.85,2]};
+let MSX=1,MSY=1;
 function initGL(){
   try{
     gl=cv.getContext("webgl",{alpha:false,antialias:false,premultipliedAlpha:false,powerPreference:"low-power"});
@@ -314,7 +332,7 @@ function initGL(){
     const p=gl.createProgram();
     gl.attachShader(p,sh(gl.VERTEX_SHADER,"attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}"));
     gl.attachShader(p,sh(gl.FRAGMENT_SHADER,`precision mediump float;
-varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform sampler2D D;
+varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform vec2 MS;uniform sampler2D D;
 vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
   float s=(1.+(sz-1.)*w)*(1.+BR*w); vec2 q=F+(p-F)/s;
   float cw=1.+(ch-1.)*w; q.x=C.x+(q.x-C.x)/cw;
@@ -338,7 +356,7 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     vec2 fd=(texture2D(D,uv).rg-.5)*.1; float sh=clamp(1.+fd.y*3.2-abs(fd.x)*.8,.9,1.06);
     vec2 dd=(uv-T)*vec2(1.,AS); float cs=TP*.14*exp(-dot(dd,dd)/.0011);
     c*=mix(1.,sh*(1.-cs),body); }
-  if(dk>.001){ vec2 d=(uv-vec2(C.x,C.y+.01+MO))/(HB2*vec2(ch*sz,sz)); float m=dk*(1.-smoothstep(.62,1.04,length(d)));
+  if(dk>.001){ vec2 d=(uv-vec2(C.x,C.y+.01+MO))/(HB2*vec2(ch*sz,sz)*MS); float m=dk*(1.-smoothstep(.62,1.04,length(d)));
     // 床材はザラザラ（細かい明暗が多い）、毛はなめらか。ザラザラしたところには色をのせない
     float gs=0.; for(int i=0;i<4;i++){ vec2 o=PX*2.5*vec2(i==0?1.:i==1?-1.:0., i==2?1.:i==3?-1.:0.);
       vec3 n=mix(texture2D(A,q+o).rgb,texture2D(B,q+o).rgb,mx); gs+=abs(dot(n-c,vec3(.33))); }
@@ -353,7 +371,7 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     gl.useProgram(p);
     const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     const loc=gl.getAttribLocation(p,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D","MS"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
     const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE)); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); return t; };
     texA=mk(); texB=mk(); texD=mk();
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,DW,DH,0,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf);
@@ -383,7 +401,7 @@ function glDraw(){
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,DW,DH,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf); if(mx2<.0004) FIELD.live=false; }
     { const asl=state==="sleep"||state==="sleeploop", f=asl?0.75:(state==="startle"?3.2:1.6), a=asl?0.009:(state==="startle"?0.008:0.005); gl.uniform1f(U.BR,a*Math.sin(now/1000*Math.PI*2*f)); }
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
-    gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); MO+=((MOFF[state]||0)-MO)*0.05; gl.uniform1f(U.MO,MO);
+    gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); { const up=POSE==="four"&&!SCENE&&MUP[state]; const tm=up?up[0]:(MOFF[state]||0), tx=up?up[1]:1, ty=up?up[2]:1; MO+=(tm-MO)*0.05; MSX+=(tx-MSX)*0.05; MSY+=(ty-MSY)*0.05; } gl.uniform1f(U.MO,MO); gl.uniform2f(U.MS,MSX,MSY);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     if(capReq){ const f=capReq; capReq=null; f(cv); }
     if(!glGood){ // 端末によっては動画を描けない（真っ黒になる）。そのときはふつうの動画に戻す
@@ -485,6 +503,530 @@ function renderHint(show){ const h=$("#hint"); if(!h) return; const small=t=>`<b
   else if(app.classList.contains("sleeping")) html=`${esc(NM())}は、お昼寝中`+small(TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ");
   else html=esc(nadeHint())+small(TOUCH?"毛なみが指についてくる。頭がすき、足はいや":"毛なみがカーソルについてくる。頭がすき、足はいや");
   if(h.innerHTML!==html) h.innerHTML=html; if(show) h.style.opacity=""; }
+/* toqr 0.1.1 — MIT License, (c) Phil Pluckthun, (c) 650 Industries (Expo) */
+const QR=(()=>{
+const t = new Uint8Array(512);
+
+const n = new Uint8Array(256);
+
+for (let e = 0, o = 1; e < 255; e++) {
+  t[e] = o;
+  n[o] = e;
+  o <<= 1;
+  if (256 & o) {
+    o ^= 285;
+  }
+}
+
+for (let n = 255; n < 512; n++) {
+  t[n] = t[n - 255];
+}
+
+const gmul = (e, o) => e > 0 && o > 0 ? t[n[e] + n[o]] : 0;
+
+const gpow = (e, o) => t[o * n[e] % 255];
+
+const genRS = t => {
+  const n = new Uint8Array(t + 2);
+  const e = new Uint8Array(t + 1);
+  e[0] = 1;
+  for (let o = 0; o < t; o++) {
+    const t = gpow(2, o);
+    n.fill(0, 0, o + 2);
+    for (let s = 0; s < o + 1; s++) {
+      n[s] ^= e[s];
+      n[s + 1] ^= gmul(e[s], t);
+    }
+    for (let t = 0; t < o + 2; t++) {
+      e[t] = n[t];
+    }
+  }
+  return e;
+};
+
+const encodeRS = (t, n) => {
+  const e = genRS(n);
+  const o = new Uint8Array(t.byteLength + e.byteLength - 1);
+  o.set(t);
+  for (let n = 0; n < t.byteLength; n++) {
+    const t = o[n];
+    if (t) {
+      for (let s = 1; s < e.byteLength; s++) {
+        o[n + s] ^= gmul(e[s], t);
+      }
+    }
+  }
+  return o.subarray(t.byteLength);
+};
+
+const e = [ 0, 26, 44, 70, 100, 134, 172, 196, 242, 292, 346, 404, 466, 532, 581, 655, 733, 815, 901, 991, 1085, 1156, 1258, 1364, 1474, 1588, 1706, 1828, 1921, 2051, 2185, 2323, 2465, 2611, 2761, 2876, 3034, 3196, 3362, 3532, 3706 ];
+
+const o = [ [ 0, 0, 0, 0 ], [ 10, 7, 17, 13 ], [ 16, 10, 28, 22 ], [ 26, 15, 44, 36 ], [ 36, 20, 64, 52 ], [ 48, 26, 88, 72 ], [ 64, 36, 112, 96 ], [ 72, 40, 130, 108 ], [ 88, 48, 156, 132 ], [ 110, 60, 192, 160 ], [ 130, 72, 224, 192 ], [ 150, 80, 264, 224 ], [ 176, 96, 308, 260 ], [ 198, 104, 352, 288 ], [ 216, 120, 384, 320 ], [ 240, 132, 432, 360 ], [ 280, 144, 480, 408 ], [ 308, 168, 532, 448 ], [ 338, 180, 588, 504 ], [ 364, 196, 650, 546 ], [ 416, 224, 700, 600 ], [ 442, 224, 750, 644 ], [ 476, 252, 816, 690 ], [ 504, 270, 900, 750 ], [ 560, 300, 960, 810 ], [ 588, 312, 1050, 870 ], [ 644, 336, 1110, 952 ], [ 700, 360, 1200, 1020 ], [ 728, 390, 1260, 1050 ], [ 784, 420, 1350, 1140 ], [ 812, 450, 1440, 1200 ], [ 868, 480, 1530, 1290 ], [ 924, 510, 1620, 1350 ], [ 980, 540, 1710, 1440 ], [ 1036, 570, 1800, 1530 ], [ 1064, 570, 1890, 1590 ], [ 1120, 600, 1980, 1680 ], [ 1204, 630, 2100, 1770 ], [ 1260, 660, 2220, 1860 ], [ 1316, 720, 2310, 1950 ], [ 1372, 750, 2430, 2040 ] ];
+
+const s = [ [ 0, 0, 0, 0 ], [ 1, 1, 1, 1 ], [ 1, 1, 1, 1 ], [ 1, 1, 2, 2 ], [ 2, 1, 4, 2 ], [ 2, 1, 4, 4 ], [ 4, 2, 4, 4 ], [ 4, 2, 5, 6 ], [ 4, 2, 6, 6 ], [ 5, 2, 8, 8 ], [ 5, 4, 8, 8 ], [ 5, 4, 11, 8 ], [ 8, 4, 11, 10 ], [ 9, 4, 16, 12 ], [ 9, 4, 16, 16 ], [ 10, 6, 18, 12 ], [ 10, 6, 16, 17 ], [ 11, 6, 19, 16 ], [ 13, 6, 21, 18 ], [ 14, 7, 25, 21 ], [ 16, 8, 25, 20 ], [ 17, 8, 25, 23 ], [ 17, 9, 34, 23 ], [ 18, 9, 30, 25 ], [ 20, 10, 32, 27 ], [ 21, 12, 35, 29 ], [ 23, 12, 37, 34 ], [ 25, 12, 40, 34 ], [ 26, 13, 42, 35 ], [ 28, 14, 45, 38 ], [ 29, 15, 48, 40 ], [ 31, 16, 51, 43 ], [ 33, 17, 54, 45 ], [ 35, 18, 57, 48 ], [ 37, 19, 60, 51 ], [ 38, 19, 63, 53 ], [ 40, 20, 66, 56 ], [ 43, 21, 70, 59 ], [ 45, 22, 74, 62 ], [ 47, 24, 77, 65 ], [ 49, 25, 81, 68 ] ];
+
+const r = [ 0, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 117, 121, 125, 129, 133, 137, 141, 145, 149, 153, 157, 161, 165, 169, 173, 177 ];
+
+const c = [ [], [], [ 4, 16 ], [ 4, 20 ], [ 4, 24 ], [ 4, 28 ], [ 4, 32 ], [ 4, 20, 36 ], [ 4, 22, 40 ], [ 4, 24, 44 ], [ 4, 26, 48 ], [ 4, 28, 52 ], [ 4, 30, 56 ], [ 4, 32, 60 ], [ 4, 24, 44, 64 ], [ 4, 24, 46, 68 ], [ 4, 24, 48, 72 ], [ 4, 28, 52, 76 ], [ 4, 28, 54, 80 ], [ 4, 28, 56, 84 ], [ 4, 32, 60, 88 ], [ 4, 26, 48, 70, 92 ], [ 4, 24, 48, 72, 96 ], [ 4, 28, 52, 76, 100 ], [ 4, 26, 52, 78, 104 ], [ 4, 30, 56, 82, 108 ], [ 4, 28, 56, 84, 112 ], [ 4, 32, 60, 88, 116 ], [ 4, 24, 48, 72, 96, 120 ], [ 4, 28, 52, 76, 100, 124 ], [ 4, 24, 50, 76, 102, 128 ], [ 4, 28, 54, 80, 106, 132 ], [ 4, 32, 58, 84, 110, 136 ], [ 4, 28, 56, 84, 112, 140 ], [ 4, 32, 60, 88, 116, 144 ], [ 4, 28, 52, 76, 100, 124, 148 ], [ 4, 22, 48, 74, 100, 126, 152 ], [ 4, 26, 52, 78, 104, 130, 156 ], [ 4, 30, 56, 82, 108, 134, 160 ], [ 4, 24, 52, 80, 108, 136, 164 ], [ 4, 28, 56, 84, 112, 140, 168 ] ];
+
+const makeSegments = (t, n, s) => {
+  const r = e[n] - o[n][s];
+  const c = new Uint8Array(r);
+  let f = 0;
+  let l = 0;
+  if (n > 9) {
+    const n = 65535 & t.byteLength;
+    c[0] = 64 | n >>> 12 & 15;
+    c[1] = n >>> 4 & 255;
+    f = (15 & n) << 4;
+    l = 2;
+  } else {
+    const n = 255 & t.byteLength;
+    c[0] = 64 | n >>> 4 & 15;
+    f = (15 & n) << 4;
+    l = 1;
+  }
+  let i = 0;
+  while (i + 1 < t.byteLength) {
+    const n = t[i++] << 8 | t[i++];
+    c[l++] = f | n >>> 12;
+    c[l++] = n >>> 4 & 255;
+    f = n << 4 & 240;
+  }
+  if (i < t.byteLength) {
+    c[l++] = f | t[i] >>> 4;
+    f = t[i] << 4 & 240;
+  }
+  c[l++] = f;
+  for (let t = 0; l < r; t++) {
+    c[l++] = 1 & t ? 17 : 236;
+  }
+  return c;
+};
+
+const getBestVersion = (t, n) => {
+  for (let s = 1; s <= 40; s++) {
+    let r = e[s] - o[s][n];
+    r -= s > 9 ? 3 : 2;
+    if (r >= t.byteLength) {
+      return s;
+    }
+  }
+  throw new RangeError("Bytes exceed max length");
+};
+
+const encodeData = (t, n, e) => {
+  const r = t.byteLength + o[n][e];
+  const c = s[n][e];
+  const f = c - r % c;
+  const l = t.byteLength / c | 0;
+  const i = (r / c | 0) - l;
+  const y = t.byteLength;
+  const h = new Uint8Array(r);
+  for (let n = 0, e = 0; n < c; n++) {
+    const o = n < f ? l : l + 1;
+    const s = encodeRS(t.subarray(e, e + o), i);
+    for (let s = 0; s < o; s++) {
+      h[s < l ? s * c + n : l * c + (n - f)] = t[e + s];
+    }
+    for (let t = 0; t < i; t++) {
+      h[y + t * c + n] = s[t];
+    }
+    e += o;
+  }
+  return h;
+};
+
+const setSquare = (t, n, e, o, s) => {
+  const r = (e + s) * n;
+  for (let c = e * n; c < r; c += n) {
+    t.fill(1, c + o, c + o + s);
+  }
+};
+
+const setPattern = (t, n, e, o, s) => {
+  const r = e * n + o;
+  for (let e = 0; e < s; e++) {
+    for (let o = 0; o < s; o++) {
+      const c = o < s - 1 - o ? o : s - 1 - o;
+      const f = e < s - 1 - e ? e : s - 1 - e;
+      t[r + e * n + o] = 1 !== (c < f ? c : f) ? 1 : 0;
+    }
+  }
+};
+
+const writeFinderPatterns = (t, n, e) => {
+  const o = e - 7;
+  setPattern(t, e, 0, 0, 7);
+  setPattern(t, e, o, 0, 7);
+  setPattern(t, e, 0, o, 7);
+  setSquare(n, e, 0, 0, 8);
+  setSquare(n, e, o - 1, 0, 8);
+  setSquare(n, e, 0, o - 1, 8);
+};
+
+const writeAlignmentPatterns = (t, n, e, o) => {
+  const s = c[o];
+  for (let o = 0; o < s.length; o++) {
+    const r = s[o];
+    for (let c = 0; c < s.length; c++) {
+      if ((o || c % (s.length - 1)) && (c || o % (s.length - 1))) {
+        const o = s[c];
+        setPattern(t, e, r, o, 5);
+        setSquare(n, e, r, o, 5);
+      }
+    }
+  }
+};
+
+const writeTimingPatterns = (t, n, e) => {
+  const o = e - 7;
+  for (let s = 8; s < o; s++) {
+    const o = s * e + 6;
+    if (!n[o]) {
+      n[o] = 1;
+      t[o] = (s + 1) % 2;
+    }
+    const r = 6 * e + s;
+    if (!n[r]) {
+      n[r] = 1;
+      t[r] = (s + 1) % 2;
+    }
+  }
+};
+
+const reserveFormatInfo = (t, n) => {
+  const e = n - 7 - 1;
+  t[8 * n + 8] = 1;
+  for (let o = 0; o < 8; o++) {
+    t[o * n + 8] = 1;
+    t[8 * n + o] = 1;
+    t[(e + o) * n + 8] = 1;
+    t[8 * n + e + o] = 1;
+  }
+};
+
+const reserveVersionInfo = (t, n, e) => {
+  if (e >= 7) {
+    const e = n - 7 - 4;
+    for (let o = 0; o < 6; o++) {
+      for (let s = 0; s < 3; s++) {
+        t[(e + s) * n + o] = 1;
+        t[o * n + e + s] = 1;
+      }
+    }
+  }
+};
+
+const writeData = (t, n, e, o) => {
+  let s = 0;
+  let r = e - 1;
+  let c = -1;
+  let f = 7;
+  while (s < o.byteLength) {
+    if (6 === r) {
+      r--;
+    }
+    for (let l = 0; l < e; l++) {
+      for (let i = 0; i < 2; i++) {
+        const y = r - i;
+        const h = -1 === c ? e - l - 1 : l;
+        if (n[h * e + y]) {
+          continue;
+        }
+        t[h * e + y] = o[s] >>> f & 1;
+        if (0 === f--) {
+          f = 7;
+          if (++s >= o.byteLength) {
+            return;
+          }
+        }
+      }
+    }
+    c = -c;
+    r -= 2;
+  }
+};
+
+const xorPatternN0 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      if (!(n[e] || o + r & 1)) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN1 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      if (!(n[e] || 1 & o)) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN2 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let o = 0; o < e; o++) {
+      const e = s + o;
+      if (!n[e] && o % 3 == 0) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN3 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      if (!n[e] && (o + r) % 3 == 0) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN4 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    const r = o / 2 | 0;
+    for (let o = 0; o < e; o++) {
+      const e = s + o;
+      if (!(n[e] || r + (o / 3 | 0) & 1)) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN5 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      const c = o * r;
+      if (!n[e] && (1 & c) + c % 3 == 0) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN6 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      const c = o * r;
+      if (!n[e] && ((1 & c) + c % 3) % 2 == 0) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPatternN7 = (t, n, e) => {
+  for (let o = 0, s = 0; o < e; o++, s += e) {
+    for (let r = 0; r < e; r++) {
+      const e = s + r;
+      if (!(n[e] || o * r % 3 + (o + r & 1) & 1)) {
+        t[e] ^= 1;
+      }
+    }
+  }
+};
+
+const xorPattern = (t, n, e, o) => {
+  switch (o) {
+   case 0:
+    return xorPatternN0(t, n, e);
+
+   case 1:
+    return xorPatternN1(t, n, e);
+
+   case 2:
+    return xorPatternN2(t, n, e);
+
+   case 3:
+    return xorPatternN3(t, n, e);
+
+   case 4:
+    return xorPatternN4(t, n, e);
+
+   case 5:
+    return xorPatternN5(t, n, e);
+
+   case 6:
+    return xorPatternN6(t, n, e);
+
+   case 7:
+    return xorPatternN7(t, n, e);
+  }
+};
+
+const computePenalty = (t, n) => {
+  let e = 0;
+  let o = 0;
+  for (let s = 0; s < n; s++) {
+    let r = 1;
+    let c = 1;
+    let f = 0;
+    let l = 0;
+    for (let i = 0; i < n; i++) {
+      const y = s * n + i;
+      const h = i * n + s;
+      o += t[y];
+      if (i > 0) {
+        if (t[y - 1] === t[y]) {
+          r++;
+        } else {
+          if (r >= 5) {
+            e += r - 5 + 3;
+          }
+          r = 1;
+        }
+        if (t[h - n] === t[h]) {
+          c++;
+        } else {
+          if (c >= 5) {
+            e += c - 5 + 3;
+          }
+          c = 1;
+        }
+      }
+      if (s < n - 1 && i < n - 1 && t[y] === t[y + 1] && t[y] === t[y + n] && t[y] === t[y + n + 1]) {
+        e += 3;
+      }
+      f = f << 1 & 2047 | t[y];
+      l = l << 1 & 2047 | t[h];
+      if (i >= 10) {
+        if (1488 === f || 93 === f) {
+          e += 40;
+        }
+        if (1488 === l || 93 === l) {
+          e += 40;
+        }
+      }
+    }
+    if (r >= 5) {
+      e += r - 5 + 3;
+    }
+    if (c >= 5) {
+      e += c - 5 + 3;
+    }
+  }
+  const s = 100 * Math.abs(o / t.byteLength - .5);
+  e += 10 * Math.floor(s / 5);
+  return e;
+};
+
+const applyBestPattern = (t, n, e) => {
+  let o = 0;
+  let s = 0;
+  const r = new Uint8Array(t.byteLength);
+  for (let c = 0; c <= 7; c += 1) {
+    r.set(t);
+    xorPattern(r, n, e, c);
+    const f = computePenalty(r, e);
+    if (0 === c || f < o) {
+      o = f;
+      s = c;
+    }
+  }
+  xorPattern(t, n, e, s);
+  return s;
+};
+
+const encodeFormatInfo = (t, n) => {
+  const e = (t << 3 | n) << 10;
+  let o = e;
+  for (let t = 0; t < 5; t++) {
+    if (o & 1 << 14 - t) {
+      o ^= 1335 << 4 - t;
+    }
+  }
+  return 21522 ^ (o | e);
+};
+
+const writeFormatInfo = (t, n, e, o) => {
+  const s = encodeFormatInfo(e, o);
+  let r = 14;
+  for (let e = 0; e < 6; e++) {
+    t[8 * n + e] = s >> r-- & 1;
+  }
+  t[8 * n + 7] = s >> r-- & 1;
+  t[8 * n + 8] = s >> r-- & 1;
+  t[7 * n + 8] = s >> r-- & 1;
+  for (let e = 0; e < 6; e++) {
+    t[(5 - e) * n + 8] = s >> r-- & 1;
+  }
+  r = 14;
+  for (let e = 0; e < 7; e++) {
+    t[(n - 1 - e) * n + 8] = s >> r-- & 1;
+  }
+  t[(n - 8) * n + 8] = 1;
+  for (let e = 0; e < 8; e++) {
+    t[8 * n + n - 8 + e] = s >> r-- & 1;
+  }
+};
+
+const encodeVersionInfo = t => {
+  const n = t << 12;
+  let e = n;
+  for (let t = 0; t < 6; t++) {
+    if (e & 1 << 17 - t) {
+      e ^= 7973 << 5 - t;
+    }
+  }
+  return e | n;
+};
+
+const writeVersionInfo = (t, n, e) => {
+  if (e >= 7) {
+    const o = encodeVersionInfo(e);
+    for (let e = 0; e < 6; e++) {
+      for (let s = 0; s < 3; s++) {
+        const r = o >>> 3 * e + s & 1;
+        t[(n - 11 + s) * n + e] = r;
+        t[e * n + n - 11 + s] = r;
+      }
+    }
+  }
+};
+
+const encodeBytes = (t, n) => {
+  const e = getBestVersion(t, n);
+  const o = makeSegments(t, e, n);
+  const s = encodeData(o, e, n);
+  const c = r[e];
+  const f = new Uint8Array(c * c);
+  const l = new Uint8Array(c * c);
+  writeFinderPatterns(f, l, c);
+  writeAlignmentPatterns(f, l, c, e);
+  writeTimingPatterns(f, l, c);
+  reserveFormatInfo(l, c);
+  reserveVersionInfo(l, c, e);
+  writeData(f, l, c, s);
+  const i = applyBestPattern(f, l, c);
+  writeFormatInfo(f, c, n, i);
+  writeVersionInfo(f, c, e);
+  return f;
+};
+
+const f = new TextEncoder;
+
+const toQR = (t, n = 1) => {
+  const e = "string" == typeof t ? f.encode(t) : t;
+  return encodeBytes(e, n);
+};
+
+
+//# sourceMappingURL=toqr.mjs.map
+return toQR; })();
+function drawQR(cv,text){ const m=QR(text), n=Math.round(Math.sqrt(m.length)), q=2, N=n+q*2; cv.width=cv.height=N*4; const g=cv.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,N*4,N*4); g.fillStyle='#000'; for(let y=0;y<n;y++) for(let x=0;x<n;x++) if(m[y*n+x]) g.fillRect((x+q)*4,(y+q)*4,4,4); }
 function sayText(t){ sayEl.textContent=t; sayEl.classList.add("show"); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),1700); }
 function say(k){ if(SAY[k]) sayText(SAY[k]); }
 function haptic(kind){
@@ -571,7 +1113,9 @@ function onClipEnd(){
   if(late){ py=.15; }
   if(!isDaytime() && Date.now()-life.fed<12*H && Date.now()-life.fed>H) pe=.05; // 夜、ためこんだ種をつまむ
   const r=Math.random(); let n="idle";
-  if(lastAuto==="idle"){ if(r<pg) n="groom"; else if(r<pg+pl) n="look"; else if(r<pg+pl+py) n="yawn"; else if(r<pg+pl+py+pe) n="eat"; }
+  onClipEnd.run=(state==="idle")?(onClipEnd.run||0)+1:0;
+  if(lastAuto==="idle" && onClipEnd.run>=3 && !late){ onClipEnd.run=0; n=["groom","look","groom","yawn"][Math.floor(Math.random()*4)]; } // 何もしなくても、ときどき小さな動きがある
+  else if(lastAuto==="idle"){ if(r<pg) n="groom"; else if(r<pg+pl) n="look"; else if(r<pg+pl+py) n="yawn"; else if(r<pg+pl+py+pe) n="eat"; }
   lastAuto=n; if(n!=="idle") say(n);
   // idleが続くときは最初のポーズに近いところから始めて、速さも少し揺らす
   const at=(n==="idle"&&state==="idle")?(nextCalmTime("idle",0.4,2.5,9)||0):0;
@@ -605,7 +1149,9 @@ function addBond(v){ life.bond=Math.max(0,Math.min(100,life.bond+v)); save(); re
 // ---------- 画面に重なる手 ----------
 const HAND={point:{src:"t/hand_point.webp",ax:180,ay:180},stroke:{src:"t/hand_stroke.webp",ax:200,ay:220},seed:{src:"t/hand_seed.webp",ax:170,ay:170}};
 const handEl=$("#hand"), handOK={};
-Object.entries(HAND).forEach(([k,h])=>{ const im=new Image(); im.onload=()=>{handOK[k]=true;}; im.src=h.src; });
+// 最初のハムが出るまでは、ほかの画像を読まない（遅い回線で待ち時間が伸びるため）
+const afterReady=fn=>{ if(performance.getEntriesByName("nade-ready").length) setTimeout(fn,0); else (afterReady.q=afterReady.q||[]).push(fn); };
+afterReady(()=>{ Object.entries(HAND).forEach(([k,h])=>{ const im=new Image(); im.onload=()=>{handOK[k]=true;}; im.src=h.src; }); document.querySelectorAll("img.trace[data-src]").forEach(i=>{ i.src=i.dataset.src; i.removeAttribute("data-src"); }); });
 let handKind=null, handTarget=null, handPos=null, handHideT=0;
 function handScale(){ return handEl.getBoundingClientRect().width/1000 || (Math.min(330,stage.clientWidth*0.58)/1000); }
 function showHand(kind,x,y){
@@ -807,7 +1353,7 @@ $("#seed").onclick=()=>{
   request(k);
 };
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
-$("#snd").onclick=()=>{ sound=!sound; if(!INAPP) store.set("snd",sound); $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
+$("#snd").onclick=()=>{ $("#sndTip").classList.remove("show"); sound=!sound; if(!INAPP) store.set("snd",sound); $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
 function openBody(){ if(!$("#pad").hidden) closePad(); openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
@@ -844,6 +1390,7 @@ $("#bN").oninput=e=>{ const g=graph(e.target.value); if(g.length>8){ e.target.va
 function nameChanged(){ renderHint(false); if($("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
+  if(HASHCODE) return HASHCODE;
   const d={v:1,sp,n:life.name||"",s:+life.body.s.toFixed(2),c:+life.body.c.toFixed(2),b:Math.round(life.bond),p:life.pets||0,sec:[...secSeen]};
   const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
   return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
@@ -860,6 +1407,7 @@ $("#mvCopy").onclick=async()=>{
   $("#mvCode").value=code; $("#mvCode").style.display="block";
   $("#mvCopy").textContent=ok?"✓ コピーしました（もう一度コピー）":"コピーできませんでした。上のコードを長押しでコピー";
   $("#mvStore").style.display="block";
+  if(!/iPhone|iPad|iPod/.test(navigator.userAgent)&&!(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)){ try{ drawQR($("#mvQRc"),"https://oaiko-app.github.io/nade/#m="+code); $("#mvQR").style.display="block"; }catch(e){} }
 };
 $("#bS").oninput=e=>{ life.body.s=e.target.value/100; liftStage(); };
 $("#bC").oninput=e=>{ life.body.c=e.target.value/100; liftStage(); };
@@ -878,7 +1426,7 @@ async function loadSpecies(id){
   const my=++reqId; document.querySelectorAll("#top .chip").forEach(c=>c.classList.toggle("busy",c.dataset.id===id)); sp=id; $("#loading").classList.remove("hide");
   if(!GEO_SP[id]){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
   applyGeo(); renderScenes();
-  poster.src=`v/${id}/poster.jpg`;
+  $("#loading").classList.remove("soft"); poster.onload=()=>{ if(my===reqId) $("#loading").classList.add("soft"); }; poster.src=`v/${id}/poster.jpg`; $("#bgblur").style.backgroundImage=`url(v/${id}/poster.jpg)`;
   document.querySelectorAll("#top .chip").forEach(c=>{ c.classList.toggle("on",c.dataset.id===id); c.setAttribute("aria-pressed",String(c.dataset.id===id)); if(c.dataset.id===id) c.scrollIntoView({inline:"nearest",block:"nearest"}); });
   if(!INAPP) store.set("sp",id);
   const list=BASE.concat(EXTRA[id]||[]), next={};
@@ -890,7 +1438,7 @@ async function loadSpecies(id){
   const old=urls; urls=next; setTimeout(()=>Object.values(old).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)),1500);
   (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
     for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
-  $("#loading").classList.add("hide"); pending=null; document.querySelectorAll("#top .busy").forEach(c=>c.classList.remove("busy"));
+  $("#loading").classList.add("hide"); pending=null; try{ if(!performance.getEntriesByName("nade-ready").length){ performance.mark("nade-ready"); (afterReady.q||[]).splice(0).forEach(f=>setTimeout(f,0)); } }catch(e){} document.querySelectorAll("#top .busy").forEach(c=>c.classList.remove("busy"));
   if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); renderHint(true); }
   else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
   else play("idle");
@@ -898,6 +1446,11 @@ async function loadSpecies(id){
 }
 renderHint(false);
 new MutationObserver(()=>{ const k=app.classList.contains("sleeping")+"|"+app.classList.contains("scene"); if(k!==renderHint._k){ renderHint._k=k; renderHint(true); } }).observe(app,{attributes:true,attributeFilter:["class"]});
+// しばらく触らないと、まわりの操作をそっと消して、ハムだけを眺められるようにする
+let lastAct=Date.now();
+["pointerdown","keydown","wheel"].forEach(ev=>addEventListener(ev,()=>{ lastAct=Date.now(); if(app.classList.contains("calm")) app.classList.remove("calm"); },true));
+setInterval(()=>{ const busy=DLG||!$("#pad").hidden||$("#bodySheet").classList.contains("open")||!$("#loading").classList.contains("hide")||!$("#move").hidden||!$("#secret").hidden;
+  if(!busy && Date.now()-lastAct>25000) app.classList.add("calm"); },1000);
 const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
@@ -922,7 +1475,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
-function countNade(){ life.nade=(life.nade||0)+1; save(); if(life.nade===15) setTimeout(showAL,2000); }
+function countNade(){ life.nade=(life.nade||0)+1; save(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===15) setTimeout(showAL,2000); }
 function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
@@ -938,10 +1491,13 @@ else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
 
 glOK=initGL(); if(glOK) box.classList.add("gl");
 const okSp=x=>SPECIES.some(y=>y[0]===x);
+// PCのQRから開いたとき：コードをそのまま見せて、コピーできるようにする
+const HASHCODE=(/^#m=(OAIKO-[A-Za-z0-9_-]+)$/.exec(location.hash)||[])[1]||null;
 const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene"))?Q.get("scene"):null;
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
-fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); });
-window.__t={sec:()=>{secSeen.clear();goDoku(0)},foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
+fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}); // 切り替えのタイミング用。読み終わるのを待たずにハムを出す
+(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
+window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
