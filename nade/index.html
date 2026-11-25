@@ -108,6 +108,19 @@
   #sShare{background:var(--accent);color:#fff}
   #app.inapp #bN,#app.inapp label[for=bN]{display:none}
   #sClose,#mvClose{background:transparent;color:#8a7262;font-weight:400}
+  #padBtn{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 92px);z-index:11;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,250,240,.55);font-size:18px;opacity:.55;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  #pad{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translate(-50%,20px);opacity:0;transition:.25s;z-index:13;text-align:center}
+  #pad.open{transform:translate(-50%,0);opacity:1}
+  .padBody{display:flex;align-items:center;gap:14px;background:linear-gradient(#e9e2d0,#d6ccb4);border-radius:22px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 -3px 0 rgba(0,0,0,.12)}
+  .dpad{display:grid;grid-template-columns:36px 36px 36px;grid-template-rows:20px 36px 20px}
+  .dpad span,.dpad button{background:#2b2b2b}
+  .dpad .du{grid-column:2;grid-row:1;border-radius:6px 6px 0 0}.dpad .dd{grid-column:2;grid-row:3;border-radius:0 0 6px 6px}.dpad .dc{grid-column:2;grid-row:2}
+  .dpad button{border:0;color:#bbb;font-size:13px;grid-row:2}.dpad button[data-k=L]{grid-column:1;border-radius:6px 0 0 6px}.dpad button[data-k=R]{grid-column:3;border-radius:0 6px 6px 0}
+  .dpad button:active,.ab button:active{filter:brightness(1.5)}
+  .ab{display:flex;gap:10px}.ab button{width:46px;height:46px;border-radius:50%;border:0;background:#b8322c;color:#fff;font-weight:800;font-size:16px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+  #padShow{min-width:70px;font:800 14px/1 ui-monospace,monospace;color:#5a4a3a;letter-spacing:2px}
+  #pad.ok .padBody{background:linear-gradient(#fff6c8,#f0dc8a)}
+  #padClose{margin-top:8px;border:0;background:rgba(255,250,240,.85);border-radius:999px;padding:6px 16px;font:inherit;font-size:13px}
   #pill{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translate(-50%,12px);z-index:12;border:0;border-radius:999px;padding:12px 20px;font:inherit;font-size:14px;font-weight:800;background:#6a2a8a;color:#fff;box-shadow:0 6px 20px rgba(60,20,80,.4);opacity:0;transition:opacity .3s,transform .3s;white-space:nowrap}
   #pill.show{opacity:1;transform:translate(-50%,0)}
   #mvCopy{background:var(--accent);color:#fff}
@@ -189,6 +202,15 @@
     <button id="mvClose">あとで</button>
   </div></div>
   <button id="pill" hidden></button>
+  <button id="padBtn" aria-label="コントローラー">🎮</button>
+  <div id="pad" hidden>
+    <div class="padBody">
+      <div class="dpad"><span class="du"></span><button data-k="L" aria-label="左">◀</button><span class="dc"></span><button data-k="R" aria-label="右">▶</button><span class="dd"></span></div>
+      <div id="padShow"></div>
+      <div class="ab"><button data-k="B">B</button><button data-k="A">A</button></div>
+    </div>
+    <button id="padClose">とじる</button>
+  </div>
   <div id="loading">よみこみ中…</div>
   <button id="tap">タップしてはじめる</button>
 </div>
@@ -229,7 +251,7 @@ let HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215], POSE="stand";
 // ハムの位置と大きさ（動画の中の割合）。キンクマは四つ足の動画、場面ごとにも位置がちがう
 const GEO_STAND={C:[.54,.555],F:[.54,.75],R:[.30,.28],B:[.235,.215],pose:"stand"};
 const GEO_SP={kinkuma:{C:[.56,.64],F:[.56,.73],R:[.28,.16],B:[.21,.095],pose:"four"}};
-const SCENES=[["room","おへや"],["kagami","🍊かがみもち"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
+const SCENES=[["room","おへや"],["kagami","🍊鏡餅"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
 const GEO_SCENE={kagami:{C:[.5,.43],F:[.5,.54],R:[.26,.09],B:[.3,.06]},palm:{C:[.5,.48],F:[.5,.62],R:[.27,.19],B:[.2,.14]},hug:{C:[.5,.51],F:[.5,.62],R:[.28,.15],B:[.21,.11]},lap:{C:[.48,.5],F:[.48,.63],R:[.23,.18],B:[.17,.13]},pouch:{C:[.5,.5],F:[.5,.6],R:[.24,.14],B:[.18,.1]},fence:{C:[.5,.41],F:[.5,.58],R:[.27,.23],B:[.2,.17]},greens:{C:[.5,.45],F:[.5,.62],R:[.24,.23],B:[.18,.17]}};
 let SCENE=null;
 function applyGeo(){
@@ -390,6 +412,9 @@ async function shareSecret(){
 $("#sShare").onclick=shareSecret;
 $("#sClose").onclick=hideSecret;
 $("#secret").addEventListener("pointerdown",e=>e.stopPropagation());
+["#pad","#padBtn"].forEach(q=>$(q).addEventListener("pointerdown",e=>e.stopPropagation()));
+$("#padBtn").onclick=()=>$("#pad").hidden?openPad():closePad(); $("#padClose").onclick=closePad;
+document.querySelectorAll("#pad [data-k]").forEach(b=>b.addEventListener("click",()=>padPress(b.dataset.k)));
 function bodyActive(){ return Math.abs(life.body.s-1)>.004 || Math.abs(life.body.c-1)>.004; }
 
 // ---------- 時間 ----------
@@ -470,7 +495,7 @@ function tick(){
   if(v.currentTime>=v.duration-0.3 || v.ended){ ending=true; onClipEnd(); }
 }
 function onClipEnd(){
-  if(SCENE){ pending=null; play("scene_"+SCENE,{rate:0.95+Math.random()*0.08}); return; }
+  if(SCENE){ pending=null; play(sceneKey(),{rate:0.95+Math.random()*0.08}); return; }
   if(pending){ const p=pending; pending=null; start(p); return; }
   if(shouldSleep()){
     app.classList.add("sleeping");
@@ -618,7 +643,25 @@ function asleep(){ return state==="sleep"||state==="sleeploop"; }
 function dokuOn(){ return Date.now()<dokuUntil; }
 // かくし図鑑（アプリと同じ番号・名前・ことば）
 const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫になった。1分で元に戻る。",tag:"#毒ハム"},
-              1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム"}};
+              1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム"},
+              kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム"}};
+function sceneKey(){ return "scene_"+SCENE; }
+// かくしコマンド：コントローラーで「← → A B」と入れると、本物の鏡餅になる
+let padLog=[];
+function padPress(k){
+  haptic("light"); const now=Date.now(); padLog=padLog.filter(x=>now-x.t<5000); padLog.push({k,t:now});
+  const seq=padLog.map(x=>x.k).join(""); $("#padShow").textContent=padLog.map(x=>({L:"←",R:"→",A:"A",B:"B"})[x.k]).join(" ");
+  if(seq.endsWith("LRAB")){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); return; }
+  if(!"LRAB".startsWith(seq.slice(-Math.min(seq.length,4))) && !"LRAB".startsWith(k)){ padLog=[]; }
+}
+function openPad(){ $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
+function closePad(){ $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
+async function goKagami(){
+  if(!GEO_SP[sp]) await loadSpecies("kinkuma");
+  lastN=0; await setScene("kagami"); haptic("heavy"); sayText("……鏡餅になった");
+  toApp({t:"secret",id:"kagami"});
+  const x=SECRET.kagami; if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderScenes(); setTimeout(()=>snapHam(img=>showSecret(x,img)),2000); }
+}
 const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.get("sec",[]));
 let capReq=null, secCur=null;
 let nadeCount=0, lastN=0;
@@ -768,14 +811,14 @@ const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
 SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
-function renderScenes(){ sceneBar.style.display=GEO_SP[sp]?"flex":"none"; sceneBar.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); }
+function renderScenes(){ sceneBar.style.display=GEO_SP[sp]?"flex":"none"; sceneBar.querySelectorAll(".chip").forEach(c=>{ c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); }
 async function setScene(id){
   if(id===SCENE) return;
   const k="scene_"+id;
   if(id && !urls[k]){ $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
   SCENE=id; app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
   FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
-  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"かがみもちになった。そっとなでてみて":"指で、ゆっくりなでてみて"; }
+  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"鏡餅になった。そっとなでてみて":"指で、ゆっくりなでてみて"; }
   else { play("idle",{fade:.45}); }
   toApp({t:"scene",id:id||"room"});
 }
@@ -797,7 +840,7 @@ else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
 
 glOK=initGL(); if(glOK) box.classList.add("gl");
 const okSp=x=>SPECIES.some(y=>y[0]===x);
-const startScene=SCENES.some(([i])=>i!=="room"&&i===Q.get("scene"))?Q.get("scene"):null;
+const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene"))?Q.get("scene"):null;
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ if(startScene && GEO_SP[sp]) setScene(startScene); }); tick(); });
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
