@@ -143,6 +143,25 @@
     #bodySheet{left:auto;right:10px;top:10px;bottom:10px;width:min(52%,300px);overflow:auto;padding:12px 14px}
     #bodySheet .foot button{padding:8px 12px}
   }
+  /* --- review r2 --- */
+  #move .scard,#secret .scard{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+  #move{padding:12px}
+  #mvClose,#sClose{position:sticky;bottom:-16px;background:#fffdf9!important;padding:10px 0 12px;margin-bottom:-4px}
+  #app.alshow #padBtn{bottom:calc(env(safe-area-inset-bottom) + 160px)}
+  #padBtn{width:44px;height:44px}
+  #top .chip,#scenes .chip{min-height:44px}
+  #scenes .note{white-space:normal;line-height:1.45;display:flex;flex-direction:column;padding:6px 12px;border-radius:14px}
+  #scenes .note b{font-weight:700}
+  #scenes .toK{flex:0 0 auto;align-self:center;border:0;border-radius:999px;min-height:44px;padding:0 14px;background:var(--accent);color:#fff;font:inherit;font-size:12px;font-weight:700}
+  .chip.busy{animation:busy 1s ease-in-out infinite}
+  @keyframes busy{50%{opacity:.45}}
+  #bNcount{float:right;font-size:11px;font-weight:400;color:#8a7262}
+  #bNcount.max{color:#c0392b;font-weight:700}
+  #bMove{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
+  #bHow{margin:10px 0 0;font-size:11px;color:#8a7262;line-height:1.6}
+  #bodySheet{max-height:min(58%,420px);overflow-y:auto;overscroll-behavior:contain}
+  #app.sheetopen #applink{display:none}
+  @media (orientation:landscape) and (max-height:520px){ #bodySheet{max-height:none} }
 </style>
 </head>
 <body>
@@ -177,10 +196,10 @@
     <button class="btn" id="bodyBtn">この子のこと</button>
     <button class="btn" id="snd">🔇 音</button>
   </div>
-  <div id="bodySheet" role="dialog" aria-label="この子のこと">
+  <div id="bodySheet" role="dialog" aria-modal="true" aria-label="この子のこと">
     <h3>この子のこと</h3>
-    <label for="bN">名前</label>
-    <input type="text" id="bN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
+    <label for="bN">名前 <span id="bNcount">0/8文字</span></label>
+    <input type="text" id="bN" placeholder="ちゃむ" autocomplete="off" aria-describedby="bNcount">
     <label for="bS">大きさ</label>
     <input type="range" id="bS" min="86" max="114" step="1" value="100">
     <div class="ends"><span>小さめ</span><span>大きめ</span></div>
@@ -190,6 +209,8 @@
     <p id="bNote"></p>
     <div class="foot"><button id="bReset">体形を標準に戻す</button><button id="bOk">閉じる</button></div>
     <p style="margin:6px 0 0;font-size:11px;color:#8a7262;text-align:right">変更は自動で保存されます</p>
+    <button id="bMove">この子を、アプリにつれていく →</button>
+    <p id="bHow"><b>遊び方</b>　なでる：ゆっくりドラッグ（頭と背中がすき・足はいや）／起こす：2回つづけてタップ／種：下の「種をあげる」</p>
   </div>
   <div id="sheet">
     <h3>テスト用の設定</h3>
@@ -203,7 +224,7 @@
     </div>
     <p id="dbg"></p>
   </div>
-  <div id="secret" hidden role="dialog" aria-label="かくし図鑑"><div class="scard">
+  <div id="secret" hidden role="dialog" aria-modal="true" aria-label="かくし図鑑"><div class="scard">
     <p class="smuted" id="sNo"></p>
     <img id="sImg" alt="">
     <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
@@ -211,20 +232,20 @@
     <button id="sShare">カードにする</button>
     <button id="sClose">とじる</button>
   </div></div>
-  <div id="move" hidden role="dialog" aria-label="アプリでつづける"><div class="scard">
+  <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
     <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・かくし図鑑を、アプリにそのまま引き継げます。おあいこは、自分をいたわると、この子も元気になる習慣づくりアプリです。</small></p>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
-    <input id="mvCode" readonly style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
+    <input id="mvCode" readonly aria-label="ひきつぎコード" style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
     <p id="mvDev" style="display:none;margin:4px 0;font-size:12px;color:#8a7262"></p>
     <a id="mvStore" href="https://apps.apple.com/jp/app/id6836835986" style="display:none;text-align:center;background:#3d4470;color:#fff;border-radius:14px;padding:12px;text-decoration:none;font-weight:700;margin:6px 0">App Storeでおあいこをひらく</a>
-    <button id="mvCopy">コードをコピーして、App Storeへ</button>
+    <button id="mvCopy">ひきつぎコードをコピー</button>
     <button id="mvClose">あとで</button>
   </div></div>
   <button id="pill" hidden></button>
   <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド">🎮</button>
-  <div id="pad" hidden>
+  <div id="pad" hidden role="dialog" aria-modal="true" aria-label="ひみつのコマンド">
     <div class="padBody">
       <div class="dpad"><span class="du"></span><button data-k="L" aria-label="左">◀</button><span class="dc"></span><button data-k="R" aria-label="右">▶</button><span class="dd"></span></div>
       <div id="padShow"></div>
@@ -277,7 +298,7 @@ const GEO_SCENE={kagami:{C:[.5,.43],F:[.5,.54],R:[.26,.09],B:[.3,.06]},palm:{C:[
 let SCENE=null;
 function applyGeo(){
   const g=SCENE?Object.assign({pose:"scene"},GEO_SCENE[SCENE]):(GEO_SP[sp]||GEO_STAND);
-  HC=g.C; HF=g.F; HR=g.R; HB=g.B; POSE=g.pose;
+  HC=g.C; HF=g.F; HR=g.R; HB=g.B; POSE=g.pose; try{ layout(); }catch(e){}
   if(glOK&&gl){ try{ gl.uniform2f(U.C,HC[0],HC[1]); gl.uniform2f(U.F,HF[0],HF[1]); gl.uniform2f(U.R,HR[0],HR[1]); gl.uniform2f(U.HB2,HB[0],HB[1]); }catch(e){} }
 }
 const cv=$("#cv");
@@ -446,7 +467,9 @@ function shouldSleep(){ if(manualSleep) return true; if(Date.now()<wakeUntil) re
 // ---------- 表示まわり ----------
 function layout(){
   const W=stage.clientWidth,Hh=stage.clientHeight, s=Math.max(W/540,Hh/960), w=540*s, h=960*s;
-  box.style.width=w+"px"; box.style.height=h+"px"; box.style.left=(W-w)/2+"px"; box.style.top=(Hh-h)/2+"px";
+  const hx=(HC[0]+HF[0])/2, hy=(HC[1]+HF[1])/2; // はみ出す向きでは、ハムが画面の中に来るように寄せる
+  const L=w>W+1?Math.min(0,Math.max(W-w,W/2-w*hx)):(W-w)/2, T=h>Hh+1?Math.min(0,Math.max(Hh-h,Hh*.5-h*hy)):(Hh-h)/2;
+  box.style.width=w+"px"; box.style.height=h+"px"; box.style.left=L+"px"; box.style.top=T+"px";
 }
 const ro=new ResizeObserver(layout); ro.observe(stage);
 Object.entries(TRACE_POS).forEach(([k,p])=>{const el=$("#tr-"+k); el.style.left=p.l+"%"; el.style.top=p.t+"%"; el.style.width=p.w+"%";});
@@ -454,7 +477,13 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const TOUCH=matchMedia("(pointer:coarse)").matches;
 const NM=()=>life.name||"この子";
 const nadeHint=()=>TOUCH?"指で、ゆっくりなでてみて":"ドラッグして、ゆっくりなでてみて";
-if(!TOUCH && $("#hintMain")) $("#hintMain").textContent=nadeHint();
+// 下の説明は、いまの状態（場面・お昼寝・名前）からいつも作り直す
+function renderHint(show){ const h=$("#hint"); if(!h) return; const small=t=>`<br><span style="font-size:12px;font-weight:400">${t}</span>`;
+  let html;
+  if(SCENE) html=SCENE==="pouch"?`${esc(NM())}は、ねぶくろの中で、すやすや`+small("そっとなでてみて"):SCENE==="kagami"?"鏡餅になった"+small("そっとなでてみて"):esc(nadeHint());
+  else if(app.classList.contains("sleeping")) html=`${esc(NM())}は、お昼寝中`+small(TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ");
+  else html=esc(nadeHint())+small(TOUCH?"毛なみが指についてくる。頭がすき、足はいや":"毛なみがカーソルについてくる。頭がすき、足はいや");
+  if(h.innerHTML!==html) h.innerHTML=html; if(show) h.style.opacity=""; }
 function sayText(t){ sayEl.textContent=t; sayEl.classList.add("show"); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),1700); }
 function say(k){ if(SAY[k]) sayText(SAY[k]); }
 function haptic(kind){
@@ -634,7 +663,7 @@ let touched=false;
   }
   setTimeout(()=>requestAnimationFrame(step),2200);
 })();
-stage.addEventListener("pointerdown",e=>{ touched=true; });
+stage.addEventListener("pointerdown",e=>{ touched=true; if(!sound && !INAPP && store.get("snd",false) && !stage._sndTried){ stage._sndTried=true; $("#snd").onclick(); } });
 stage.addEventListener("pointerdown",e=>{
   try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   ptr.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now(),moved:0});
@@ -777,30 +806,48 @@ $("#seed").onclick=()=>{
   request(k);
 };
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
-$("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
+$("#snd").onclick=()=>{ sound=!sound; if(!INAPP) store.set("snd",sound); $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
 function openBody(){ if(!$("#pad").hidden) closePad(); openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
   $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); liftStage(); openDlg($("#bodySheet"),$("#bodyBtn"),closeBody); }
 let DLG=null;
-function openDlg(el,opener,onClose){ closeDlg(true); DLG={el,opener,onClose}; ["#stage","#bar","#top","#scenes","#status","#applink","#padBtn"].forEach(q=>{ const x=$(q); if(x&&!el.contains(x)&&x!==el) x.inert=true; });
-  const f=el.querySelector("input,button,a[href]"); if(f) setTimeout(()=>f.focus({preventScroll:true}),30); }
-function closeDlg(silent){ if(!DLG) return; const d=DLG; DLG=null; document.querySelectorAll("[inert]").forEach(x=>x.inert=false); if(d.opener&&!silent) d.opener.focus({preventScroll:true}); }
-addEventListener("keydown",e=>{ if(e.key==="Escape"&&DLG){ e.preventDefault(); const f=DLG.onClose; f?f():closeDlg(); } });
-function liftStage(){ const st=$("#stage"); st.style.transform=""; const R=st.getBoundingClientRect(), sh=$("#bodySheet").getBoundingClientRect(), b=box.getBoundingClientRect();
-  const cx=b.left+b.width*(HC[0]+HF[0])/2-R.left, cy=b.top+b.height*(HC[1]+HF[1])/2-R.top;
-  if(R.width>R.height){ const sl=sh.left-R.left; st.style.transform=`translate(${Math.min(0,sl/2-cx)}px,${Math.min(0,R.height*.62-cy)}px)`; return; }
-  const free=sh.top-R.top; st.style.transform=`translate(0px,${Math.min(0,free*.64-cy)}px)`; }
+const focusables=el=>[...el.querySelectorAll('input,button,a[href],select,textarea,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.offsetParent!==null&&getComputedStyle(x).visibility!=="hidden");
+function openDlg(el,opener,onClose){ closeDlg(true); DLG={el,opener,onClose};
+  [...app.children,...[...document.body.children].filter(x=>x!==app)].forEach(x=>{ if(x!==el&&!x.contains(el)&&x.tagName!=="SCRIPT") x.inert=true; });
+  setTimeout(()=>{ if(DLG&&DLG.el===el){ const f=focusables(el)[0]; if(f) f.focus({preventScroll:true}); else { el.tabIndex=-1; el.focus({preventScroll:true}); } } },40); }
+function closeDlg(silent){ if(!DLG) return; const d=DLG; DLG=null; document.querySelectorAll("[inert]").forEach(x=>x.inert=false); if(d.opener&&!silent&&d.opener.isConnected) d.opener.focus({preventScroll:true}); }
+addEventListener("keydown",e=>{ if(!DLG) return;
+  if(e.key==="Escape"){ e.preventDefault(); const f=DLG.onClose; f?f():closeDlg(); return; }
+  if(e.key==="Tab"){ const L=focusables(DLG.el); if(!L.length){ e.preventDefault(); return; } const a=document.activeElement, i=L.indexOf(a);
+    if(e.shiftKey&&(i<=0)){ e.preventDefault(); L[L.length-1].focus(); } else if(!e.shiftKey&&(i===-1||i===L.length-1)){ e.preventDefault(); L[0].focus(); } } });
+function liftStage(){ const st=$("#stage"); st.style.transformOrigin="0 0";
+  // 変形中の値に引っぱられないよう、レイアウト上の位置（transform前）で計算する
+  const A=app.getBoundingClientRect(), sh=$("#bodySheet").getBoundingClientRect(), B=life.body;
+  const bx={l:box.offsetLeft,t:box.offsetTop,w:box.offsetWidth,h:box.offsetHeight}, W=st.offsetWidth, H=st.offsetHeight;
+  const topUI=Math.max(0,...["#top","#scenes"].map(q=>{ const x=$(q); return x&&x.offsetParent!==null?x.offsetTop+x.offsetHeight:0; }))+6;
+  const land=sh.left-A.left>W*.35;
+  const X=u=>bx.l+bx.w*u, Y=v=>bx.t+bx.h*v;
+  const hamTop=Y(HC[1]-HR[1]*1.25*B.s), hamBot=Y(HF[1]+HB[1]*1.15*B.s), hamL=X(Math.min(HC[0]-HR[0]*1.1*B.s*B.c,HF[0]-HB[0]*1.15*B.s*B.c)), hamR=X(Math.max(HC[0]+HR[0]*1.1*B.s*B.c,HF[0]+HB[0]*1.15*B.s*B.c));
+  const area=land?{l:0,r:sh.left-A.left-8,t:topUI,b:H-8}:{l:0,r:W,t:topUI,b:sh.top-A.top-8};
+  const k=Math.min(1,(area.b-area.t)/(hamBot-hamTop),(area.r-area.l)/(hamR-hamL)), kk=Math.max(.45,k);
+  const tx=(area.l+area.r)/2-(hamL+hamR)/2*kk, ty=(area.t+area.b)/2-(hamTop+hamBot)/2*kk;
+  st.style.transform=`translate(${tx}px,${ty}px) scale(${kk})`; }
 function closeBody(){ if(life.name && life.name!==openBody._n) setTimeout(showAL,1800); $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); $("#stage").style.transform=""; closeDlg(); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
-$("#bodyBtn").onclick=()=>{ openBody(); $("#bN").value=life.name||""; };
-$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); }; 
+$("#bodyBtn").onclick=()=>{ $("#bN").value=life.name||""; nameCount(); openBody(); };
+$("#bMove").onclick=()=>{ closeBody(); setTimeout(()=>$("#applink").onclick(new Event("click")),60); };
+const SEG=(typeof Intl!=="undefined"&&Intl.Segmenter)?new Intl.Segmenter("ja",{granularity:"grapheme"}):null;
+const graph=t=>SEG?[...SEG.segment(t)].map(x=>x.segment):[...t];
+function nameCount(){ const n=graph($("#bN").value).length, el=$("#bNcount"); el.textContent=n>=8?"8文字まで":`${n}/8文字`; el.classList.toggle("max",n>=8); }
+$("#bN").oninput=e=>{ const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); };
+function nameChanged(){ renderHint(false); if($("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
   const d={v:1,sp,n:life.name||"",s:+life.body.s.toFixed(2),c:+life.body.c.toFixed(2),b:Math.round(life.bond),p:life.pets||0,sec:[...secSeen]};
   const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
   return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
-$("#applink").onclick=e=>{ e.preventDefault(); if(!$("#pad").hidden) closePad(); $("#mvName").textContent=NM(); $("#move").hidden=false; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
+$("#applink").onclick=e=>{ e.preventDefault(); if(!$("#pad").hidden) closePad(); $("#mvName").textContent=NM(); $("#move").hidden=false; $("#move").querySelector(".scard").scrollTop=0; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(!ios){ $("#mvDev").style.display="block"; $("#mvDev").textContent="おあいこはiPhoneのアプリです。コードをコピーしたら、iPhoneで App Store の「おあいこ」を入れて貼りつけてください（コードはこの画面でいつでも見られます）。"; } };
 $("#mvClose").onclick=()=>{ $("#move").hidden=true; closeDlg(); };
@@ -813,10 +860,10 @@ $("#mvCopy").onclick=async()=>{
   $("#mvCopy").textContent=ok?"✓ コピーしました（もう一度コピー）":"コピーできませんでした。上のコードを長押しでコピー";
   $("#mvStore").style.display="block";
 };
-$("#bS").oninput=e=>{ life.body.s=e.target.value/100; };
-$("#bC").oninput=e=>{ life.body.c=e.target.value/100; };
+$("#bS").oninput=e=>{ life.body.s=e.target.value/100; liftStage(); };
+$("#bC").oninput=e=>{ life.body.c=e.target.value/100; liftStage(); };
 $("#bOk").onclick=closeBody;
-$("#bReset").onclick=()=>{ life.body={s:1,c:1}; $("#bS").value=100; $("#bC").value=100; };
+$("#bReset").onclick=()=>{ life.body={s:1,c:1}; $("#bS").value=100; $("#bC").value=100; liftStage(); };
 $("#bodySheet").addEventListener("pointerdown",e=>e.stopPropagation());
 $("#close").onclick=()=>{ save(); toApp({t:"close"}); };
 $("#gear").onclick=()=>$("#sheet").classList.toggle("open");
@@ -827,7 +874,7 @@ $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play()
 
 // ---------- 種類 ----------
 async function loadSpecies(id){
-  const my=++reqId; sp=id; $("#loading").classList.remove("hide");
+  const my=++reqId; document.querySelectorAll("#top .chip").forEach(c=>c.classList.toggle("busy",c.dataset.id===id)); sp=id; $("#loading").classList.remove("hide");
   if(!GEO_SP[id]){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
   applyGeo(); renderScenes();
   poster.src=`v/${id}/poster.jpg`;
@@ -842,27 +889,30 @@ async function loadSpecies(id){
   const old=urls; urls=next; setTimeout(()=>Object.values(old).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)),1500);
   (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
     for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
-  $("#loading").classList.add("hide"); pending=null;
-  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").innerHTML=`${esc(NM())}は、お昼寝中<br><span style="font-size:12px;font-weight:400">${TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ"}</span>`; }
+  $("#loading").classList.add("hide"); pending=null; document.querySelectorAll("#top .busy").forEach(c=>c.classList.remove("busy"));
+  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); renderHint(true); }
   else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
   else play("idle");
   life.visit=Date.now(); save(); renderAll();
 }
+renderHint(false);
+new MutationObserver(()=>{ const k=app.classList.contains("sleeping")+"|"+app.classList.contains("scene"); if(k!==renderHint._k){ renderHint._k=k; renderHint(true); } }).observe(app,{attributes:true,attributeFilter:["class"]});
 const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
 SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
 function renderScenes(){ const ok=!!GEO_SP[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
-  let n=sceneBar.querySelector(".note"); if(!ok&&!n){ n=document.createElement("span"); n.className="note"; sceneBar.appendChild(n); } if(n){ n.hidden=ok; n.textContent="この子は、おへやで遊べます（てのひら・だっこはキンクマで）"; }
+  let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!ok&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=ok; kb.hidden=ok; }
   sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok; if(!ok) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); }
 async function setScene(id){
-  if(id===SCENE) return;
+  if(id===SCENE) return; const bc=sceneBar.querySelector(`.chip[data-sc="${id||"room"}"]`); if(bc) bc.classList.add("busy");
   const k="scene_"+id;
   if(id && !urls[k]){ $("#loading").textContent=`${(SCENES.find(x=>x[0]===id)||[,""])[1]}を よみこみ中…`; $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
   SCENE=id; if(!INAPP) store.set("scene",id||""); app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
   FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
-  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"鏡餅になった。そっとなでてみて":nadeHint(); }
+  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); }
   else { play("idle",{fade:.45}); }
+  renderHint(true); sceneBar.querySelectorAll(".busy").forEach(x=>x.classList.remove("busy"));
   toApp({t:"scene",id:id||"room"});
 }
 if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.id=id; b.onclick=()=>loadSpecies(id); topBar.appendChild(b); });
@@ -890,7 +940,8 @@ const okSp=x=>SPECIES.some(y=>y[0]===x);
 const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene"))?Q.get("scene"):null;
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); });
-window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
+window.__t={sec:()=>{secSeen.clear();goDoku(0)},foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
+window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
 </script>
