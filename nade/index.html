@@ -443,13 +443,14 @@ function secretCard(x,img){
 }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？ `:`ハムスターをなですぎたら「${x.name}」になった。 `)+x.tag, url="https://oaiko-app.github.io/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
+  const full=`${text}\n${url}\n`; // URLのあとにも改行を入れて、次の文とくっつかないようにする
   const png=await secretCard(x,img);
-  if(INAPP){ toApp({t:"share",img:png,text:`${text} #おあいこ ${url}`}); return; }
+  if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
   try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-nade.png",{type:"image/png"});
-    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:`${text} ${url}`}); return; }
-    if(navigator.share){ await navigator.share({text,url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
-  window.open("https://x.com/intent/post?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank","noopener");
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; }
+    if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+  window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener");
 }
 $("#sShare").onclick=shareSecret;
 $("#sClose").onclick=hideSecret;
