@@ -90,6 +90,7 @@
   #box.drawn video{opacity:0!important;transition:none!important}
   #box.doku video{filter:hue-rotate(250deg) saturate(1.5)}
   #box.doku.game video{animation:gaming 1.1s linear infinite}
+  #box.doku.aka video{filter:sepia(1) hue-rotate(-40deg) saturate(3)}#box.doku.mido video{filter:sepia(1) hue-rotate(60deg) saturate(2)}#box.doku.yami video{filter:brightness(.45) hue-rotate(250deg) saturate(1.4)}
   @keyframes gaming{from{filter:hue-rotate(0deg) saturate(1.6)}to{filter:hue-rotate(360deg) saturate(1.6)}}
   #close{position:absolute;left:10px;top:calc(env(safe-area-inset-top) + 10px);z-index:7;border:0;border-radius:999px;padding:9px 15px;font:inherit;font-size:13px;font-weight:700;background:rgba(255,248,239,.9);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.2);display:none}
   #app.inapp #close{display:block}
@@ -160,6 +161,8 @@
   #bNcount.max{color:#c0392b;font-weight:700}
   #bMove{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
   #bHow{margin:10px 0 0;font-size:11px;color:#8a7262;line-height:1.6}
+  #secList{margin:8px 0 0;font-size:11px;color:#8a7262;line-height:1.55;display:flex;flex-direction:column;gap:1px}
+  #secList b{color:#3b2a20;font-size:12px}#secList .got{color:#b8743c;font-weight:700}#secList small{margin-top:4px;font-size:10px}
   #bodySheet{max-height:min(58%,420px);overflow-y:auto;overscroll-behavior:contain}
   #app.sheetopen #applink{display:none}
   @media (orientation:landscape) and (max-height:520px){ #bodySheet{max-height:none} }
@@ -228,6 +231,7 @@
     <p style="margin:6px 0 0;font-size:11px;color:#8a7262;text-align:right">変更は自動で保存されます</p>
     <button id="bMove">この子を、アプリにつれていく →</button>
     <p id="bHow"><b>遊び方</b>　なでる：ゆっくりドラッグ（頭と背中がすき・足はいや）／起こす：2回つづけてタップ／種：下の「種をあげる」</p>
+    <div id="secList"></div>
   </div>
   <div id="sheet">
     <h3>テスト用の設定</h3>
@@ -246,6 +250,8 @@
     <img id="sImg" alt="">
     <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
     <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
+    <p id="sNote" hidden style="margin:0;font-size:11px;line-height:1.5;color:#8a7262;text-align:center"></p>
+    <p id="sFound" style="margin:0;font-size:12px;color:#b8743c;text-align:center;font-weight:700"></p>
     <button id="sShare">カードにする</button>
     <button id="sApp">アプリで、のこりのかくし図鑑を集める →</button>
     <button id="sClose">とじる</button>
@@ -299,6 +305,7 @@ function toApp(m){ if(!INAPP) return; try{ parent.postMessage(Object.assign({src
 const store={get(k,d){try{const v=localStorage.getItem("oaiko_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("oaiko_"+k,JSON.stringify(v))}catch(e){}}};
 function freshLife(){const n=Date.now();return{bond:12,fed:n-8*H,cleaned:n-10*H,visit:n,pets:0,timeMode:"real"};}
 let life=store.get("life",null)||freshLife();
+const AWAY3=Date.now()-life.visit>3*24*H;
 const clampN=(v,a,b,d)=>{ v=parseFloat(v); return isFinite(v)?Math.max(a,Math.min(b,v)):d; };
 life.body=life.body||{s:1,c:1};
 if(INAPP){ // なかよし度・からだは、アプリの記録に合わせる
@@ -370,7 +377,9 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     float l=dot(c,vec3(.3,.59,.11)); vec3 pu;
     if(dm<.5) pu=mix(hr(c,hue)*vec3(1.02,.82,1.18), l*vec3(1.,.62,1.36)+vec3(.05,0.,.1), .5);
     else if(dm<1.5) pu=hr(c,hue)*1.12;
-    else pu=l*vec3(.62,.34,1.)*.85+vec3(.06,0.,.12);
+    else if(dm<2.5) pu=mix(c*vec3(1.3,.5,.42), l*vec3(1.55,.3,.24)+vec3(.1,0.,0.), .5);
+    else if(dm<3.5) pu=mix(c*vec3(.66,1.12,.5), l*vec3(.5,1.2,.42)+vec3(0.,.04,0.), .5);
+    else pu=l*vec3(.42,.3,.62)*.75+vec3(.03,0.,.06);
     c=mix(c,clamp(pu,0.,1.),m); }
   gl_FragColor=vec4(c,1.); }`));
     gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error("link");
@@ -429,10 +438,13 @@ function furMove(cx,cy,dx,dy){ { const g=$("#glow"); if(g){ g.style.transform=`t
   if(dx) furSplat(u,v,dx/r.width,dy/r.height);
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
-function snapHam(done){
+function fxImg(url,fx,done){ if(!fx||!url){ done(url); return; } const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); c.width=im.width; c.height=im.height; const g=c.getContext("2d"); g.drawImage(im,0,0); try{ const d=g.getImageData(0,0,c.width,c.height), a=d.data;
+    for(let i=0;i<a.length;i+=4){ const l=a[i]*.3+a[i+1]*.59+a[i+2]*.11; if(fx==="mono"){ a[i]=a[i+1]=a[i+2]=l*.9+18; } else if(fx==="night"){ a[i]=a[i]*.55; a[i+1]=a[i+1]*.6; a[i+2]=Math.min(255,a[i+2]*.8+30); } else if(fx==="gold"){ a[i]=Math.min(255,l*1.2+40); a[i+1]=Math.min(255,l*1.02+20); a[i+2]=l*.55; } }
+    g.putImageData(d,0,0); done(c.toDataURL("image/jpeg",.9)); }catch(e){ done(url); } }; im.onerror=()=>done(url); im.src=url; }
+function snapHam(done0,fx){ const done=u=>fxImg(u,fx,done0);
   const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=Math.min(W,Hh)*.82, x=Math.max(0,Math.min(W-side,W*HC[0]-side/2)), y=Math.max(0,Math.min(Hh-side,Hh*(HC[1]-.06)-side/2));
       const c=document.createElement("canvas"); c.width=c.height=520; const g=c.getContext("2d");
-      if(!glOK && Date.now()<dokuUntil){ try{ g.filter=dokuKind===1?"hue-rotate(120deg) saturate(1.6)":"hue-rotate(250deg) saturate(1.5)"; }catch(e){} }
+      if(!glOK && Date.now()<dokuUntil){ try{ g.filter=["hue-rotate(250deg) saturate(1.5)","hue-rotate(120deg) saturate(1.6)","sepia(1) hue-rotate(-40deg) saturate(3)","sepia(1) hue-rotate(60deg) saturate(2)","brightness(.45) hue-rotate(250deg) saturate(1.4)"][dokuKind]||""; }catch(e){} }
       g.drawImage(src,x,y,side,side,0,0,520,520); done(c.toDataURL("image/jpeg",.9)); }catch(e){ done(null); } };
   if(glOK && glGood){ capReq=grab; setTimeout(()=>{ if(capReq===grab){ capReq=null; grab(cur); } },600); } else grab(cur);
 }
@@ -442,7 +454,9 @@ function showPill(x){
   clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
 }
 function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
-  $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:"";
+  $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:"");
+  $("#sNote").textContent=x.tint?TINT_NOTE:""; $("#sNote").hidden=!x.tint;
+  $("#sFound").textContent=`このページのかくし図鑑 ${SEC_ALL.filter(y=>secSeen.has(y.id)).length}/${SEC_ALL.length}`;
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
@@ -455,7 +469,8 @@ function secretCard(x,img){
     g.fillStyle="#fbf5ec"; g.fillRect(0,0,1080,1350);
     const fin=()=>{
       g.fillStyle="#8a7262"; g.textAlign="center"; g.font="500 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`かくし図鑑 No.${x.no}`,540,95);
-      if(lastN){ g.fillStyle="#b8743c"; g.font="800 54px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`${lastN}回なでたら、こうなった`,540,170); }
+      const top=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:""); if(top){ g.fillStyle="#b8743c"; g.font=`800 ${top.length>14?44:54}px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif`; g.fillText(top,540,170); }
+      if(x.tint){ g.fillStyle="#a8927f"; g.font="400 26px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("※色の変化は、あそびの演出です（ストレスやケガによる変色ではありません）",540,1185); }
       g.fillStyle="#3b2a20"; g.font="800 92px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.name,540,1040);
       g.fillStyle="#8a7262"; g.font="400 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.desc,540,1120);
       g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-app.github.io/nade",540,1260);
@@ -467,7 +482,7 @@ function secretCard(x,img){
 }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`ハムスターを${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
   const full=`${text}\n${url}\n`; // URLのあとにも改行を入れて、次の文とくっつかないようにする
   const png=await secretCard(x,img);
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
@@ -1252,9 +1267,33 @@ stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",u
 function asleep(){ return state==="sleep"||state==="sleeploop"; }
 function dokuOn(){ return Date.now()<dokuUntil; }
 // かくし図鑑（アプリと同じ番号・名前・ことば）
-const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫になった。1分で元に戻る。",tag:"#毒ハム"},
-              1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム"},
-              kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム"}};
+const TINT_NOTE="※色が変わるのは、あそびの演出です。ストレスやケガ（あざ）で変色しているわけではありません。";
+const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫になった。1分で元に戻る。",tag:"#毒ハム",tint:1,hint:"しつこく、なでると……"},
+              1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム",tint:1,hint:"毒ハムを、さらに……"},
+              2:{id:"doku_aka",no:22,name:"激辛毒ハム",desc:"ほっぺをつつかれすぎて、真っ赤になった。1分で元に戻る。",tag:"#激辛ハム",tint:1,hint:"毒ハムのほっぺを、つついていると"},
+              3:{id:"doku_mido",no:23,name:"青汁毒ハム",desc:"おやつの時間になですぎて、緑になった。健康には、なっていない。",tag:"#青汁ハム",tint:1,hint:"おやつの場面で、しつこくなでると"},
+              4:{id:"doku_yami",no:24,name:"闇毒ハム",desc:"真夜中になですぎて、闇に染まった。朝になれば、もどる。",tag:"#闇ハム",tint:1,hint:"真夜中（0〜4時）に、毒ハムにすると"},
+              hampter:{id:"hampter",no:20,name:"はむぷたー",desc:"はむすたー、だよ。……まあ、いいけど。",tag:"#はむぷたー",how:"名前を「はむぷたー」にしたら",hint:"名前を、ちょっとまちがえると"},
+              kyomu:{id:"kyomu",no:13,name:"虚無ハム",desc:"見つめられすぎて、無になった。",tag:"#虚無ハム",how:"1分じっと見つめたら",hint:"さわらずに、じっと見つめていると"},
+              bikkuri:{id:"bikkuri",no:5,name:"びっくり顔",desc:"ひさしぶりに会ったら、固まった。",tag:"#びっくりハム",how:"3日ぶりに会いにきたら",hint:"ひさしぶりに会いにくると"},
+              yofukashi:{id:"yofukashi",no:9,name:"夜ふかし仲間",desc:"こんな時間に起こされた。おたがいさま。",tag:"#夜ふかし",how:"夜中に起こしたら",hint:"夜おそく（23〜3時）に、寝ている子を起こすと"},
+              neochi:{id:"neochi",no:16,name:"寝落ちハム",desc:"なでられている途中で、寝た。",tag:"#寝落ち",how:"あくびの途中でなでたら",hint:"あくびのときに、やさしくなでると"},
+              shinya:{id:"shinya",no:42,name:"丑三つ時のハム",desc:"いちばん元気な時間に会えた。夜行性の本気。",tag:"#丑三つ時",how:"2時台に会いにきたら",hint:"2時台に、なでにくると"},
+              asa:{id:"asa",no:35,name:"朝いちばん",desc:"夜行性なのに、つきあって起きてくれた。眠そう。",tag:"#朝いちばん",how:"朝5〜6時になでたら",hint:"朝はやく（5〜6時）に、なでると"},
+              nadenade:{id:"nadenade",no:31,name:"なでられ上手",desc:"なでられるのが、うまくなった。目を細める角度が完璧。",tag:"#なでられ上手",how:"100回なでたら",hint:"たくさん、なでると"},
+              aizu:{id:"aizu",no:41,name:"ひみつの合図",desc:"その順番でさわると、合図だとわかってくれる。",tag:"#ひみつの合図",how:"ひみつの順番でさわったら",hint:"あたま→ほっぺ→からだ→ほっぺ→あたま の順にトン"},
+              kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"🎮で、ひみつのコマンドを"}};
+const SEC_ALL=Object.values(SECRET).sort((a,b)=>a.no-b.no);
+const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","……からい！","……にがい","……闇"];
+// 見つけたら：図鑑カード（はじめて）か、シェアの小さなボタン（2回目から）。fx は写真の色加工
+function unlock(x,opt={}){
+  if(!x) return; if(!opt.nade) lastN=0;
+  if(!x.tint) toApp({t:"secret",id:x.id});
+  if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>snapHam(img=>showSecret(x,img),opt.fx),opt.wait||1700); }
+  else if(opt.nade) setTimeout(()=>showPill(x),1400);
+}
+function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_ALL.filter(x=>secSeen.has(x.id)).length;
+  el.innerHTML=`<b>このページのかくし図鑑 ${n}/${SEC_ALL.length}</b>`+SEC_ALL.map(x=>secSeen.has(x.id)?`<span class="got">No.${x.no} ${x.name}</span>`:`<span>？？？ … ${x.hint}</span>`).join("")+`<small>${TINT_NOTE}</small>`; }
 function sceneKey(){ return "scene_"+SCENE; }
 // かくしコマンド：コントローラーで「← → A B」と入れると、本物の鏡餅になる
 let padLog=[];
@@ -1270,20 +1309,28 @@ function closePad(){ closeDlg(); $("#pad").classList.remove("open"); setTimeout(
 async function goKagami(){
   if(!GEO_SP[sp]) await loadSpecies("kinkuma");
   lastN=0; await setScene("kagami"); haptic("heavy"); sayText("……鏡餅になった");
-  toApp({t:"secret",id:"kagami"});
-  const x=SECRET.kagami; if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderScenes(); setTimeout(()=>snapHam(img=>showSecret(x,img)),2000); }
+  const had=secSeen.has("kagami"); unlock(SECRET.kagami,{wait:2000}); if(!had) renderScenes();
 }
 const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.get("sec",[]));
 let capReq=null, secCur=null;
 let nadeCount=0, lastN=0, gStroke=false; // 1回＝指を置いてから離すまで（タップも1回）
+let awayLong=!INAPP&&AWAY3, aizuLog=[], yawnStrokes=0;
+function secOnNade(){ const h=new Date().getHours();
+  if(life.nade>=100) unlock(SECRET.nadenade,{wait:600});
+  if(h===2) unlock(SECRET.shinya,{wait:900,fx:"night"});
+  if(h===5||h===6) unlock(SECRET.asa,{wait:900});
+  if(awayLong){ awayLong=false; request("startle"); unlock(SECRET.bikkuri,{wait:500}); } }
+function aizuTap(z){ const now=Date.now(), m=z==="head"?"h":(z==="cheek"||z==="nose")?"f":"b"; aizuLog=aizuLog.filter(t=>now-t.t<9000); aizuLog.push({m,t:now}); if(aizuLog.length>5) aizuLog.shift();
+  if(aizuLog.map(t=>t.m).join("")==="hfbfh"){ aizuLog=[]; sayText("……合図、わかった"); request("happy"); unlock(SECRET.aizu,{wait:1200}); return true; } return false; }
+let cheekTaps=[];
+function nextDoku(){ if(!dokuOn()){ const h=new Date().getHours(); goDoku(SCENE==="greens"?3:(h<5&&secSeen.has("doku"))?4:0); } else if(dokuKind===0) goDoku(1); }
 function goDoku(k){
   lastN=nadeCount+(gStroke?1:0); nadeCount=0; gStroke=false;
-  dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(k===1?"……ゲーミング":"なですぎて、紫になった");
-  toApp({t:"doku",kind:["","game"][k]});
-  const x=SECRET[k]; if(x && !secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); setTimeout(()=>snapHam(img=>showSecret(x,img)),1700); }
-  else if(x){ setTimeout(()=>showPill(x),1400); } // 2回目からは、シェアの小さなボタンだけ
-  if(!glOK){ box.classList.add("doku"); box.classList.toggle("game",k===1); }
-  clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game"),60e3);
+  dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(DOKU_WORD[k]||DOKU_WORD[0]);
+  toApp({t:"doku",kind:["","game","aka","mido","yami"][k]});
+  unlock(SECRET[k],{nade:true}); // 2回目からは、シェアの小さなボタンだけ
+  if(!glOK){ box.classList.remove("game","aka","mido","yami"); box.classList.add("doku"); const c=["","game","aka","mido","yami"][k]; if(c) box.classList.add(c); }
+  clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game","aka","mido","yami"),60e3);
 }
 // 好きなところ・いやなところ（ハムスターは頭〜背中をなでられるのが好きで、おなかや足は苦手な子が多い）
 function zoneReact(z,fast,against){
@@ -1308,12 +1355,13 @@ function onStroke(s,dt){
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
   gStroke=true;
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
-  if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; }
+  if(strokeLog.length>=18){ strokeLog=[]; nextDoku(); return; }
   if(asleep()){
     sleepStrokes=sleepStrokes.filter(t=>now-t<8e3); sleepStrokes.push(now); addBond(.2);
     if(sleepStrokes.length>=5){ sleepStrokes=[]; if(Math.random()<.5){ addBond(-1); manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping"); pending=null; start("startle",{fade:.3}); } else wake(); }
     return;
   }
+  if(state==="yawn" && dt>=70){ if(++yawnStrokes>=3){ yawnStrokes=0; sayText("……すや"); unlock(SECRET.neochi,{wait:2600}); setTimeout(()=>{ if(!asleep()) request("sleep"); },300); return; } } else yawnStrokes=0;
   const fast=dt<70, against=(POSE==="four"?s.dx>Math.abs(s.dy)*.6:s.dy < -Math.abs(s.dx)*.6) && (z==="head"||z==="cheek"||z==="belly"||z==="back"); // 四つ足は頭→おしりが毛の流れ
   // 同じ反応を連打しない：反応中は毛が動くだけで、切り替えはひと呼吸おく
   if((state==="happy"||state==="finger_sniff") && !fast && z!=="feet" && z!=="belly"){ addBond(.3); life.pets++; toApp({t:"pet",z}); if(against) afterHappy="groom"; return; }
@@ -1332,8 +1380,10 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
 }
 function onTap(z){
   const now=performance.now();
-  if(z){ nadeCount++; countNade(); dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
-    if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; } }
+  if(z){ nadeCount++; countNade(); if(aizuTap(z)) return;
+    if(dokuOn() && dokuKind===0 && (z==="cheek"||z==="nose")){ cheekTaps=cheekTaps.filter(t=>now-t<5000); cheekTaps.push(now); if(cheekTaps.length>=6){ cheekTaps=[]; dokuTaps=[]; taps=[]; goDoku(2); return; } }
+    dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
+    if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; nextDoku(); return; } }
   taps=taps.filter(t=>now-t<900); taps.push(now);
   if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
   if(!z){ clearTimeout(lookT); lookT=setTimeout(()=>{ if(Math.random()<.5) request("look"); },320); return; } // 床をトントン → 音のほうを見る
@@ -1350,7 +1400,7 @@ function onTap(z){
 }
 
 // ---------- ボタン ----------
-function wake(){ manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping");  pending=null; say("yawn"); play("yawn"); }
+function wake(){ { const h=new Date().getHours(); if(h>=23||h<4) unlock(SECRET.yofukashi,{wait:2200,fx:"night"}); } manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping");  pending=null; say("yawn"); play("yawn"); }
 function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="☀️ おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
 if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
 $("#seed").onclick=()=>{
@@ -1393,7 +1443,7 @@ $("#bMove").onclick=()=>{ closeBody(); setTimeout(()=>$("#applink").onclick(new 
 const SEG=(typeof Intl!=="undefined"&&Intl.Segmenter)?new Intl.Segmenter("ja",{granularity:"grapheme"}):null;
 const graph=t=>SEG?[...SEG.segment(t)].map(x=>x.segment):[...t];
 function nameCount(){ const n=graph($("#bN").value).length, el=$("#bNcount"); el.textContent=n>=8?"8文字まで":`${n}/8文字`; el.classList.toggle("max",n>=8); }
-$("#bN").oninput=e=>{ const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); };
+$("#bN").oninput=e=>{ const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(life.name)) unlock(SECRET.hampter,{wait:900}); };
 function nameChanged(){ renderHint(false); if($("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
@@ -1457,7 +1507,8 @@ new MutationObserver(()=>{ const k=app.classList.contains("sleeping")+"|"+app.cl
 let lastAct=Date.now();
 ["pointerdown","keydown","wheel"].forEach(ev=>addEventListener(ev,()=>{ lastAct=Date.now(); if(app.classList.contains("calm")) app.classList.remove("calm"); },true));
 setInterval(()=>{ const busy=DLG||!$("#pad").hidden||$("#bodySheet").classList.contains("open")||!$("#loading").classList.contains("hide")||!$("#move").hidden||!$("#secret").hidden;
-  if(!busy && Date.now()-lastAct>25000) app.classList.add("calm"); },1000);
+  if(!busy && Date.now()-lastAct>25000) app.classList.add("calm");
+  if(!busy && !document.hidden && (life.nade||0)>=3 && !asleep() && !secSeen.has("kyomu") && Date.now()-lastAct>60000){ sayText("……（無）"); unlock(SECRET.kyomu,{wait:300,fx:"mono"}); } },1000);
 const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
@@ -1482,7 +1533,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
-function countNade(){ life.nade=(life.nade||0)+1; save(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
+function countNade(){ life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
 function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
@@ -1504,7 +1555,8 @@ const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene")
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}); // 切り替えのタイミング用。読み終わるのを待たずにハムを出す
 (()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
-window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
+renderSecList();
+window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
