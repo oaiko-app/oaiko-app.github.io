@@ -108,6 +108,8 @@
   #sShare{background:var(--accent);color:#fff}
   #app.inapp #bN,#app.inapp label[for=bN]{display:none}
   #sClose,#mvClose{background:transparent;color:#8a7262;font-weight:400}
+  #pill{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translate(-50%,12px);z-index:12;border:0;border-radius:999px;padding:12px 20px;font:inherit;font-size:14px;font-weight:800;background:#6a2a8a;color:#fff;box-shadow:0 6px 20px rgba(60,20,80,.4);opacity:0;transition:opacity .3s,transform .3s;white-space:nowrap}
+  #pill.show{opacity:1;transform:translate(-50%,0)}
   #mvCopy{background:var(--accent);color:#fff}
   #move{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px}
   #move[hidden]{display:none}
@@ -174,6 +176,7 @@
   <div id="secret" hidden role="dialog" aria-label="かくし図鑑"><div class="scard">
     <p class="smuted" id="sNo"></p>
     <img id="sImg" alt="">
+    <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
     <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
     <button id="sShare">カードにする</button>
     <button id="sClose">とじる</button>
@@ -185,6 +188,7 @@
     <button id="mvCopy">コードをコピーして、App Storeへ</button>
     <button id="mvClose">あとで</button>
   </div></div>
+  <button id="pill" hidden></button>
   <div id="loading">よみこみ中…</div>
   <button id="tap">タップしてはじめる</button>
 </div>
@@ -344,7 +348,13 @@ function snapHam(done){
       g.drawImage(src,x,y,side,side,0,0,520,520); done(c.toDataURL("image/jpeg",.9)); }catch(e){ done(null); } };
   if(glOK && glGood){ capReq=grab; setTimeout(()=>{ if(capReq===grab){ capReq=null; grab(cur); } },600); } else grab(cur);
 }
+function showPill(x){
+  const el=$("#pill"); el.textContent=`${lastN}回なでて${x.name}に。シェアする`; el.hidden=false; requestAnimationFrame(()=>el.classList.add("show"));
+  el.onclick=()=>{ el.classList.remove("show"); snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
+  clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
+}
 function showSecret(x,img){
+  $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:"";
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
@@ -356,7 +366,8 @@ function secretCard(x,img){
     const c=document.createElement("canvas"); c.width=1080; c.height=1350; const g=c.getContext("2d");
     g.fillStyle="#fbf5ec"; g.fillRect(0,0,1080,1350);
     const fin=()=>{
-      g.fillStyle="#8a7262"; g.textAlign="center"; g.font="500 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`かくし図鑑 No.${x.no}`,540,150);
+      g.fillStyle="#8a7262"; g.textAlign="center"; g.font="500 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`かくし図鑑 No.${x.no}`,540,95);
+      if(lastN){ g.fillStyle="#b8743c"; g.font="800 54px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`${lastN}回なでたら、こうなった`,540,170); }
       g.fillStyle="#3b2a20"; g.font="800 92px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.name,540,1040);
       g.fillStyle="#8a7262"; g.font="400 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.desc,540,1120);
       g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-app.github.io/nade",540,1260);
@@ -368,7 +379,7 @@ function secretCard(x,img){
 }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=`ハムスターをなですぎたら「${x.name}」になった。 ${x.tag}`, url="https://oaiko-app.github.io/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？ `:`ハムスターをなですぎたら「${x.name}」になった。 `)+x.tag, url="https://oaiko-app.github.io/nade/";
   const png=await secretCard(x,img);
   if(INAPP){ toApp({t:"share",img:png,text:`${text} #おあいこ ${url}`}); return; }
   try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-nade.png",{type:"image/png"});
@@ -610,10 +621,13 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               1:{id:"doku_game",no:21,name:"ゲーミング毒ハム",desc:"なですぎの先。光っている。たぶん、フレームレートが高い。",tag:"#ゲーミングハム"}};
 const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.get("sec",[]));
 let capReq=null, secCur=null;
+let nadeCount=0, lastN=0;
 function goDoku(k){
+  lastN=nadeCount; nadeCount=0;
   dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(k===1?"……ゲーミング":"なですぎて、紫になった");
   toApp({t:"doku",kind:["","game"][k]});
   const x=SECRET[k]; if(x && !secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); setTimeout(()=>snapHam(img=>showSecret(x,img)),1700); }
+  else if(x){ setTimeout(()=>showPill(x),1400); } // 2回目からは、シェアの小さなボタンだけ
   if(!glOK){ box.classList.add("doku"); box.classList.toggle("game",k===1); }
   clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game"),60e3);
 }
@@ -637,6 +651,7 @@ function onStroke(s,dt){
   const now=Date.now();
   const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
+  nadeCount++; life.nade=(life.nade||0)+1;
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
   if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; }
   if(asleep()){
@@ -662,7 +677,7 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
 }
 function onTap(z){
   const now=performance.now();
-  if(z){ dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
+  if(z){ nadeCount++; dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
     if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; } }
   taps=taps.filter(t=>now-t<900); taps.push(now);
   if(asleep()){ if(taps.length>=2){ taps=[]; wake(); } else say("sleep"); return; }
@@ -788,6 +803,5 @@ window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
 </script>
-<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a71f2bd8054e46b585d3dcd722440246"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
