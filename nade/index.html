@@ -44,9 +44,19 @@
   #gear{pointer-events:auto;margin-left:8px;border:0;border-radius:50%;width:34px;height:34px;background:rgba(255,248,239,.85);font-size:15px;vertical-align:middle}
   #hand{position:absolute;left:0;top:0;width:50%;max-width:290px;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3;will-change:transform;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
   #hand.show{opacity:1}
-  #applink{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4px);text-align:center;z-index:6;color:rgba(255,248,239,.72);font-size:11px;text-decoration:none;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.5);opacity:0;transition:opacity 1.5s}
-  #applink.show{opacity:1}
-  #applink small{display:block;font-size:10px;opacity:.8;margin-top:2px}
+  #applink{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 82px);z-index:6;display:none;background:rgba(255,248,239,.95);color:var(--ink);border-radius:16px;padding:10px 44px 10px 14px;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transition:opacity .6s}
+  #applink.show{display:block;opacity:1}
+  #applink small{display:block;font-size:11px;font-weight:400;color:#8a7262;margin-top:2px}
+  #alX{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:transparent;font-size:18px;color:#8a7262}
+  #app.alshow #hint{opacity:0}
+  #glow{position:absolute;left:0;top:0;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;pointer-events:none;z-index:3;opacity:0;transition:opacity .25s;background:radial-gradient(rgba(255,240,200,.5),rgba(255,240,200,0) 70%)}
+  #glow.on{opacity:1}
+  #scenes{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  #scenes .chip{min-height:38px}
+  #scenes .note{flex:0 0 auto;font-size:12px;color:#fff8ef;background:rgba(30,20,12,.4);border-radius:999px;padding:9px 12px}
+  .chip.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.9)}
+  #stage{transition:transform .35s ease}
+
   #gear{display:none}
   #status .pill{display:none}
   #app.test #status .pill{display:inline-block}
@@ -61,7 +71,7 @@
   .btn{border:0;border-radius:18px;min-height:44px;padding:10px 11px;font:inherit;font-size:13px;white-space:nowrap;background:rgba(255,248,239,.93);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .btn:active{transform:scale(.96)}
   .btn.on{background:#3d4470;color:#fff}
-  #hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 84px);text-align:center;color:#fff8ef;font-size:15px;font-weight:700;line-height:1.5;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
+  #hint{position:absolute;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;background:rgba(30,20,12,.38);border-radius:14px;padding:6px 14px;bottom:calc(env(safe-area-inset-bottom) + 84px);text-align:center;color:#fff8ef;font-size:15px;font-weight:700;line-height:1.5;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff8ef;font-size:14px;z-index:6;background:rgba(30,20,12,.35);transition:opacity .4s;pointer-events:none}
   #loading.hide{opacity:0}
   #tap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(30,20,12,.6);color:#fff8ef;font-size:16px;border:0;width:100%;font-family:inherit}
@@ -90,7 +100,7 @@
   #bodySheet input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--accent);height:28px}
   #bodySheet .ends{display:flex;justify-content:space-between;font-size:11px;color:#8a7262}
   #bodySheet .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-  #bodySheet .foot button{border:0;border-radius:14px;min-height:42px;padding:8px 18px;font:inherit;font-size:14px}
+  #bodySheet .foot button{white-space:nowrap;border:0;border-radius:14px;min-height:42px;padding:8px 18px;font:inherit;font-size:14px}
   #bOk{background:var(--accent);color:#fff;font-weight:700}
   #bReset{background:transparent;color:#8a7262}
   #bNote{margin:6px 0 0;font-size:11px;color:#9b8573;line-height:1.5}
@@ -128,6 +138,10 @@
   #move[hidden]{display:none}
   .mvsteps{margin:0;padding:0 0 0 20px;font-size:13px;line-height:1.7;color:var(--ink)}
   @media (prefers-reduced-motion:reduce){.trace{transition:none}}
+  @media (orientation:landscape) and (max-height:520px){
+    #bodySheet{left:auto;right:10px;top:10px;bottom:10px;width:min(52%,300px);overflow:auto;padding:12px 14px}
+    #bodySheet .foot button{padding:8px 12px}
+  }
 </style>
 </head>
 <body>
@@ -153,8 +167,9 @@
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say"></div>
   <div id="wearNote">なでるときは、服をぬいでるよ</div>
-  <a id="applink" href="#" role="button">この子を、アプリでつづける → おあいこ<small>自分をいたわる習慣づくりアプリ。名前・からだ・図鑑をそのまま引き継げます</small></a>
-  <div id="hint">指で、ゆっくりなでてみて<br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
+  <a id="applink" href="#" role="button"><span id="alT">この子を、アプリでつづける →</span><small>自分をいたわる習慣づくりアプリ「おあいこ」。名前・からだ・図鑑をそのまま引き継げます</small><button id="alX" aria-label="とじる">×</button></a>
+  <div id="glow"></div>
+  <div id="hint"><span id="hintMain">指で、ゆっくりなでてみて</span><br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
   <button id="close">‹ もどる</button>
   <div id="bar">
     <button class="btn" id="seed">🌻 種をあげる</button>
@@ -172,7 +187,8 @@
     <input type="range" id="bC" min="88" max="122" step="1" value="100">
     <div class="ends"><span>ほっそり</span><span>ぽっちゃり</span></div>
     <p id="bNote"></p>
-    <div class="foot"><button id="bReset">もとにもどす</button><button id="bOk">できた</button></div>
+    <div class="foot"><button id="bReset">体形を標準に戻す</button><button id="bOk">閉じる</button></div>
+    <p style="margin:6px 0 0;font-size:11px;color:#8a7262;text-align:right">変更は自動で保存されます</p>
   </div>
   <div id="sheet">
     <h3>テスト用の設定</h3>
@@ -197,12 +213,16 @@
   <div id="move" hidden role="dialog" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
     <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・かくし図鑑を、アプリにそのまま引き継げます。おあいこは、自分をいたわると、この子も元気になる習慣づくりアプリです。</small></p>
-    <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ<br><span style="font-size:11px;color:#8a7262">すでに使っている人は、ハムの「名前を変える」から。いまの子の名前・種類・からだは上書きされます</span></li></ol>
+    <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
+    <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
+    <input id="mvCode" readonly style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
+    <p id="mvDev" style="display:none;margin:4px 0;font-size:12px;color:#8a7262"></p>
+    <a id="mvStore" href="https://apps.apple.com/jp/app/id6836835986" style="display:none;text-align:center;background:#3d4470;color:#fff;border-radius:14px;padding:12px;text-decoration:none;font-weight:700;margin:6px 0">App Storeでおあいこをひらく</a>
     <button id="mvCopy">コードをコピーして、App Storeへ</button>
     <button id="mvClose">あとで</button>
   </div></div>
   <button id="pill" hidden></button>
-  <button id="padBtn" aria-label="コントローラー">🎮</button>
+  <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド">🎮</button>
   <div id="pad" hidden>
     <div class="padBody">
       <div class="dpad"><span class="du"></span><button data-k="L" aria-label="左">◀</button><span class="dc"></span><button data-k="R" aria-label="右">▶</button><span class="dd"></span></div>
@@ -212,7 +232,7 @@
     <button id="padClose">とじる</button>
   </div>
   <div id="loading">よみこみ中…</div>
-  <button id="tap">タップしてはじめる</button>
+  <button id="tap">準備できたよ。タップしてはじめる</button>
 </div>
 <script>
 {
@@ -359,7 +379,7 @@ function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウ�
     FIELD.x[k]=Math.max(-lim,Math.min(lim,FIELD.x[k]+du*g*.4)); FIELD.y[k]=Math.max(-lim,Math.min(lim,FIELD.y[k]+dv*g*.4)); }
   FIELD.live=true;
 }
-function furMove(cx,cy,dx,dy){ const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
+function furMove(cx,cy,dx,dy){ { const g=$("#glow"); if(g){ g.style.transform=`translate(${cx}px,${cy}px)`; g.classList.toggle("on",!!FUR.down); } } const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
   if(dx) furSplat(u,v,dx/r.width,dy/r.height);
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
@@ -375,7 +395,7 @@ function showPill(x){
   el.onclick=()=>{ el.classList.remove("show"); snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
   clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
 }
-function showSecret(x,img){
+function showSecret(x,img){ setTimeout(()=>openDlg($("#secret"),null,()=>$("#sClose").click()),50);
   $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:"";
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
@@ -429,6 +449,10 @@ function layout(){
 }
 const ro=new ResizeObserver(layout); ro.observe(stage);
 Object.entries(TRACE_POS).forEach(([k,p])=>{const el=$("#tr-"+k); el.style.left=p.l+"%"; el.style.top=p.t+"%"; el.style.width=p.w+"%";});
+const TOUCH=matchMedia("(pointer:coarse)").matches;
+const NM=()=>life.name||"この子";
+const nadeHint=()=>TOUCH?"指で、ゆっくりなでてみて":"ドラッグして、ゆっくりなでてみて";
+if(!TOUCH && $("#hintMain")) $("#hintMain").textContent=nadeHint();
 function sayText(t){ sayEl.textContent=t; sayEl.classList.add("show"); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),1700); }
 function say(k){ if(SAY[k]) sayText(SAY[k]); }
 function haptic(kind){
@@ -635,7 +659,7 @@ stage.addEventListener("pointermove",e=>{
 function up(e){
   const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
   if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(zoneAt(e.clientX,e.clientY)); }
-  if(ptr.size===0){ strokeDist=0; FUR.down=false; hideHand(220); }
+  if(ptr.size===0){ strokeDist=0; FUR.down=false; hideHand(220); $("#glow").classList.remove("on"); }
 }
 stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
 
@@ -654,8 +678,8 @@ function padPress(k){
   if(seq.endsWith("LRAB")){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); return; }
   if(!"LRAB".startsWith(seq.slice(-Math.min(seq.length,4))) && !"LRAB".startsWith(k)){ padLog=[]; }
 }
-function openPad(){ $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
-function closePad(){ $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
+function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
+function closePad(){ closeDlg(); $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
 async function goKagami(){
   if(!GEO_SP[sp]) await loadSpecies("kinkuma");
   lastN=0; await setScene("kagami"); haptic("heavy"); sayText("……鏡餅になった");
@@ -684,6 +708,7 @@ function zoneReact(z,fast,against){
   if(z==="belly"){ if(b<55 || fast || r<.35){ addBond(-.5); request("startle"); afterHappy=null; } else { addBond(.5); afterHappy="groom"; request("happy"); } return; }
   if(z==="nose"){ if(EXTRA[sp] && b>=20 && r<.75){ request("finger_sniff"); addBond(.8); } else request("look"); return; }
   if(fast){ const p=b<30?.6:b<60?.3:.1; if(r<p){ addBond(-1); request("startle"); return; } }
+  if((z==="head"||z==="back") && Date.now()-(zoneReact._w||0)>5000 && Math.random()<.45){ zoneReact._w=Date.now(); const W=[`${NM()}、うっとり`,"きもちよさそう","うとうと…","目がほそくなった","もっと、って顔"]; sayText(W[Math.floor(Math.random()*W.length)]); }
   life.pets++; toApp({t:"pet",z});
   if(against){ addBond(.4); afterHappy="groom"; request("happy"); return; } // 毛を逆なで → あとで毛づくろいして直す
   addBond(z==="head"||z==="back"?(b<40?1.6:1.1):(b<40?1.1:.8));
@@ -694,7 +719,7 @@ function onStroke(s,dt){
   const now=Date.now();
   const zs=Object.entries(s.z).sort((a,b)=>b[1]-a[1]); const z=zs.length && zs[0][1]>30 ? zs[0][0] : null;
   if(!z){ if(!asleep() && state==="idle" && Math.random()<.2) request("look"); return; } // 床をなでても、音に気づいて見るだけ
-  nadeCount++; life.nade=(life.nade||0)+1;
+  nadeCount++; life.nade=(life.nade||0)+1; if(life.nade===40) setTimeout(showAL,2500);
   strokeLog=strokeLog.filter(t=>now-t<10e3); strokeLog.push(now);
   if(strokeLog.length>=18){ strokeLog=[]; if(!dokuOn()) goDoku(0); else if(dokuKind!==1) goDoku(1); return; }
   if(asleep()){
@@ -750,27 +775,39 @@ $("#seed").onclick=()=>{
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
 $("#snd").onclick=()=>{ sound=!sound; $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
-function openBody(){ const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
+function openBody(){ touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
-  $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); }
-function closeBody(){ $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
+  $("#bS").disabled=$("#bC").disabled=!glOK; $("#bodySheet").classList.add("open"); app.classList.add("sheetopen"); liftStage(); openDlg($("#bodySheet"),$("#bodyBtn"),closeBody); }
+let DLG=null;
+function openDlg(el,opener,onClose){ closeDlg(true); DLG={el,opener,onClose}; ["#stage","#bar","#top","#scenes","#status","#applink","#padBtn"].forEach(q=>{ const x=$(q); if(x&&!el.contains(x)&&x!==el) x.inert=true; });
+  const f=el.querySelector("input,button,a[href]"); if(f) setTimeout(()=>f.focus({preventScroll:true}),30); }
+function closeDlg(silent){ if(!DLG) return; const d=DLG; DLG=null; document.querySelectorAll("[inert]").forEach(x=>x.inert=false); if(d.opener&&!silent) d.opener.focus({preventScroll:true}); }
+addEventListener("keydown",e=>{ if(e.key==="Escape"&&DLG){ e.preventDefault(); const f=DLG.onClose; f?f():closeDlg(); } });
+function liftStage(){ const st=$("#stage"); st.style.transform=""; const R=st.getBoundingClientRect(), sh=$("#bodySheet").getBoundingClientRect(), b=box.getBoundingClientRect();
+  const cx=b.left+b.width*(HC[0]+HF[0])/2-R.left, cy=b.top+b.height*(HC[1]+HF[1])/2-R.top;
+  if(R.width>R.height){ const sl=sh.left-R.left; st.style.transform=`translate(${Math.min(0,sl/2-cx)}px,${Math.min(0,R.height*.62-cy)}px)`; return; }
+  const free=sh.top-R.top; st.style.transform=`translate(0px,${Math.min(0,free*.64-cy)}px)`; }
+function closeBody(){ $("#bodySheet").classList.remove("open"); app.classList.remove("sheetopen"); $("#stage").style.transform=""; closeDlg(); save(); toApp({t:"body",s:life.body.s,c:life.body.c}); }
 $("#bodyBtn").onclick=()=>{ openBody(); $("#bN").value=life.name||""; };
-$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); };
+$("#bN").oninput=e=>{ life.name=e.target.value.trim().slice(0,8); save(); }; $("#bN").onchange=()=>{ if(life.name) setTimeout(showAL,1500); };
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
   const d={v:1,sp,n:life.name||"",s:+life.body.s.toFixed(2),c:+life.body.c.toFixed(2),b:Math.round(life.bond),p:life.pets||0,sec:[...secSeen]};
   const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
   return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
-$("#applink").onclick=e=>{ e.preventDefault(); $("#mvName").textContent=life.name||"この子"; $("#move").hidden=false; };
-$("#mvClose").onclick=()=>{ $("#move").hidden=true; };
+$("#applink").onclick=e=>{ e.preventDefault(); $("#mvName").textContent=NM(); $("#move").hidden=false; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(!ios){ $("#mvDev").style.display="block"; $("#mvDev").textContent="おあいこはiPhoneのアプリです。コードをコピーしたら、iPhoneで App Store の「おあいこ」を入れて貼りつけてください（コードはこの画面でいつでも見られます）。"; } };
+$("#mvClose").onclick=()=>{ $("#move").hidden=true; closeDlg(); };
 $("#move").addEventListener("pointerdown",e=>e.stopPropagation());
 $("#mvCopy").onclick=async()=>{
   const code=moveCode(); let ok=false;
   try{ await navigator.clipboard.writeText(code); ok=true; }catch(e){}
   if(!ok){ try{ const t=document.createElement("textarea"); t.value=code; document.body.appendChild(t); t.select(); ok=document.execCommand("copy"); t.remove(); }catch(e){} }
-  $("#mvCopy").textContent=ok?"コピーしました。App Storeをひらきます":"コピーできませんでした";
-  setTimeout(()=>{ location.href="https://apps.apple.com/jp/app/id6836835986"; },ok?700:1500);
+  $("#mvCode").value=code; $("#mvCode").style.display="block";
+  $("#mvCopy").textContent=ok?"✓ コピーしました（もう一度コピー）":"コピーできませんでした。上のコードを長押しでコピー";
+  $("#mvStore").style.display="block";
 };
 $("#bS").oninput=e=>{ life.body.s=e.target.value/100; };
 $("#bC").oninput=e=>{ life.body.c=e.target.value/100; };
@@ -790,7 +827,7 @@ async function loadSpecies(id){
   if(SCENE && !GEO_SP[id]){ SCENE=null; app.classList.remove("scene"); }
   applyGeo(); renderScenes();
   poster.src=`v/${id}/poster.jpg`;
-  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.id===id));
+  document.querySelectorAll("#top .chip").forEach(c=>{ c.classList.toggle("on",c.dataset.id===id); c.setAttribute("aria-pressed",String(c.dataset.id===id)); if(c.dataset.id===id) c.scrollIntoView({inline:"nearest",block:"nearest"}); });
   if(!INAPP) store.set("sp",id);
   const list=BASE.concat(EXTRA[id]||[]), next={};
   const get=async c=>{ try{ const r=await fetch(`v/${id}/${c}.mp4`); if(!r.ok) throw 0; return URL.createObjectURL(await r.blob()); }catch(e){ return `v/${id}/${c}.mp4`; } };
@@ -802,7 +839,7 @@ async function loadSpecies(id){
   (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
     for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
   $("#loading").classList.add("hide"); pending=null;
-  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").textContent="いまはお昼寝中。2回つつくと起きるよ"; }
+  if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); $("#hint").textContent=`${NM()}は、お昼寝中。`+(TOUCH?"トントン、と2回タップすると起きるよ":"ダブルクリックすると起きるよ"); }
   else if(Date.now()-life.visit>3*H){ say("welcome"); play("look"); }
   else play("idle");
   life.visit=Date.now(); save(); renderAll();
@@ -811,14 +848,16 @@ const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
 SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
-function renderScenes(){ sceneBar.style.display=GEO_SP[sp]?"flex":"none"; sceneBar.querySelectorAll(".chip").forEach(c=>{ c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); }
+function renderScenes(){ const ok=!!GEO_SP[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
+  let n=sceneBar.querySelector(".note"); if(!ok&&!n){ n=document.createElement("span"); n.className="note"; sceneBar.appendChild(n); } if(n){ n.hidden=ok; n.textContent="この子は、おへやで遊べます（てのひら・だっこはキンクマで）"; }
+  sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok; if(!ok) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); }
 async function setScene(id){
   if(id===SCENE) return;
   const k="scene_"+id;
-  if(id && !urls[k]){ $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
-  SCENE=id; app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
+  if(id && !urls[k]){ $("#loading").textContent=`${(SCENES.find(x=>x[0]===id)||[,""])[1]}を よみこみ中…`; $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
+  SCENE=id; if(!INAPP) store.set("scene",id||""); app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
   FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
-  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"鏡餅になった。そっとなでてみて":"指で、ゆっくりなでてみて"; }
+  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"鏡餅になった。そっとなでてみて":nadeHint(); }
   else { play("idle",{fade:.45}); }
   toApp({t:"scene",id:id||"room"});
 }
@@ -828,7 +867,10 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 const ANDROID=/Android/i.test(navigator.userAgent);
 if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
-if(!INAPP) setTimeout(()=>$("#applink").classList.add("show"),20000);
+function showAL(){ if(INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
+$("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
+$("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
+if(!INAPP) setTimeout(showAL,90000);
 if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test") app.classList.add("test");
@@ -842,7 +884,7 @@ glOK=initGL(); if(glOK) box.classList.add("gl");
 const okSp=x=>SPECIES.some(y=>y[0]===x);
 const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene"))?Q.get("scene"):null;
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
-fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ if(startScene && GEO_SP[sp]) setScene(startScene); }); tick(); });
+fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); });
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
