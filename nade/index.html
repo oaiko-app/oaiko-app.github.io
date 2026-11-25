@@ -229,8 +229,8 @@ let HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215], POSE="stand";
 // ハムの位置と大きさ（動画の中の割合）。キンクマは四つ足の動画、場面ごとにも位置がちがう
 const GEO_STAND={C:[.54,.555],F:[.54,.75],R:[.30,.28],B:[.235,.215],pose:"stand"};
 const GEO_SP={kinkuma:{C:[.56,.64],F:[.56,.73],R:[.28,.16],B:[.21,.095],pose:"four"}};
-const SCENES=[["room","おへや"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
-const GEO_SCENE={palm:{C:[.5,.48],F:[.5,.62],R:[.27,.19],B:[.2,.14]},hug:{C:[.5,.51],F:[.5,.62],R:[.28,.15],B:[.21,.11]},lap:{C:[.48,.5],F:[.48,.63],R:[.23,.18],B:[.17,.13]},pouch:{C:[.5,.5],F:[.5,.6],R:[.24,.14],B:[.18,.1]},fence:{C:[.5,.41],F:[.5,.58],R:[.27,.23],B:[.2,.17]},greens:{C:[.5,.45],F:[.5,.62],R:[.24,.23],B:[.18,.17]}};
+const SCENES=[["room","おへや"],["kagami","🍊かがみもち"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
+const GEO_SCENE={kagami:{C:[.5,.43],F:[.5,.54],R:[.26,.09],B:[.3,.06]},palm:{C:[.5,.48],F:[.5,.62],R:[.27,.19],B:[.2,.14]},hug:{C:[.5,.51],F:[.5,.62],R:[.28,.15],B:[.21,.11]},lap:{C:[.48,.5],F:[.48,.63],R:[.23,.18],B:[.17,.13]},pouch:{C:[.5,.5],F:[.5,.6],R:[.24,.14],B:[.18,.1]},fence:{C:[.5,.41],F:[.5,.58],R:[.27,.23],B:[.2,.17]},greens:{C:[.5,.45],F:[.5,.62],R:[.24,.23],B:[.18,.17]}};
 let SCENE=null;
 function applyGeo(){
   const g=SCENE?Object.assign({pose:"scene"},GEO_SCENE[SCENE]):(GEO_SP[sp]||GEO_STAND);
@@ -775,7 +775,7 @@ async function setScene(id){
   if(id && !urls[k]){ $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
   SCENE=id; app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
   FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
-  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":"指で、ゆっくりなでてみて"; }
+  if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); $("#hint").textContent=id==="pouch"?"ねぶくろの中で、すやすや。そっとなでてみて":id==="kagami"?"かがみもちになった。そっとなでてみて":"指で、ゆっくりなでてみて"; }
   else { play("idle",{fade:.45}); }
   toApp({t:"scene",id:id||"room"});
 }
@@ -797,8 +797,9 @@ else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
 
 glOK=initGL(); if(glOK) box.classList.add("gl");
 const okSp=x=>SPECIES.some(y=>y[0]===x);
-const startSp=(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
-fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); loadSpecies(startSp); tick(); });
+const startScene=SCENES.some(([i])=>i!=="room"&&i===Q.get("scene"))?Q.get("scene"):null;
+const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
+fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}).finally(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ if(startScene && GEO_SP[sp]) setScene(startScene); }); tick(); });
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond}};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
