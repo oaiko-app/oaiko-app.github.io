@@ -207,7 +207,7 @@ function build(){
   cv.addEventListener("pointerdown",onDown); cv.addEventListener("pointermove",onMove); ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,onUp));
   root.addEventListener("pointerdown",e=>e.stopPropagation()); root.addEventListener("wheel",e=>{ const L=selL(); if(!L) return; e.preventDefault(); gest={size0:L.size,w0:L.w||.5}; scaleL(L,e.deltaY<0?1.06:.94); gest=null; draw(); clearTimeout(root._w); root._w=setTimeout(commit,300); },{passive:false});
   $("#edX").onclick=()=>ED.close(); $("#edZ").onclick=()=>{ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; TPLS[0].f(s); S=s; sel=null; tool="ham"; penOn=false; commit(); refresh(); toast("最初からにしました。左の矢印で、前の状態に戻せます"); }; $("#edU").onclick=undo; $("#edR").onclick=redo; $("#edDone").onclick=finish; $("#edBack").onclick=()=>{ $("#edDoneSheet").hidden=true; $("#edDone").focus(); };
-  $("#edTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ tool=b.dataset.t; penOn=tool==="pen"; if(penOn) sel=null; if(tool==="ham"&&!(selL()&&/ham|photo/.test(selL().type))){ const h=[...S.layers].reverse().find(l=>l.type==="ham"||l.type==="photo"); if(h) sel=h.id; } panel(); draw(); });
+  $("#edTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ tool=b.dataset.t; penOn=tool==="pen"; if(penOn) sel=null; if(tool==="ham"&&!(selL()&&/ham|photo|snap/.test(selL().type))){ const h=[...S.layers].reverse().find(l=>l.type==="ham"||l.type==="photo"||l.type==="snap"); if(h) sel=h.id; } panel(); draw(); });
   $("#edFile").onchange=onFile;
   $("#edTabs").addEventListener("keydown",e=>{ if(!/^Arrow(Left|Right)$/.test(e.key)) return; const bs=[...$("#edTabs").querySelectorAll("button")], i=bs.indexOf(document.activeElement); if(i<0) return; e.preventDefault(); const n=bs[(i+(e.key==="ArrowLeft"?-1:1)+bs.length)%bs.length]; n.click(); n.focus(); });
   addEventListener("resize",fit); addEventListener("keydown",e=>{ if(!root||root.hidden) return;
@@ -222,7 +222,7 @@ const chips=(arr,cur,attr)=>arr.map(([v,n])=>`<button class="chp" role="radio" d
 function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.t===tool)); b.setAttribute("aria-selected",String(b.dataset.t===tool)); b.tabIndex=b.dataset.t===tool?0:-1; });
   const L=selL(); selBar(L);
   if(tool==="tpl") p.innerHTML=`<div class="edrow">${TPLS.map((t,i)=>`<button class="tplb" data-tp="${i}" aria-pressed="${S.tpl===i}"><b>${t.n}</b><small>${t.d}</small></button>`).join("")}</div><div class="edrow">${chips(RATIOS.map(r=>[r[0],r[0]]),S.ratio,"ra")}</div>`;
-  else if(tool==="ham") p.innerHTML=(L&&(L.type==="ham"||L.type==="photo")?(L.type==="ham"?hamTint(L):photoOpts(L)):`<div class="edcall">${IC.ham}<div><b>ハムの色も大きさも、自由に変えられます</b><small>カードの上のハムをタップすると、毛色・あざやかさ・明るさ・大きさを変えられます</small></div></div>`)+`<button class="edbtn own" id="edOwn">${IC.photo}うちの子の写真をのせる</button><div class="edrow grid">${HAMS.map((h,i)=>`<button class="thb" data-hm="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}<button class="thb tx" id="edSnap">${IC.snap}<small>いまの写真</small></button></div>`;
+  else if(tool==="ham") p.innerHTML=(L&&(L.type==="ham"||L.type==="photo"||L.type==="snap")?(L.type==="ham"?hamTint(L):photoOpts(L)):`<div class="edcall">${IC.ham}<div><b>ハムの色も大きさも、自由に変えられます</b><small>カードの上のハムをタップすると、毛色・あざやかさ・明るさ・大きさを変えられます</small></div></div>`)+`<button class="edbtn own" id="edOwn">${IC.photo}うちの子の写真をのせる</button>${secRow()}<p class="edlbl">ハム</p><div class="edrow grid">${HAMS.map((h,i)=>`<button class="thb" data-hm="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}<button class="thb tx" id="edSnap">${IC.snap}<small>いまの写真</small></button></div>`;
   else if(tool==="item") p.innerHTML=`<p class="edhint">ハムを選んでから押すと、その子に合わせて置かれます</p><div class="edrow grid">${ITEMS.map((h,i)=>`<button class="thb" data-it="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}</div>`;
   else if(tool==="bg") p.innerHTML=`<div class="edrow grid">${BGS.map((b,i)=>`<button class="thb" data-bgi="${i}" aria-label="${b.name}"><img src="${b.t||b.src}" alt=""></button>`).join("")}<button class="thb tx" id="edPhoto">${IC.photo}<small>自分の写真</small></button></div>
     <div class="edrow">${BGCOL.map((c,i)=>`<button class="sw" data-bgc="${i}" style="background:linear-gradient(${c[0]},${c[1]})" aria-label="色${i+1}"></button>`).join("")}</div>
@@ -233,8 +233,12 @@ function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button")
   p.querySelectorAll(".edrow").forEach(r=>{ if(r.querySelector('[role="radio"]')) r.setAttribute("role","radiogroup"); });
   if(tool==="tpl") p.insertAdjacentHTML("beforeend",`<p class="edhint">作りかけは、このブラウザに自動で保存されます</p>`);
   bindPanel(p); requestAnimationFrame(fit); }
+function secRow(){ const L=ED.secrets?ED.secrets():[]; if(!L.length) return ""; const n=L.filter(x=>x.got).length;
+  return `<p class="edlbl">見つけたかくしハム（${n}/${L.length}）</p><div class="edrow grid">${L.map((x,i)=>{ const ok=x.got&&(x.kind!=="snap"||x.src);
+    const th=x.kind==="tint"?`<img src="${(ED.curHam?ED.curHam():HAMS[0]).src}" alt="" style="filter:hue-rotate(${-x.tint.h}deg) saturate(${x.tint.s}%) brightness(${x.tint.b}%)">`:(x.src?`<img src="${x.src}" alt="">`:"");
+    return `<button class="thb sec ${ok?"":"lock"}" data-sec="${i}" aria-label="${ok?x.name:"まだ見つけていない"}" ${ok?"":"aria-disabled=\"true\""}>${ok?th:"<b>？</b>"}<small>${ok?x.name:(x.got?"もう一度見つけると使えます":"No."+x.no)}</small></button>`; }).join("")}</div>`; }
 function sizeSl(L){ return `<label class="edsl">大きさ<input type="range" data-szl min="8" max="140" value="${Math.round((L.w||.5)*100)}"></label>`; }
-function photoOpts(L){ return `<p class="edlbl">うちの子の写真</p><button class="edbtn own ai" id="edCut">${IC.ham}${L.cut?"背景を消しました（もう一度ためす）":"AIで背景を消す"}</button><div class="edrow">${chips([["0.06","角まる"],["0.5","まる"],["0","四角"]],String(L.round==null?0.06:L.round),"rd")}${chips([["#ffffff","白ふち"],["","ふちなし"]],L.border||"","bd")}</div>${sizeSl(L)}<p class="edhint">「みんなのハム」に載せるときは、人の顔や住所がわかるものが写っていないか確かめてね</p>`; }
+function photoOpts(L){ return `<p class="edlbl">${L.type==="snap"?"写真":"うちの子の写真"}</p><button class="edbtn own ai" id="edCut">${IC.ham}${L.cut?"背景を消しました（もう一度ためす）":"AIで背景を消す"}</button><div class="edrow">${chips([["0.06","角まる"],["0.5","まる"],["0","四角"]],String(L.round==null?0.06:L.round),"rd")}${chips([["#ffffff","白ふち"],["","ふちなし"]],L.border||"","bd")}</div>${sizeSl(L)}<p class="edhint">「みんなのハム」に載せるときは、人の顔や住所がわかるものが写っていないか確かめてね</p>`; }
 function hamTint(L){ const t=L.tint||{h:0,s:100,b:100}; return `<p class="edlbl">この子の色と大きさ</p><div class="edtint">${sizeSl(L)}<label class="edsl">毛色<input type="range" data-tn="h" min="-180" max="180" value="${t.h}"></label><label class="edsl">あざやかさ<input type="range" data-tn="s" min="0" max="220" value="${t.s}"></label><label class="edsl">明るさ<input type="range" data-tn="b" min="40" max="150" value="${t.b}"></label><button class="chp" id="edTR">色をもとに戻す</button></div>`; }
 function textOpts(L){ return `<div class="edrow"><button class="chp big" id="edEditT">${IC.edit}文字を書きかえる</button></div><div class="edrow">${FONTS.map(([f,n])=>`<button class="chp" data-fo="${f}" aria-pressed="${L.font===f}" style="font-family:'${f}'">${n}</button>`).join("")}</div>
   <div class="edrow">${COLORS.map(c=>`<button class="sw" data-tc="${c}" style="background:${c}" aria-pressed="${L.color===c}" aria-label="文字色"></button>`).join("")}</div>
@@ -275,6 +279,11 @@ function bindPanel(p){ const on=(q,f)=>p.querySelectorAll(q).forEach(b=>b.onclic
   if(q("#edSnap")) q("#edSnap").onclick=()=>{ if(ED.snap) ED.snap(u=>{ if(u) add({type:"snap",src:u,w:.62,border:"#ffffff",y:H()*.5}); }); };
   p.querySelectorAll("[data-tn]").forEach(r=>{ r.oninput=()=>{ const L=selL(); L.tint=Object.assign({h:0,s:100,b:100},L.tint); L.tint[r.dataset.tn]=+r.value; draw(); }; r.onchange=()=>commit(); });
   if(q("#edCut")) q("#edCut").onclick=()=>cutBg(selL());
+  p.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{ const x=(ED.secrets?ED.secrets():[])[+b.dataset.sec]; if(!x) return;
+    if(!x.got){ toast(`No.${x.no} は、まだ見つけていません。なでる画面で探してみてね`); return; }
+    if(x.kind==="tint"){ const h=ED.curHam?ED.curHam():HAMS[0]; ED.addHam(h,{tint:Object.assign({},x.tint)}); return; }
+    if(!x.src){ toast("この子の写真はまだありません。もう一度見つけると、カードで使えます"); return; }
+    add({type:"snap",src:x.src,w:.62,round:.06,border:"#ffffff",y:H()*.5,sec:x.id}); });
   if(q("#edOwn")) q("#edOwn").onclick=()=>{ ED._fileFor="ham"; $("#edFile").click(); };
   p.querySelectorAll("[data-szl]").forEach(r=>{ r.oninput=()=>{ const L=selL(); if(!L) return; L.w=+r.value/100; draw(); }; r.onchange=()=>commit(); });
   on("[data-rd]",b=>{ const L=selL(); if(!L) return; L.round=+b.dataset.rd; commit(); panel(); draw(); });
@@ -309,7 +318,7 @@ self.onmessage=async e=>{ try{
   cutW=new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"})),{type:"module"}); return cutW; }
 function edAsk(msg,ok){ return new Promise(res=>{ const w=document.createElement("div"); w.className="edask"; w.innerHTML=`<div class="edaskc"><p></p><div class="edaskb"><button class="edbtn ghost" data-v="0">やめる</button><button class="edbtn main" data-v="1"></button></div></div>`; w.querySelector("p").textContent=msg; w.querySelector('[data-v="1"]').textContent=ok;
   w.querySelectorAll("button").forEach(b=>b.onclick=()=>{ w.remove(); res(b.dataset.v==="1"); }); root.appendChild(w); }); }
-async function cutBg(L){ if(!L||L.type!=="photo") return;
+async function cutBg(L){ if(!L||(L.type!=="photo"&&L.type!=="snap")) return;
   if(!localStorage.getItem("oaiko_cutok")){ if(!await edAsk("はじめてのときだけ、背景を消すAI（約85MB）を読みこみます。Wi-Fiのときがおすすめです。写真はどこにも送らず、このスマホの中だけで処理します。","読みこんで消す")) return; try{ localStorage.setItem("oaiko_cutok","1"); }catch(e){} }
   const ov2=document.createElement("div"); ov2.className="edbusy"; ov2.innerHTML=`<div><div class="edspin"></div><p>準備しています…</p></div>`; root.appendChild(ov2); const msg=t=>ov2.querySelector("p").textContent=t;
   const src=L.orig||L.src; const W0=cutWorker();
@@ -368,9 +377,9 @@ let outPng=null, postedId=null;
 function finish(){ sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
   const ph=usesPhoto(); $("#edPost").hidden=false; $("#edPostNote").textContent=(ph?"写真には、人の顔・名札・住所や窓の外の景色など、身元がわかるものが写っていないか確かめてね。写真は載せる前に自動で確認します。":"")+"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。";
   $("#edDoneSheet").hidden=false; setTimeout(()=>$("#edShare").focus(),40); $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
-  $("#edShare").onclick=()=>ED.share&&ED.share(outPng,postedId);
+  $("#edShare").classList.remove("pulse"); $("#edShare").lastChild.textContent="画像を保存・シェア"; $("#edShare").onclick=()=>ED.share&&ED.share(outPng,postedId);
   $("#edPost").onclick=async()=>{ if(!ED.post) return; const bt=$("#edPost"); bt.disabled=true; bt.lastChild.textContent="載せています…"; const j=watermark(exportCanvas(540)).toDataURL("image/jpeg",.84);
-    const r=await ED.post(j, texts(), usesPhoto()); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました。シェアすると、このカードのページも広まります"; bt.lastChild.textContent="載せました"; } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
+    const r=await ED.post(j, texts(), usesPhoto()); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました！ 載せたことを、SNSでもシェアできます"; bt.lastChild.textContent="載せました"; const sh=$("#edShare"); sh.lastChild.textContent="載せたことをシェア"; sh.classList.add("pulse"); setTimeout(()=>sh.focus(),50); } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
   $("#edApp").onclick=()=>{ ED.close(); ED.toApp&&ED.toApp(); }; }
 function texts(){ return S.layers.filter(l=>l.type==="text").map(l=>l.text).join(" ").slice(0,60); }
 // ---------- 開く・閉じる ----------

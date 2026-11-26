@@ -94,3 +94,8 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .edtabs button{padding:0;letter-spacing:-.05em}
 .edtabs button{flex:1 1 auto;min-width:max-content}.edtabs button span{overflow:visible}
 .edtabs{gap:3px}
+
+.thb.sec{position:relative;flex-direction:column}.thb.sec small{position:absolute;left:2px;right:2px;bottom:2px;font-size:9px;line-height:1.2;background:#000a;color:#fff;border-radius:6px;padding:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thb.sec.lock{background:#ffffff10!important;border:1px dashed #ffffff40}.thb.sec.lock b{font-size:22px;opacity:.6}
+
+@keyframes edpl{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}#ed .edbtn.pulse{animation:edpl 1.2s ease-in-out 3}

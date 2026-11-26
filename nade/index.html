@@ -166,6 +166,15 @@
   .gi .gb button{border:0;background:none;font:inherit;min-height:36px;min-width:36px;border-radius:10px;color:#8a7262;font-size:13px}
   .gi .gb .lk{font-weight:800;color:#c0566b}.gi .gb .lk.on{background:#ffe9ee}
   .gi .gb span{flex:1}
+  #galGrid .gi img{cursor:zoom-in}
+  #galView{position:fixed;inset:0;z-index:60;background:rgba(20,14,10,.86);display:flex;align-items:center;justify-content:center;padding:16px}
+  #galView .gvc{position:relative;width:min(92vw,480px)}
+  #galView img{display:block;width:100%;max-height:calc(100dvh - 140px);object-fit:contain;border-radius:14px;background:#efe5d8}
+  #galView .gvx{position:absolute;right:-6px;top:-50px;width:44px;height:44px;border-radius:50%;border:0;background:#fffdf9;font-size:22px;color:#3b2a20}
+  #galView .gvb{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:12px}
+  #galView .gvb button{min-height:44px;min-width:44px;border:0;border-radius:999px;background:#fffdf9;color:#3b2a20;font:inherit;font-weight:800;padding:0 16px;font-size:15px}
+  #galView .gvb .lk{color:#c0566b}#galView .gvb .lk.on{background:#ffe9ee}
+  #galView .gvb button:disabled{opacity:.35}
   #galMore{margin-top:4px}
   #galEmpty{text-align:center;color:#8a7262;font-size:13px;margin:16px 0}
   .gi.hl{outline:3px solid #b8743c}
@@ -581,7 +590,10 @@ function showPill(x){
   el.onclick=()=>{ el.classList.remove("show"); if(x.img){ secCur={x,img:x.img}; shareSecret(); return; } snapHam(img=>{ secCur={x,img}; shareSecret(); }); };
   clearTimeout(showPill._t); showPill._t=setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=>el.hidden=true,400); },9000);
 }
-function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
+// 見つけたかくしハムの写真を、カードで使えるように小さくして残す
+function saveSecImg(id,u){ if(INAPP||!u||!/^data:image/.test(u)) return; const im=new Image(); im.onload=()=>{ try{ const c=document.createElement("canvas"), k=Math.min(1,420/im.width); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+  const m=store.get("secimg",{})||{}; m[id]=c.toDataURL("image/jpeg",.82); const ks=Object.keys(m); while(ks.length>14){ delete m[ks.shift()]; } store.set("secimg",m); }catch(e){} }; im.src=u; }
+function showSecret(x,img){ if(x&&!x.img&&!x.tint) saveSecImg(x.id,img); setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
   $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:"");
   $("#sNote").textContent=x.tint?TINT_NOTE:""; $("#sNote").hidden=!x.tint;
   $("#sFound").textContent=`このページのかくし図鑑 ${SEC_ALL.filter(y=>secSeen.has(y.id)).length}/${SEC_ALL.length}`;
@@ -1789,16 +1801,18 @@ $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); 
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=6"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=6"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=8"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=8"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
 async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);
   ED.name=()=>life.name||"うちの子";
+  ED.secrets=()=>{ const saved=store.get("secimg",{})||{}, TP={doku:{h:95,s:150,b:95},doku_game:{h:160,s:220,b:105},doku_aka:{h:25,s:200,b:95},doku_mido:{h:-90,s:140,b:92},doku_yami:{h:100,s:60,b:45}};
+    return SEC_ALL.map(x=>{ const got=secSeen.has(x.id); if(x.img) return {id:x.id,no:x.no,name:x.name,got,kind:"img",src:x.img}; if(TP[x.id]) return {id:x.id,no:x.no,name:x.name,got,kind:"tint",tint:TP[x.id]}; return {id:x.id,no:x.no,name:x.name,got,kind:"snap",src:saved[x.id]||null}; }); };
   ED.curHam=()=>ED_ASSETS.ham.find(h=>h.sp===sp&&!h.pose)||ED_ASSETS.ham[0];
   ED.snap=done=>snapCard(sn=>done(sn&&sn.url));
   ED.toApp=()=>setTimeout(()=>$("#applink").onclick(new Event("click")),120);
-  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; const url=postId?`https://oaiko-app.github.io/nade/?g=${postId}`:"https://oaiko-app.github.io/nade/"; const text=`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
+  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; const url=postId?`https://oaiko-app.github.io/nade/?g=${postId}`:"https://oaiko-app.github.io/nade/"; const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
     if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
     try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-card.png",{type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
@@ -1855,8 +1869,28 @@ async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$(
   }catch(e){ if(reset){ grid.innerHTML=`<p class="note" role="alert">読みこめませんでした。通信を確かめてね <button type="button" class="t" id="galRetry">もう一度</button></p>`; const b=$("#galRetry"); if(b) b.onclick=()=>galLoad(true); } }
   grid.removeAttribute("aria-busy"); gal.busy=false; }
 $("#galMore").onclick=()=>galLoad(false);
+// 一覧のカードを大きく見る（左右で前後へ）
+function galView(id){ const items=[...$("#galGrid").querySelectorAll(".gi")]; let i=items.findIndex(x=>x.dataset.id===id); if(i<0) return;
+  let v=$("#galView"); if(!v){ v=document.createElement("div"); v.id="galView"; v.setAttribute("role","dialog"); v.setAttribute("aria-modal","true"); v.setAttribute("aria-label","カードを大きく見る");
+    v.innerHTML=`<div class="gvc"><button class="gvx" type="button" aria-label="とじる">×</button><img alt=""><div class="gvb"><button class="gvp" type="button" aria-label="前のカード">‹</button><button class="lk gvl" type="button" aria-label="いいね">♡ <b>0</b></button><button class="gvs" type="button">シェア</button><button class="gvn" type="button" aria-label="次のカード">›</button></div></div>`;
+    document.body.appendChild(v); v.addEventListener("pointerdown",e=>e.stopPropagation());
+    v.onclick=e=>{ if(e.target===v) close(); }; let sx=null; v.addEventListener("touchstart",e=>{ sx=e.touches[0].clientX; },{passive:true}); v.addEventListener("touchend",e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx; sx=null; if(Math.abs(dx)>50) go(dx<0?1:-1); }); }
+  const img=v.querySelector("img"), lk=v.querySelector(".gvl");
+  function show(){ const it=items[i], id=it.dataset.id, src=it.querySelector("img").src, alt=it.querySelector("img").alt, b=it.querySelector(".lk b");
+    img.src=src; img.alt=alt; lk.querySelector("b").textContent=b?b.textContent:"0"; lk.classList.toggle("on",gal.liked.has(id));
+    lk.onclick=()=>{ const o=it.querySelector("[data-lk]"); if(o&&!gal.liked.has(id)){ o.click(); setTimeout(show,30); } };
+    v.querySelector(".gvs").onclick=async()=>{ const url=`https://oaiko-app.github.io/nade/?g=${id}`, text=`「みんなのハム」で見つけた子 #おあいこ #みんなのハム`;
+      try{ if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+      window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+    v.querySelector(".gvp").disabled=i<=0; v.querySelector(".gvn").disabled=i>=items.length-1; }
+  function go(d){ const j=i+d; if(j<0||j>=items.length) return; i=j; show(); }
+  function close(){ v.hidden=true; removeEventListener("keydown",kd,true); const o=items[i]&&items[i].querySelector("img"); if(o) o.focus({preventScroll:true}); }
+  const kd=e=>{ if(v.hidden) return; if(e.key==="Escape"){ e.stopPropagation(); e.preventDefault(); close(); } else if(e.key==="ArrowRight") go(1); else if(e.key==="ArrowLeft") go(-1); };
+  v.querySelector(".gvx").onclick=close; v.querySelector(".gvp").onclick=()=>go(-1); v.querySelector(".gvn").onclick=()=>go(1);
+  addEventListener("keydown",kd,true); v.hidden=false; show(); setTimeout(()=>v.querySelector(".gvx").focus(),30); }
 $("#galSort").querySelectorAll("button").forEach(b=>b.onclick=()=>{ gal.s=b.dataset.s; gal.focus=null; $("#galSort").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); galLoad(true); });
 $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[data-lk]"), rp=e.target.closest("[data-rp]");
+  if(!lk&&!rp&&e.target.tagName==="IMG"){ const gi=e.target.closest(".gi"); if(gi) galView(gi.dataset.id); return; }
   if(lk){ const id=lk.dataset.lk; if(gal.liked.has(id)) return; gal.liked.add(id); store.set("galLiked",[...gal.liked].slice(-300)); lk.classList.add("on"); const b=lk.querySelector("b"); b.textContent=(+b.textContent||0)+1; haptic("light");
     fetch(GAL_URL+"/like",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); }
   if(rp){ if(!await askDlg("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）","知らせる")) return; const id=rp.dataset.rp;
