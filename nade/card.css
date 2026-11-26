@@ -77,3 +77,20 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .edspin{width:38px;height:38px;margin:auto;border-radius:50%;border:4px solid #ffffff33;border-top-color:#ffb877;animation:edsp 1s linear infinite}
 @keyframes edsp{to{transform:rotate(360deg)}}
 #ed .edbtn.own.ai{background:#e8954c;color:#fff}#ed .edbtn.own.ai svg{color:#fff}
+
+.eddraft{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px;background:#3a2c22;font-size:12px}
+.eddraft span{flex:1;min-width:140px}
+.tplb[aria-pressed="true"]{outline:2px solid #f2b880;outline-offset:-2px}
+#ed .chp[aria-checked="true"]{background:#f6efe6;color:#2a1f19}
+#edTitle:focus{outline:none}
+.edtabs button span{max-width:100%;overflow:hidden}
+@media (max-width:360px){ .edt{display:none} .edtop{justify-content:space-between} .edtabs button{font-size:9px;letter-spacing:-.06em;padding:0} .edtabs button svg{width:18px;height:18px} }
+@media (orientation:landscape) and (max-height:520px){
+  #ed{display:grid!important;grid-template-columns:1fr min(46vw,400px);grid-template-rows:auto auto 1fr auto;grid-template-areas:"top top" "stage sel" "stage panel" "stage tabs"}
+  #ed .edtop{grid-area:top;padding-top:4px;padding-bottom:4px} #ed .edstage{grid-area:stage;min-height:0} #ed .edsel{grid-area:sel;flex-wrap:wrap} #ed .edpanel{grid-area:panel;max-height:none;border-radius:14px 14px 0 0} #ed .edtabs{grid-area:tabs}
+  #ed .edtabs button{min-height:44px} #ed .eddraft{display:none}
+}
+
+.edtabs button{padding:0;letter-spacing:-.05em}
+.edtabs button{flex:1 1 auto;min-width:max-content}.edtabs button span{overflow:visible}
+.edtabs{gap:3px}
