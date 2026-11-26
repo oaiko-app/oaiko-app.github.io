@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="apple-itunes-app" content="app-id=6836835986">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a1e16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
 <title>ハムスターを撫でられるページ</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🐹%3C/text%3E%3C/svg%3E">
 <meta name="description" content="指でなでると、ハムスターがうっとりする。夜は起きて、昼はすやすや。">
@@ -12,7 +15,7 @@
 <meta property="og:image" content="https://oaiko-app.github.io/nade/og.jpg">
 <meta property="og:url" content="https://oaiko-app.github.io/nade/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="apple-itunes-app" content="app-id=6836835986">
+
 <style>
   :root{--ink:#3b2a20;--paper:#fff8ef;--accent:#e8924a}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;min-width:0}
@@ -48,6 +51,13 @@
   #hand.show{opacity:1}
   #applink{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 82px);z-index:6;display:none;background:rgba(255,248,239,.95);color:var(--ink);border-radius:16px;padding:10px 44px 10px 14px;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transition:opacity .6s}
   #applink.show{display:block;opacity:1}
+  .ask{position:fixed;inset:0;z-index:300;background:rgba(30,20,12,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+  .askc{background:#fffdf9;color:#3b2a20;border-radius:18px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .askc p{margin:0 0 14px;font-size:14px;line-height:1.7;white-space:pre-line}
+  .askb{display:flex;gap:8px}.askb button{flex:1;min-height:44px;border-radius:12px;border:0;font:inherit;font-weight:700}
+  .askb .no{background:#efe5da;color:#3b2a20}.askb .yes{background:#e8954c;color:#fff}
+  .legal{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:10px 0 2px;font-size:11px}.legal a{color:#8a7262}
+  [hidden]{display:none!important}
   #applink small{display:block;font-size:11px;font-weight:400;color:#8a7262;margin-top:2px}
   #alX{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:transparent;font-size:18px;color:#8a7262}
   #app.alshow #hint{opacity:0}
@@ -74,6 +84,9 @@
   .btn:active{transform:scale(.96)}
   .btn.on{background:#3d4470;color:#fff}
   #hint{position:absolute;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;background:rgba(30,20,12,.38);border-radius:14px;padding:6px 14px;bottom:calc(env(safe-area-inset-bottom) + 84px);text-align:center;color:#fff8ef;font-size:15px;font-weight:700;line-height:1.5;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:4;pointer-events:none;transition:opacity .6s}
+  #loading.err{pointer-events:auto}
+  .neterr{display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(30,20,12,.7);padding:14px 18px;border-radius:14px;text-align:center}
+  .neterr button{border:0;border-radius:999px;background:#fffdf9;color:#3b2a20;font:inherit;font-weight:700;padding:8px 18px;min-height:40px}
   #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff8ef;font-size:14px;z-index:6;background:rgba(30,20,12,.35);transition:opacity .4s;pointer-events:none}
   #loading.hide{opacity:0}
   #tap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(30,20,12,.6);color:#fff8ef;font-size:16px;border:0;width:100%;font-family:inherit}
@@ -143,7 +156,9 @@
   #galMore{margin-top:4px}
   #galEmpty{text-align:center;color:#8a7262;font-size:13px;margin:16px 0}
   .gi.hl{outline:3px solid #b8743c}
-  #mkBtnTop{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 92px);z-index:6;border:0;border-radius:999px;background:#fffdf9e6;color:#3b2a20;font:inherit;font-size:13px;font-weight:800;min-height:40px;padding:0 14px;box-shadow:0 3px 12px rgba(0,0,0,.15)}
+  #galBtnTop{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 156px);z-index:6;border:0;border-radius:999px;background:#fffdf9cc;color:#3b2a20;font:inherit;font-size:12px;font-weight:700;min-height:36px;padding:0 12px;box-shadow:0 3px 12px rgba(0,0,0,.12)}
+  @media (orientation:landscape) and (max-height:600px){ #mkBtnTop{top:auto!important;bottom:calc(env(safe-area-inset-bottom) + 150px)} #galBtnTop{top:auto!important;bottom:calc(env(safe-area-inset-bottom) + 104px)} }
+  #mkBtnTop{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 110px);z-index:6;border:0;border-radius:999px;background:#fffdf9e6;color:#3b2a20;font:inherit;font-size:13px;font-weight:800;min-height:40px;padding:0 14px;box-shadow:0 3px 12px rgba(0,0,0,.15)}
   #secret{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px;opacity:0;transition:opacity .35s}
   #secret.show{opacity:1}
   #secret[hidden]{display:none}
@@ -182,10 +197,14 @@
     #bodySheet{left:auto;right:10px;top:10px;bottom:10px;width:min(52%,300px);overflow:auto;padding:12px 14px}
     #bodySheet .foot button{padding:8px 12px}
   }
+  @media (orientation:landscape) and (max-height:600px){ #hint{left:12px;transform:none;max-width:30%;font-size:12px;padding:5px 10px;text-align:left} }
+  @media (max-width:360px){ #mk .tabs button{font-size:12px;white-space:nowrap;padding:0 4px} #mk .tabs button .ic{display:none} }
   /* --- review r2 --- */
   #move .scard,#secret .scard{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
   #move{padding:12px}
-  #mvClose,#sClose{position:sticky;bottom:-16px;background:#fffdf9!important;padding:10px 0 12px;margin-bottom:-4px}
+  .mvfoot{position:sticky;bottom:-16px;background:#fffdf9;padding:8px 0 4px;margin-bottom:-4px;display:flex;flex-direction:column;gap:2px;z-index:1}
+  .mvfoot #mvClose{position:static!important;padding:8px 0 10px!important}
+  #sClose{position:sticky;bottom:-16px;background:#fffdf9!important;padding:10px 0 12px;margin-bottom:-4px}
   #app.alshow #padBtn{bottom:calc(env(safe-area-inset-bottom) + 160px)}
   #padBtn{width:44px;height:44px}
   #top .chip,#scenes .chip{min-height:44px}
@@ -201,7 +220,8 @@
   #secList{margin:8px 0 0;font-size:11px;color:#8a7262;line-height:1.55;display:flex;flex-direction:column;gap:1px}
   #secList b{color:#3b2a20;font-size:12px}#secList .got{color:#b8743c;font-weight:700}#secList small{margin-top:4px;font-size:10px}
   #bodySheet{max-height:min(58%,420px);overflow-y:auto;overscroll-behavior:contain}
-  #app.sheetopen #applink{display:none}
+  #app.sheetopen #applink,#app.sheetopen #padBtn,#app.sheetopen #mkBtnTop,#app.sheetopen #galBtnTop{display:none}
+  #app.padopen #applink{display:none!important}
   @media (orientation:landscape) and (max-height:520px){ #bodySheet{max-height:none} }
   #loading.soft{background:transparent;align-items:flex-end;padding-bottom:calc(env(safe-area-inset-bottom) + 140px);font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
   #bgblur{position:fixed;inset:-60px;z-index:0;background:#1d1611 center/cover no-repeat;filter:blur(34px) brightness(.5) saturate(1.1);display:none;transition:background-image .6s}
@@ -211,7 +231,7 @@
   #top,#scenes,#bar,#padBtn,#status{transition:opacity .4s}
   #sndTip{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:7;background:rgba(255,248,239,.96);color:var(--ink);font-size:12px;font-weight:700;border-radius:12px;padding:8px 12px;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transition:opacity .4s;pointer-events:none}
   #sndTip.show{opacity:1}
-  #sndTip:after{content:"";position:absolute;right:24px;bottom:-6px;border:6px solid transparent;border-top-color:rgba(255,248,239,.96);border-bottom:0}
+  #sndTip:after{content:"";position:absolute;right:var(--ax,24px);bottom:-6px;border:6px solid transparent;border-top-color:rgba(255,248,239,.96);border-bottom:0}
   #mvQR{display:none;text-align:center;margin:4px 0}
   #mvQR canvas{width:156px;height:156px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #e3d3c3}
   #mvQR p{margin:4px 0 0;font-size:11px;color:#8a7262}
@@ -219,8 +239,11 @@
   #app.inapp #sApp{display:none}
   .mvwhat{margin:2px 0 4px;padding:8px 10px;background:#f6efe6;border-radius:12px;font-size:12px;text-align:left;line-height:1.7}
 </style>
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://oaiko-app.github.io/nade/">
 </head>
 <body>
+<noscript><p style="padding:24px;font:16px sans-serif;color:#3b2a20;background:#fbf5ec">このページは JavaScript をオンにすると、ハムスターをなでられます。</p></noscript>
 <div id="bgblur"></div>
 <div id="app">
   <div id="stage">
@@ -295,7 +318,7 @@
   </div></div>
   <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
-    <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
+    <p class="slv" style="font-size:22px"><span id="mvName" style="display:block;word-break:break-all"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
     <div class="mvwhat">アプリでは…<br>・自分にやさしくできた日は、この子の暮らしも育つ<br>・きせかえ・おでかけ・お部屋づくり<br>・かくし図鑑は全53種。ここでは見つからない子も</div>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
@@ -303,8 +326,8 @@
     <p id="mvDev" style="display:none;margin:4px 0;font-size:12px;color:#8a7262"></p>
     <div id="mvQR"><canvas id="mvQRc" aria-label="iPhoneで読み取るQRコード" role="img"></canvas><p>iPhoneのカメラで読み取ると、このコードのままiPhoneで開けます</p></div>
     <a id="mvStore" href="https://apps.apple.com/jp/app/id6836835986" style="display:none;text-align:center;background:#3d4470;color:#fff;border-radius:14px;padding:12px;text-decoration:none;font-weight:700;margin:6px 0">App Storeでおあいこをひらく</a>
-    <button id="mvCopy">ひきつぎコードをコピー</button>
-    <button id="mvClose">あとで</button>
+    <div class="mvfoot"><button id="mvCopy">ひきつぎコードをコピー</button>
+    <button id="mvClose">あとで</button></div><div class="legal"><a href="https://oaiko-app.github.io/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-app.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-app.github.io/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
   </div></div>
   <div id="mk" hidden role="dialog" aria-modal="true" aria-label="うちの子カード"><div class="scard">
     <div class="tabs" role="tablist"><button role="tab" id="tabMk" aria-selected="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>つくる</button><button role="tab" id="tabGal" aria-selected="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>みんなのハム</button></div>
@@ -312,7 +335,7 @@
       <div id="mkPrevWrap"><img id="mkPrev" alt="うちの子カードの見本"></div>
       <div class="mkrow" id="mkSt" hidden></div>
       <label>カードの色</label><div class="mkrow" id="mkFr"></div>
-      <label for="mkN">名前（8文字まで）</label><input type="text" id="mkN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
+      <label for="mkN">名前（8文字まで・この子の名前も変わります）</label><input type="text" id="mkN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
       <label for="mkL">ひとこと（24文字まで）</label><input type="text" id="mkL" maxlength="24" placeholder="すきなもの：ひまわりの種" autocomplete="off">
       <p class="note">種類・体つき・場面は、なでる画面で変えたものがそのまま使われます。</p>
       <p id="mkMsg" role="status"></p>
@@ -326,12 +349,13 @@
       <div id="galGrid"></div><p id="galEmpty" hidden>まだだれも載せていません。いちばん乗りしよう</p>
       <button class="sub" id="galMore" hidden>もっと見る</button>
       <p class="note">いやな投稿は「…」から知らせてください。2人から知らせがあると、すぐ見えなくなります。</p>
-      <button class="main" id="galMake">自分の子もつくる</button>
+      <button class="main" id="galMake">自分の子もつくる</button><div class="legal"><a href="https://oaiko-app.github.io/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-app.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-app.github.io/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
     </div>
     <button class="sub" id="mkClose">とじる</button>
   </div></div>
   <button id="pill" hidden></button>
   <button id="noDoku" hidden>しばらく毒にしない</button>
+  <button id="galBtnTop">みんなのハム</button>
   <button id="mkBtnTop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>うちの子カード</button>
   <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg></button>
   <div id="pad" hidden role="dialog" aria-modal="true" aria-label="ひみつのコマンド">
@@ -347,6 +371,14 @@
   <button id="tap">準備できたよ。タップしてはじめる</button>
 </div>
 <script>
+// 不具合の知らせ（エラー内容とブラウザの種類だけ。1回の表示で3件まで）
+(function(){ var n=0, U="https://oaiko-ai.yukiya1013.workers.dev/gal/log", V="2026-11-26b";
+  function send(m,s){ if(n++>=3||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return; try{ var b=JSON.stringify({m:String(m||"").slice(0,300),s:String(s||"").slice(0,200),l:V,p:location.search.slice(0,80)}); if(navigator.sendBeacon) navigator.sendBeacon(U,b); else fetch(U,{method:"POST",body:b,keepalive:true}); }catch(e){} }
+  addEventListener("error",function(e){ send(e.message,(e.filename||"").split("/").pop()+":"+e.lineno+":"+e.colno); });
+  addEventListener("unhandledrejection",function(e){ var r=e.reason; send("rej: "+(r&&r.message||r),r&&r.stack&&String(r.stack).split("\n")[1]); });
+})();
+</script>
+<script>
 {
 // アプリ（おあいこ）で選べる種類と同じにする（ウェブとアプリで、会える子をそろえる）
 const SPECIES=[["kinkuma","キンクマ"],["djungarian","ジャンガリアン"],["robo","ロボロフスキー"],["campbell","キャンベル"],["longhair","長毛"],["pearl","パールホワイト"]];
@@ -361,7 +393,8 @@ let META={}, sp=null, urls={}, cur=va, nxt=vb, state="idle", pending=null, reqId
 
 // ---------- アプリ（おあいこ）の中で開いたとき ----------
 const Q=new URLSearchParams(location.search);
-const INAPP=Q.get("app")==="1";
+const INAPP=Q.get("app")==="1" && window.parent!==window;
+const ANDROID=/Android/i.test(navigator.userAgent);
 function toApp(m){ if(!INAPP) return; try{ parent.postMessage(Object.assign({src:"nade"},m),"*"); }catch(e){} }
 
 // ---------- 保存 ----------
@@ -539,16 +572,21 @@ function showSecret(x,img){ setTimeout(()=>{ if(!$("#secret").hidden) openDlg($(
 }
 function hideSecret(){ closeDlg(); if(!INAPP) setTimeout(showAL,1500); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
 // 図鑑のカード（シェア用の画像）
+function fitText(g,t,x,y,maxW,size,weight,minSize){ let s=size; const F=z=>`${weight} ${z}px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif`; g.font=F(s); while(s>minSize&&g.measureText(t).width>maxW){ s-=2; g.font=F(s); } g.fillText(t,x,y); }
+function wrapText(g,t,x,y,maxW,size,weight,maxLines){ const F=z=>`${weight} ${z}px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif`; let s=size, lines;
+  const split=()=>{ const out=[]; let cur=""; for(const ch of graph(t)){ if(g.measureText(cur+ch).width>maxW&&cur){ out.push(cur); cur=/^[、。」）]$/.test(ch)?(out[out.length-1]+=ch,""):ch; } else cur+=ch; } if(cur) out.push(cur); return out; };
+  do{ g.font=F(s); lines=split(); if(lines.length<=maxLines) break; s-=2; }while(s>24);
+  const lh=s*1.4; lines.forEach((l,i)=>g.fillText(l,x,y+i*lh)); }
 function secretCard(x,img){
   return new Promise(res=>{
     const c=document.createElement("canvas"); c.width=1080; c.height=1350; const g=c.getContext("2d");
     g.fillStyle="#fbf5ec"; g.fillRect(0,0,1080,1350);
     const fin=()=>{
       g.fillStyle="#8a7262"; g.textAlign="center"; g.font="500 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(`かくし図鑑 No.${x.no}`,540,95);
-      const top=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:""); if(top){ g.fillStyle="#b8743c"; g.font=`800 ${top.length>14?44:54}px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif`; g.fillText(top,540,170); }
-      if(x.tint){ g.fillStyle="#a8927f"; g.font="400 26px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("※色の変化は、あそびの演出です（ストレスやケガによる変色ではありません）",540,1185); }
-      g.fillStyle="#3b2a20"; g.font="800 92px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.name,540,1040);
-      g.fillStyle="#8a7262"; g.font="400 38px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText(x.desc,540,1120);
+      const top=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:""); if(top){ g.fillStyle="#b8743c"; fitText(g,top,540,170,980,54,800,30); }
+      if(x.tint){ g.fillStyle="#a8927f"; g.font="400 26px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; fitText(g,"※色の変化は、あそびの演出です（ストレスやケガによる変色ではありません）",540,1200,1000,26,400,18); }
+      g.fillStyle="#3b2a20"; fitText(g,x.name,540,1035,980,92,800,48);
+      g.fillStyle="#8a7262"; wrapText(g,x.desc,540,1100,960,38,400,2);
       g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-app.github.io/nade",540,1260);
       res(c.toDataURL("image/png"));
     };
@@ -558,7 +596,7 @@ function secretCard(x,img){
 }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`ハムスターを${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
   const full=`${text}\n${url}\n`; // URLのあとにも改行を入れて、次の文とくっつかないようにする
   const png=await secretCard(x,img);
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
@@ -1154,13 +1192,14 @@ function nextCalmTime(clip,from,limit,thr){ // 最初のポーズに近いタイ
 }
 let loading=null; // 切り替え中の動画（読み込みが終わるまで次の切り替えをしない）
 function play(clip,opt={}){
+  if(!urls[clip] && sp && BASE.concat(EXTRA[sp]||[]).includes(clip)) urls[clip]=`v/${sp}/${clip}.mp4`; // まだ先読みしていない動画は、そのまま読みにいく
   if(!urls[clip]) clip=urls.idle?"idle":Object.keys(urls)[0];
   if(!clip||!urls[clip]) return;
   if(loading){ loading.cancel(); }
   state=clip; switchAt=null;
   const v=nxt, old=cur, fade=opt.fade||0.22, token={dead:false,cancel(){this.dead=true;}};
   loading=token;
-  v.pause(); v.muted=true; v.src=urls[clip]; v.playbackRate=opt.rate||1;
+  v.pause(); v.muted=true; v.src=urls[clip]||`v/${sp}/${clip}.mp4`; v.playbackRate=opt.rate||1;
   let swapped=false;
   const swap=()=>{
     if(token.dead||swapped) return; swapped=true; loading=null;
@@ -1181,8 +1220,13 @@ function play(clip,opt={}){
   v.addEventListener("playing",swap);
   token.cancel=()=>{ token.dead=true; v.removeEventListener("playing",swap); v.removeEventListener("loadedmetadata",begin); clearTimeout(fb); };
   const fb=setTimeout(()=>{ if(!token.dead && v.readyState>=2) swap(); },2500);
+  const slow=setTimeout(()=>{ if(!token.dead && !swapped && v.readyState<2 && !document.hidden) netErr(); },15000);
+  v.addEventListener("playing",()=>clearTimeout(slow),{once:true});
+  v.onerror=()=>{ if(!token.dead && !swapped && navigator.onLine===false) netErr(); };
   if(v.readyState>=1) begin(); else v.addEventListener("loadedmetadata",begin);
 }
+function netErr(){ const L=$("#loading"); L.innerHTML='<span class="neterr">うまく読みこめませんでした。通信を確かめてね<button type="button" id="netRetry">もう一度</button></span>'; L.classList.remove("hide","soft"); L.classList.add("err");
+  $("#netRetry").onclick=()=>{ L.classList.remove("err"); L.textContent="よみこみ中…"; const id=sp; sp=null; loadSpecies(id); }; }
 function tick(){
   requestAnimationFrame(tick);
   glDraw();
@@ -1367,9 +1411,9 @@ const SEC_ALL=Object.values(SECRET).sort((a,b)=>a.no-b.no);
 const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","……からい！","……にがい","……闇"];
 // 見つけたら：図鑑カード（はじめて）か、シェアの小さなボタン（2回目から）。fx は写真の色加工
 function unlock(x,opt={}){
-  if(!x) return; if(!opt.nade) lastN=0;
+  if(!x) return;
   if(!x.tint) toApp({t:"secret",id:x.id});
-  if(!secSeen.has(x.id)){ secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>{ if(x.img) showSecret(x,x.img); else snapHam(img=>showSecret(x,img),opt.fx); },opt.wait||1700); }
+  if(!secSeen.has(x.id)){ if(!opt.nade) lastN=0; secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>{ if(x.img) showSecret(x,x.img); else snapHam(img=>showSecret(x,img),opt.fx); },opt.wait||1700); }
   else if(opt.nade) setTimeout(()=>showPill(x),1400);
 }
 function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_ALL.filter(x=>secSeen.has(x.id)).length;
@@ -1386,8 +1430,8 @@ function padPress(k){
   else if(q==="BABA"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); sayText("……これ、毒かも"); haptic("heavy"); request("startle"); unlock(SECRET.yuki,{wait:1200}); },500); }
 }
 
-function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; requestAnimationFrame(()=>$("#pad").classList.add("open")); }
-function closePad(){ closeDlg(); $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
+function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; app.classList.add("padopen"); requestAnimationFrame(()=>$("#pad").classList.add("open")); }
+function closePad(){ closeDlg(); app.classList.remove("padopen"); $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
 async function goKagami(){
   if(!GEO_SP[sp]) await loadSpecies("kinkuma");
   lastN=0; await setScene("kagami"); haptic("heavy"); sayText("……鏡餅になった");
@@ -1532,8 +1576,9 @@ $("#bMove").onclick=()=>{ closeBody(); setTimeout(()=>$("#applink").onclick(new 
 const SEG=(typeof Intl!=="undefined"&&Intl.Segmenter)?new Intl.Segmenter("ja",{granularity:"grapheme"}):null;
 const graph=t=>SEG?[...SEG.segment(t)].map(x=>x.segment):[...t];
 function nameCount(){ const n=graph($("#bN").value).length, el=$("#bNcount"); el.textContent=n>=8?"8文字まで":`${n}/8文字`; el.classList.toggle("max",n>=8); }
-$("#bN").oninput=e=>{ const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(life.name)) unlock(SECRET.hampter,{wait:900}); };
-function nameChanged(){ renderHint(false); if($("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
+$("#bN").addEventListener("compositionend",e=>$("#bN").oninput(e));
+$("#bN").oninput=e=>{ if(e.isComposing) return; const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(life.name)) unlock(SECRET.hampter,{wait:900}); };
+function nameChanged(){ renderHint(false); if(!ANDROID&&$("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
   if(HASHCODE) return HASHCODE;
@@ -1569,7 +1614,7 @@ $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play()
 
 // ---------- 種類 ----------
 async function loadSpecies(id){
-  const my=++reqId; document.querySelectorAll("#top .chip").forEach(c=>c.classList.toggle("busy",c.dataset.id===id)); sp=id; $("#loading").classList.remove("hide");
+  const my=++reqId; document.querySelectorAll("#top .chip").forEach(c=>c.classList.toggle("busy",c.dataset.id===id)); sp=id; $("#loading").classList.remove("hide","err"); $("#loading").textContent="よみこみ中…";
   if(!GEO_SP[id]){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
   applyGeo(); renderScenes();
   $("#loading").classList.remove("soft"); poster.onload=()=>{ if(my===reqId) $("#loading").classList.add("soft"); }; poster.src=`v/${id}/poster.jpg`; $("#bgblur").style.backgroundImage=`url(v/${id}/poster.jpg)`;
@@ -1582,7 +1627,7 @@ async function loadSpecies(id){
   next[first]=await get(first);
   if(my!==reqId){ return; }
   const old=urls; urls=next; setTimeout(()=>Object.values(old).forEach(u=>u.startsWith("blob:")&&URL.revokeObjectURL(u)),1500);
-  (async()=>{ const order=["happy","idle","look","startle","eat","groom","yawn","sleep","sleeploop"].concat(EXTRA[id]||[]);
+  (async()=>{ const order=["happy","idle","look"]; // よく使う3本だけ先読み。ほかは必要になったときに読む
     for(const c of order){ if(my!==reqId) return; if(!next[c]) next[c]=await get(c); } })();
   $("#loading").classList.add("hide"); pending=null; try{ if(!performance.getEntriesByName("nade-ready").length){ performance.mark("nade-ready"); (afterReady.q||[]).splice(0).forEach(f=>setTimeout(f,0)); } }catch(e){} document.querySelectorAll("#top .busy").forEach(c=>c.classList.remove("busy"));
   if(shouldSleep()){ app.classList.add("sleeping"); play("sleeploop"); renderHint(true); }
@@ -1594,7 +1639,8 @@ renderHint(false);
 new MutationObserver(()=>{ const k=app.classList.contains("sleeping")+"|"+app.classList.contains("scene"); if(k!==renderHint._k){ renderHint._k=k; renderHint(true); } }).observe(app,{attributes:true,attributeFilter:["class"]});
 // しばらく触らないと、まわりの操作をそっと消して、ハムだけを眺められるようにする
 let lastAct=Date.now();
-["pointerdown","keydown","wheel"].forEach(ev=>addEventListener(ev,()=>{ lastAct=Date.now(); if(app.classList.contains("calm")) app.classList.remove("calm"); },true));
+["pointerdown","keydown","wheel"].forEach(ev=>addEventListener(ev,e=>{ lastAct=Date.now(); if(app.classList.contains("calm")){ app.classList.remove("calm"); if(ev==="pointerdown"&&e.pointerType!=="mouse"&&stage.contains(e.target)){ e.stopPropagation(); e.preventDefault(); } } },true));
+addEventListener("pointermove",e=>{ if(e.pointerType==="mouse"&&app.classList.contains("calm")){ app.classList.remove("calm"); lastAct=Date.now(); } },true);
 setInterval(()=>{ const busy=DLG||!$("#pad").hidden||$("#bodySheet").classList.contains("open")||!$("#loading").classList.contains("hide")||!$("#move").hidden||!$("#secret").hidden;
   if(!busy && Date.now()-lastAct>25000) app.classList.add("calm");
   if(!busy && !document.hidden && (life.nade||0)>=3 && !asleep() && !secSeen.has("kyomu") && Date.now()-lastAct>60000){ sayText("……（無）"); unlock(SECRET.kyomu,{wait:300,fx:"mono"}); } },1000);
@@ -1605,10 +1651,12 @@ SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.classN
 function renderScenes(){ const ok=!!GEO_SP[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
   let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!ok&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=ok; kb.hidden=ok; }
   sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok; if(!ok) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); }
+let sceneReq=0;
 async function setScene(id){
-  if(id===SCENE) return; const bc=sceneBar.querySelector(`.chip[data-sc="${id||"room"}"]`); if(bc) bc.classList.add("busy");
+  if(id===SCENE) return; const my=++sceneReq, spAt=sp; const bc=sceneBar.querySelector(`.chip[data-sc="${id||"room"}"]`); if(bc) bc.classList.add("busy");
   const k="scene_"+id;
-  if(id && !urls[k]){ $("#loading").textContent=`${(SCENES.find(x=>x[0]===id)||[,""])[1]}を よみこみ中…`; $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); urls[k]=URL.createObjectURL(await r.blob()); }catch(e){ urls[k]=`v/${sp}/scene_${id}.mp4`; } $("#loading").classList.add("hide"); }
+  if(id && !urls[k]){ $("#loading").textContent=`${(SCENES.find(x=>x[0]===id)||[,""])[1]}を よみこみ中…`; $("#loading").classList.remove("hide"); try{ const r=await fetch(`v/${sp}/scene_${id}.mp4`); if(!r.ok) throw 0; const u=URL.createObjectURL(await r.blob()); if(sp===spAt) urls[k]=u; }catch(e){ if(sp===spAt) urls[k]=`v/${sp}/scene_${id}.mp4`; }
+    if(my!==sceneReq||sp!==spAt){ if(bc) bc.classList.remove("busy"); return; } $("#loading").classList.add("hide"); $("#loading").textContent="よみこみ中…"; }
   SCENE=id; if(!INAPP) store.set("scene",id||""); app.classList.toggle("scene",!!id); applyGeo(); renderScenes(); pending=null; switchAt=null; afterHappy=null;
   FIELD.x.fill(0); FIELD.y.fill(0); FIELD.live=true;
   if(id){ manualSleep=false; app.classList.remove("sleeping"); play(k,{fade:.45}); }
@@ -1620,16 +1668,15 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 
 // アプリへの案内は、しばらく触ってからそっと出す
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
-const ANDROID=/Android/i.test(navigator.userAgent);
-if(ANDROID && !INAPP){ const a=$("#applink"); a.innerHTML="Androidアプリは準備中です<small>このブラウザ版は、そのままずっと無料で使えます</small>"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
-function countNade(){ life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
-function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
-$("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
+if(ANDROID && !INAPP){ const a=$("#applink"); $("#alT").textContent="Androidアプリは準備中です"; const sm=a.querySelector("small"); if(sm) sm.textContent="このブラウザ版は、そのままずっと無料で使えます"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
+function countNade(){ life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); try{ const a=t.getBoundingClientRect(), b=$("#snd").getBoundingClientRect(); t.style.setProperty("--ax",Math.max(10,Math.min(a.width-22,a.right-(b.left+b.width/2)-6))+"px"); }catch(e){} setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
+function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; if(!ANDROID) $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
+if($("#alX")) $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
 if(!INAPP) setTimeout(showAL,45000);
 if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
-if(location.hash==="#test") app.classList.add("test");
+if(location.hash==="#test" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) app.classList.add("test");
 // はじめて来た人には、昼でも少しのあいだ起きて待っている
 if(!store.get("seen",false)){ wakeUntil=Date.now()+4*60e3; store.set("seen",true); }
 else if(isDaytime()){ /* 昼はすやすや。2回つつくと起きる */ }
@@ -1645,10 +1692,25 @@ const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okS
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}); // 切り替えのタイミング用。読み終わるのを待たずにハムを出す
 (()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
 renderSecList();
-window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
+if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__t={card:()=>secCur&&secretCard(secCur.x,secCur.img),req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
 
 // ---------- うちの子カード ＆ みんなのハム ----------
 const ICS={on:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>',off:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'};
+const ED_ASSETS={ham:[
+  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp",name:"キンクマ（ふっくら）"},
+  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp",name:"ごろん"},
+  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp",name:"ロボロフスキー"},
+  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp",name:"パールホワイト"}],
+ item:[
+  {id:"crown",src:"ed/it_crown.webp",name:"王冠",at:[0,-.43],rel:.42},{id:"beanie",src:"ed/it_beanie.webp",name:"ニット帽",at:[0,-.4],rel:.56},
+  {id:"strawhat",src:"ed/it_strawhat.webp",name:"むぎわら帽子",at:[0,-.43],rel:.72},{id:"beret",src:"ed/it_beret.webp",name:"ベレー帽",at:[.05,-.44],rel:.56},
+  {id:"partyhat",src:"ed/it_partyhat.webp",name:"パーティー帽",at:[.08,-.5],rel:.42},{id:"ribbon",src:"ed/it_ribbon.webp",name:"リボン",at:[.24,-.4],rel:.32},
+  {id:"flowercrown",src:"ed/it_flowercrown.webp",name:"花かんむり",at:[0,-.41],rel:.62},{id:"glasses",src:"ed/it_glasses.webp",name:"まるメガネ",at:[0,-.21],rel:.5},
+  {id:"heartglasses",src:"ed/it_heartglasses.webp",name:"ハートのサングラス",at:[0,-.21],rel:.56},{id:"bowtie",src:"ed/it_bowtie.webp",name:"蝶ネクタイ",at:[0,.0],rel:.34},
+  {id:"scarf",src:"ed/it_scarf.webp",name:"マフラー",at:[0,.02],rel:.62},{id:"medal",src:"ed/it_medal.webp",name:"メダル",at:[0,.12],rel:.22},
+  {id:"seed",src:"ed/it_seed.webp",name:"ひまわりの種",at:[0,.1],rel:.16},{id:"strawberry",src:"ed/it_strawberry.webp",name:"いちご",at:[0,.12],rel:.22},
+  {id:"cake",src:"ed/it_cake.webp",name:"ショートケーキ",at:[.42,.32],rel:.34},{id:"onigiri",src:"ed/it_onigiri.webp",name:"おにぎり",at:[.42,.34],rel:.3}],
+ bg:["flowers","night","tatami","cafe","snow","party","beach"].map(k=>({id:k,src:`ed/bg_${k}.jpg`,t:`ed/bg_${k}_t.jpg`,name:k}))};
 const GAL_URL="https://oaiko-ai.yukiya1013.workers.dev/gal";
 const STICK=["","🎀","👑","🌸","🎩","🍓","⭐","🍀","🧢","🌻","💤","❤️"];
 const FRAMES=[["#fbf5ec","#b8743c","クリーム"],["#eaf4ff","#3d6fb0","そら"],["#fff0f3","#c0566b","さくら"],["#eef6e9","#4f8a3c","はっぱ"],["#2b2320","#f0c27a","よる"]];
@@ -1688,10 +1750,34 @@ function openMk(tab){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=fa
   $("#mkPrev").removeAttribute("src"); snapCard(sn=>{ mk.snap=sn; mkRender(); }); }
 function closeMk(){ closeDlg(); $("#mk").hidden=true; }
 function setTab(t){ const g=t==="gal"; $("#tabMk").setAttribute("aria-selected",String(!g)); $("#tabGal").setAttribute("aria-selected",String(g)); $("#mkPane").hidden=g; $("#galPane").hidden=!g; if(g) galLoad(true); }
-$("#tabMk").onclick=()=>setTab("mk"); $("#tabGal").onclick=()=>setTab("gal"); $("#galMake").onclick=()=>setTab("mk");
-$("#mkBtnTop").onclick=()=>openMk(); $("#mkClose").onclick=closeMk;
+$("#tabMk").onclick=()=>{ closeMk(); openEd(); }; $("#tabGal").onclick=()=>setTab("gal"); $("#galMake").onclick=()=>{ closeMk(); openEd(); };
+$("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); $("#mkClose").onclick=closeMk;
+// うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
+let edLoading=null;
+function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=2"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=2"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
+  try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
+  ED.setAssets(ED_ASSETS);
+  ED.name=()=>life.name||"うちの子";
+  ED.curHam=()=>ED_ASSETS.ham.find(h=>h.sp===sp&&!h.pose)||ED_ASSETS.ham[0];
+  ED.snap=done=>snapCard(sn=>done(sn&&sn.url));
+  ED.toApp=()=>setTimeout(()=>$("#applink").onclick(new Event("click")),120);
+  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; const url=postId?`https://oaiko-app.github.io/nade/?g=${postId}`:"https://oaiko-app.github.io/nade/"; const text=`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
+    if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
+    try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-card.png",{type:"image/png"});
+      if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+    const a=document.createElement("a"); a.href=png; a.download="oaiko-card.png"; document.body.appendChild(a); a.click(); a.remove();
+    window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+  ED.post=async(jpg,txt)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
+    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,n:life.name||"うちの子",l:txt||"",sp})}); const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.id){ store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
+      return {msg:d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう3回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
+  ED.open(); }
 $("#mk").addEventListener("pointerdown",e=>e.stopPropagation());
-$("#mkN").oninput=e=>{ const v=[...(new Intl.Segmenter?new Intl.Segmenter("ja",{granularity:"grapheme"}).segment(e.target.value):e.target.value)].map(x=>x.segment||x).slice(0,8).join(""); if(v!==e.target.value) e.target.value=v; mk.n=v.trim(); life.name=mk.n; save(); nameCount(); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
+$("#mkN").addEventListener("compositionend",e=>$("#mkN").oninput(e));
+$("#mkN").oninput=e=>{ if(e.isComposing) return; const v=graph(e.target.value).slice(0,8).join(""); if(v!==e.target.value) e.target.value=v; mk.n=v.trim(); life.name=mk.n; save(); nameCount(); nameChanged(); $("#bN").value=mk.n; if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(mk.n)) unlock(SECRET.hampter,{wait:900}); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
 $("#mkL").oninput=e=>{ mk.l=e.target.value.trim(); store.set("mkL",mk.l); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
 $("#mkPrevWrap").onclick=e=>{ if(!mk.snap) return; const r=$("#mkPrev").getBoundingClientRect(); const fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
   const X=170/1080,Y=140/1350,S=740/1080,Sy=740/1350; const px=(fx-X)/S, py=(fy-Y)/Sy; if(px<0||px>1||py<0||py>1) return; mk.pos=[px,py]; mkRender(); haptic("light"); };
@@ -1705,15 +1791,20 @@ $("#mkShare").onclick=async()=>{ const c=await drawCard(1080), png=c.toDataURL("
   const a=document.createElement("a"); a.href=png; a.download="oaiko-uchinoko.png"; a.click();
   window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
 $("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。少し待ってね"); return; }
-  if(!confirmPost()) return;
+  if(!await confirmPost()) return;
   const bt=$("#mkPost"); bt.disabled=true; bt.textContent="載せています…";
   try{ const c=await drawCard(540); const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:c.toDataURL("image/jpeg",.82),n:mk.n||NM(),l:mk.l,sp})});
     const d=await r.json().catch(()=>({}));
-    if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました ✓"; return; }
+    if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました"; return; }
     mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう3回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
   }catch(e){ mkMsg("通信できませんでした"); }
   bt.disabled=false; bt.textContent="「みんなのハム」に載せる"; };
-function confirmPost(){ if(store.get("galOk",0)) return true; const ok=confirm("「みんなのハム」に載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。\n本名・住所・SNSのIDなどは入っていませんか？\n\n載せてよければ「OK」"); if(ok) store.set("galOk",1); return ok; }
+function askDlg(msg,okLabel){ return new Promise(res=>{ const w=document.createElement("div"); w.className="ask"; w.setAttribute("role","alertdialog"); w.setAttribute("aria-modal","true");
+  w.innerHTML=`<div class="askc"><p></p><div class="askb"><button type="button" class="no">やめる</button><button type="button" class="yes"></button></div></div>`; w.querySelector("p").textContent=msg; w.querySelector(".yes").textContent=okLabel||"OK";
+  const done=v=>{ w.remove(); removeEventListener("keydown",kd,true); res(v); }; const kd=e=>{ if(e.key==="Escape"){ e.stopPropagation(); e.preventDefault(); done(false); } };
+  w.querySelector(".no").onclick=()=>done(false); w.querySelector(".yes").onclick=()=>done(true); w.addEventListener("pointerdown",e=>e.stopPropagation());
+  addEventListener("keydown",kd,true); document.body.appendChild(w); w.querySelector(".yes").focus(); }); }
+async function confirmPost(){ if(store.get("galOk",0)) return true; const ok=await askDlg("「みんなのハム」に載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。\n本名・住所・SNSのIDなどが入っていないか、確かめてね。","載せる"); if(ok) store.set("galOk",1); return ok; }
 $("#mkApp").onclick=()=>{ closeMk(); setTimeout(()=>$("#applink").onclick(new Event("click")),80); };
 // みんなのハム
 const gal={s:"new",next:0,busy:false,focus:Q.get("g")||null,liked:new Set(store.get("galLiked",[]))};
@@ -1733,7 +1824,7 @@ $("#galSort").querySelectorAll("button").forEach(b=>b.onclick=()=>{ gal.s=b.data
 $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[data-lk]"), rp=e.target.closest("[data-rp]");
   if(lk){ const id=lk.dataset.lk; if(gal.liked.has(id)) return; gal.liked.add(id); store.set("galLiked",[...gal.liked].slice(-300)); lk.classList.add("on"); const b=lk.querySelector("b"); b.textContent=(+b.textContent||0)+1; haptic("light");
     fetch(GAL_URL+"/like",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); }
-  if(rp){ if(!confirm("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）")) return; const id=rp.dataset.rp;
+  if(rp){ if(!await askDlg("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）","知らせる")) return; const id=rp.dataset.rp;
     fetch(GAL_URL+"/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); const it=rp.closest(".gi"); if(it) it.remove(); } });
 if(Q.get("g")) setTimeout(()=>openMk("gal"),1500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
