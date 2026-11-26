@@ -12,8 +12,8 @@
 <meta name="description" content="指でなでると、ハムスターがうっとりする。夜は起きて、昼はすやすや。">
 <meta property="og:title" content="ハムスターを撫でられるページ">
 <meta property="og:description" content="指でなでると、ハムスターがうっとりする。">
-<meta property="og:image" content="https://oaiko-app.github.io/nade/og.jpg">
-<meta property="og:url" content="https://oaiko-app.github.io/nade/">
+<meta property="og:image" content="https://oaiko-hamu.com/nade/og.jpg">
+<meta property="og:url" content="https://oaiko-hamu.com/nade/">
 <meta name="twitter:card" content="summary_large_image">
 
 <style>
@@ -167,6 +167,9 @@
   .gi .gb .lk{font-weight:800;color:#c0566b}.gi .gb .lk.on{background:#ffe9ee}
   .gi .gb span{flex:1}
   #galGrid .gi img{cursor:zoom-in}
+  #galTheme{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:linear-gradient(135deg,#fff1df,#ffe2c4);border:1px solid #f2c79b;border-radius:16px;padding:12px;margin:4px 0 12px}
+  #galTheme div{flex:1 1 100%}#galTheme small{display:block;font-size:11px;color:#a05a20;font-weight:700}#galTheme b{display:block;font-size:17px;color:#3b2a20}#galTheme span{display:block;font-size:12px;color:#6b5140}
+  #galTheme .t{min-height:36px;border-radius:999px;border:0;background:#e8954c;color:#fff;font:inherit;font-weight:800;font-size:13px;padding:0 14px}#galTheme #thOnly{background:#fff;color:#3b2a20;border:1px solid #e3c3a0}#galTheme #thOnly[aria-pressed="true"]{background:#3b2a20;color:#fff}
   #galView{position:fixed;inset:0;z-index:60;background:rgba(20,14,10,.86);display:flex;align-items:center;justify-content:center;padding:16px}
   #galView .gvc{position:relative;width:min(92vw,480px)}
   #galView img{display:block;width:100%;max-height:calc(100dvh - 140px);object-fit:contain;border-radius:14px;background:#efe5d8}
@@ -263,7 +266,7 @@
   .mvwhat{margin:2px 0 4px;padding:8px 10px;background:#f6efe6;border-radius:12px;font-size:12px;text-align:left;line-height:1.7}
 </style>
 <meta property="og:type" content="website">
-<link rel="canonical" href="https://oaiko-app.github.io/nade/">
+<link rel="canonical" href="https://oaiko-hamu.com/nade/">
 </head>
 <body>
 <noscript><p style="padding:24px;font:16px sans-serif;color:#3b2a20;background:#fbf5ec">このページは JavaScript をオンにすると、ハムスターをなでられます。</p></noscript>
@@ -351,7 +354,7 @@
     <div id="mvQR"><canvas id="mvQRc" aria-label="iPhoneで読み取るQRコード" role="img"></canvas><p>iPhoneのカメラで読み取ると、このコードのままiPhoneで開けます</p></div>
     <a id="mvStore" href="https://apps.apple.com/jp/app/id6836835986" style="display:none;text-align:center;background:#3d4470;color:#fff;border-radius:14px;padding:12px;text-decoration:none;font-weight:700;margin:6px 0">App Storeでおあいこをひらく</a>
     <div class="mvfoot"><button id="mvCopy">ひきつぎコードをコピー</button>
-    <button id="mvClose">あとで</button></div><div class="legal"><a href="https://oaiko-app.github.io/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-app.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-app.github.io/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
+    <button id="mvClose">あとで</button></div><div class="legal"><a href="https://oaiko-hamu.com/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-hamu.com/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-hamu.com/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
   </div></div>
   <div id="mk" hidden role="dialog" aria-modal="true" aria-label="うちの子カード"><div class="scard">
     <div class="tabs" role="tablist"><button role="tab" id="tabMk" aria-selected="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>つくる</button><button role="tab" id="tabGal" aria-selected="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>みんなのハム</button></div>
@@ -370,10 +373,10 @@
     </div>
     <div id="galPane" hidden>
       <div class="mkrow" id="galSort"><button class="t" data-s="new" aria-pressed="true">新着</button><button class="t" data-s="top" aria-pressed="false">人気</button></div>
-      <div id="galGrid"></div><p id="galEmpty" hidden>まだだれも載せていません。いちばん乗りしよう</p>
+      <div id="galTheme" hidden></div><div id="galGrid"></div><p id="galEmpty" hidden>まだだれも載せていません。いちばん乗りしよう</p>
       <button class="sub" id="galMore" hidden>もっと見る</button>
       <p class="note">いやな投稿は「…」から知らせてください。何人かから知らせがあると、見えなくなります。</p>
-      <button class="main" id="galMake">自分の子もつくる</button><div class="legal"><a href="https://oaiko-app.github.io/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-app.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-app.github.io/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
+      <button class="main" id="galMake">自分の子もつくる</button><div class="legal"><a href="https://oaiko-hamu.com/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-hamu.com/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-hamu.com/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
     </div>
     <button class="sub" id="mkClose">とじる</button>
   </div></div>
@@ -420,10 +423,20 @@ let META={}, sp=null, urls={}, cur=va, nxt=vb, state="idle", pending=null, reqId
 const Q=new URLSearchParams(location.search);
 const INAPP=Q.get("app")==="1" && window.parent!==window;
 const ANDROID=/Android/i.test(navigator.userAgent);
+// 回数の計測（個人はわからない集計だけ。1日ごとの合計をサーバーに送る）
+const EVQ=[], EVONCE=new Set();
+function track(e,once){ if(once){ if(EVONCE.has(e)) return; EVONCE.add(e); } EVQ.push(e); if(EVQ.length>=8) flushEv(); }
+function flushEv(){ if(!EVQ.length||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { EVQ.length=0; return; } const b=JSON.stringify({e:EVQ.splice(0),src:Q.get("app")==="1"?"app":"web"});
+  try{ if(navigator.sendBeacon) navigator.sendBeacon("https://oaiko-ai.yukiya1013.workers.dev/gal/ev",b); else fetch("https://oaiko-ai.yukiya1013.workers.dev/gal/ev",{method:"POST",body:b,keepalive:true}); }catch(e){} }
+addEventListener("visibilitychange",()=>{ if(document.hidden) flushEv(); }); setTimeout(()=>track("view"),800); addEventListener("pagehide",flushEv); setInterval(flushEv,30000);
 function toApp(m){ if(!INAPP) return; try{ parent.postMessage(Object.assign({src:"nade"},m),"*"); }catch(e){} }
 
 // ---------- 保存 ----------
 const store={get(k,d){try{const v=localStorage.getItem("oaiko_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("oaiko_"+k,JSON.stringify(v))}catch(e){}}};
+// アプリで持っているきせかえ（アプリから ?own=…&wear=… でわたされる）
+const APP_MAP={knit_hat:"beanie",straw_hat:"strawhat",scarf:"scarf",crown:"crown",apron:"apron",backpack:"backpack",bedhead:"bedhead",kigurumi:"kigurumi",mahou:"mahou",tuxedo:"tuxedo"};
+const APP_OWN=(()=>{ let a=(Q.get("own")||"").split(",").filter(Boolean); if(INAPP) store.set("appOwn",a); else a=store.get("appOwn",[]); return a.map(x=>APP_MAP[x]).filter(Boolean); })();
+const APP_WEAR_ITEM=INAPP?(APP_MAP[Q.get("wear")]||""):"";
 function freshLife(){const n=Date.now();return{bond:12,fed:n-8*H,cleaned:n-10*H,visit:n,pets:0,timeMode:"real"};}
 let life=store.get("life",null)||freshLife();
 const AWAY3=Date.now()-life.visit>3*24*H;
@@ -618,7 +631,7 @@ function secretCard(x,img){
       if(x.tint){ g.fillStyle="#a8927f"; g.font="400 26px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; fitText(g,"※色の変化は、あそびの演出です（ストレスやケガによる変色ではありません）",540,1200,1000,26,400,18); }
       g.fillStyle="#3b2a20"; fitText(g,x.name,540,1035,980,92,800,48);
       g.fillStyle="#8a7262"; wrapText(g,x.desc,540,1100,960,38,400,2);
-      g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-app.github.io/nade",540,1260);
+      g.fillStyle="#b8743c"; g.font="700 34px 'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif"; g.fillText("ハムスターを撫でられるページ　oaiko-hamu.com/nade",540,1260);
       res(c.toDataURL("image/png"));
     };
     if(!img){ fin(); return; }
@@ -627,7 +640,7 @@ function secretCard(x,img){
 }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-app.github.io/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-hamu.com/nade/";
   const full=`${text}\n${url}\n`; // URLのあとにも改行を入れて、次の文とくっつかないようにする
   const png=await secretCard(x,img);
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
@@ -1442,11 +1455,13 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               squeeze:{id:"squeeze",no:52,name:"スクイーズハム",desc:"ぎゅっとすると、ゆっくりもどる。ストレスがへる（あなたの）。",tag:"#スクイーズハム",how:"何度もぎゅーっと長押ししたら",hint:"ぎゅーっと長押しを、何度も",img:"img/sec_squeeze.jpg"},
               yuki:{id:"yuki",no:53,name:"これ毒かもハム",desc:"はじめて雪にさわった。つめたすぎて、毒だと思った。角刈りは、気合いのあらわれ。",tag:"#これ毒かも",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、Bからはじまる もうひとつのコマンドを",img:"img/sec_yuki.jpg"},
               kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、ひみつのコマンドを"}};
-const SEC_ALL=Object.values(SECRET).sort((a,b)=>a.no-b.no);
+const TODAY=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const secOpen=x=>!x.from||x.from<=TODAY; // 週ごとに増えるかくしハム（from の日から出てくる）
+const SEC_ALL=Object.values(SECRET).filter(secOpen).sort((a,b)=>a.no-b.no);
 const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","……からい！","……にがい","……闇"];
 // 見つけたら：図鑑カード（はじめて）か、シェアの小さなボタン（2回目から）。fx は写真の色加工
 function unlock(x,opt={}){
-  if(!x) return;
+  if(!x||!secOpen(x)) return; if(!secSeen.has(x.id)) track("secret");
   if(!x.tint) toApp({t:"secret",id:x.id});
   if(!secSeen.has(x.id)){ if(!opt.nade) lastN=0; secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>{ if(x.img) showSecret(x,x.img); else snapHam(img=>showSecret(x,img),opt.fx); },opt.wait||1700); }
   else if(opt.nade) setTimeout(()=>showPill(x),1400);
@@ -1571,7 +1586,7 @@ function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon"
 if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
 let seedLog=[];
 $("#seed").addEventListener("click",()=>{ const now=Date.now(); seedLog=seedLog.filter(t=>now-t<10000); seedLog.push(now); if(seedLog.length>=5){ seedLog=[]; sayText("……もう1こ"); unlock(SECRET.dopa,{wait:1500}); } });
-$("#seed").onclick=()=>{
+$("#seed").onclick=()=>{ track("feed",1);
   const hand=EXTRA[sp] && life.bond>=35 && Math.random()<0.6, k=hand?"finger_seed":"eat";
   if(asleep()){ wake(); pending=k; return; }
   if(k==="eat" && handOK.seed){ const [mx,my]=mouthXY(); showHand("seed",mx+40,my+30); handTarget={x:mx,y:my}; setTimeout(()=>{ hideHand(0); request("eat"); },900); return; }
@@ -1621,19 +1636,19 @@ function moveCode(){
   const bytes=new TextEncoder().encode(JSON.stringify(d)); let bin=""; bytes.forEach(x=>bin+=String.fromCharCode(x));
   return "OAIKO-"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
-$("#applink").onclick=e=>{ e.preventDefault(); if(!$("#pad").hidden) closePad(); $("#mvName").textContent=NM(); $("#move").hidden=false; $("#move").querySelector(".scard").scrollTop=0; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
+$("#applink").onclick=e=>{ e.preventDefault(); track("applink"); if(!$("#pad").hidden) closePad(); $("#mvName").textContent=NM(); $("#move").hidden=false; $("#move").querySelector(".scard").scrollTop=0; openDlg($("#move"),$("#applink"),()=>$("#mvClose").onclick());
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(!ios){ $("#mvDev").style.display="block"; $("#mvDev").textContent="おあいこはiPhoneのアプリです。コードをコピーしたら、iPhoneで App Store の「おあいこ」を入れて貼りつけてください（コードはこの画面でいつでも見られます）。"; } };
 $("#mvClose").onclick=()=>{ $("#move").hidden=true; closeDlg(); };
 $("#move").addEventListener("pointerdown",e=>e.stopPropagation());
-$("#mvCopy").onclick=async()=>{
+$("#mvCopy").onclick=async()=>{ track("handoff");
   const code=moveCode(); let ok=false;
   try{ await navigator.clipboard.writeText(code); ok=true; }catch(e){}
   if(!ok){ try{ const t=document.createElement("textarea"); t.value=code; document.body.appendChild(t); t.select(); ok=document.execCommand("copy"); t.remove(); }catch(e){} }
   $("#mvCode").value=code; $("#mvCode").style.display="block";
   $("#mvCopy").textContent=ok?"✓ コピーしました（もう一度コピー）":"コピーできませんでした。上のコードを長押しでコピー";
   $("#mvStore").style.display="block";
-  if(!/iPhone|iPad|iPod/.test(navigator.userAgent)&&!(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)){ try{ drawQR($("#mvQRc"),"https://oaiko-app.github.io/nade/#m="+code); $("#mvQR").style.display="block"; }catch(e){} }
+  if(!/iPhone|iPad|iPod/.test(navigator.userAgent)&&!(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)){ try{ drawQR($("#mvQRc"),"https://oaiko-hamu.com/nade/#m="+code); $("#mvQR").style.display="block"; }catch(e){} }
 };
 $("#bS").oninput=e=>{ life.body.s=e.target.value/100; liftStage(); };
 $("#bC").oninput=e=>{ life.body.c=e.target.value/100; liftStage(); };
@@ -1713,14 +1728,15 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 
 // アプリへの案内は、しばらく触ってからそっと出す
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
-if(ANDROID && !INAPP){ const a=$("#applink"); $("#alT").textContent="Androidアプリは準備中です"; const sm=a.querySelector("small"); if(sm) sm.textContent="このブラウザ版は、そのままずっと無料で使えます"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-app.github.io/"; }; }
+if(ANDROID && !INAPP){ const a=$("#applink"); $("#alT").textContent="Androidアプリは準備中です"; const sm=a.querySelector("small"); if(sm) sm.textContent="このブラウザ版は、そのままずっと無料で使えます"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-hamu.com/"; }; }
 $("#petBtn").onclick=()=>{ touched=true; if(asleep()){ sayText("……すやすや（ねてる）"); return; } onStroke({dx:80,dy:0,t:performance.now(),z:{head:90}},600); if(gStroke){ gStroke=false; nadeCount++; countNade(); } FUR.down=false; };
-function countNade(){ life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); try{ const a=t.getBoundingClientRect(), b=$("#snd").getBoundingClientRect(); t.style.setProperty("--ax",Math.max(10,Math.min(a.width-22,a.right-(b.left+b.width/2)-6))+"px"); }catch(e){} setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
+function countNade(){ track("nade",1); life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); try{ const a=t.getBoundingClientRect(), b=$("#snd").getBoundingClientRect(); t.style.setProperty("--ax",Math.max(10,Math.min(a.width-22,a.right-(b.left+b.width/2)-6))+"px"); }catch(e){} setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
 function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; if(!ANDROID) $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 if($("#alX")) $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
 if(!INAPP) setTimeout(showAL,45000);
-if(INAPP && Q.get("wear")==="1"){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
+if(Q.get("card")==="1") setTimeout(()=>{ if($("#loading").classList.contains("hide")) openEd(); else { const iv=setInterval(()=>{ if($("#loading").classList.contains("hide")){ clearInterval(iv); openEd(); } },400); } },600);
+if(INAPP && Q.get("wear")){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) app.classList.add("test");
 // はじめて来た人には、昼でも少しのあいだ起きて待っている
@@ -1777,7 +1793,7 @@ function drawCard(W){ return new Promise(res=>{
     const nm=(mk.n||NM()); g.fillStyle=dark?"#fff":"#3b2a20"; g.font=`800 ${(nm.length>6?80:96)*k}px ${F}`; g.fillText(nm,W/2,1035*k);
     if(mk.l){ g.fillStyle=dark?"#e8dccf":"#8a7262"; g.font=`400 ${(mk.l.length>16?34:40)*k}px ${F}`; g.fillText(mk.l,W/2,1110*k); }
     g.fillStyle=ac; g.font=`700 ${30*k}px ${F}`; g.fillText("#おあいこ　ハムスターを撫でられるページ",W/2,1235*k);
-    g.fillStyle=dark?"#bfae9c":"#a8927f"; g.font=`400 ${26*k}px ${F}`; g.fillText("oaiko-app.github.io/nade",W/2,1282*k);
+    g.fillStyle=dark?"#bfae9c":"#a8927f"; g.font=`400 ${26*k}px ${F}`; g.fillText("oaiko-hamu.com/nade",W/2,1282*k);
     res(c); };
   if(!mk.snap){ fin(); return; }
   const im=new Image(); im.onload=()=>{ const X=170*k,Y=140*k,S=740*k,r=60*k; g.save(); g.beginPath(); g.moveTo(X+r,Y); g.arcTo(X+S,Y,X+S,Y+S,r); g.arcTo(X+S,Y+S,X,Y+S,r); g.arcTo(X,Y+S,X,Y,r); g.arcTo(X,Y,X+S,Y,r); g.closePath(); g.clip(); g.drawImage(im,X,Y,S,S);
@@ -1795,15 +1811,15 @@ function openMk(tab){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=fa
   $("#mk").hidden=false; mkChips(); setTab(tab||"mk"); openDlg($("#mk"),$("#mkBtnTop"),closeMk);
   $("#mkPrev").removeAttribute("src"); snapCard(sn=>{ mk.snap=sn; mkRender(); }); }
 function closeMk(){ closeDlg(); $("#mk").hidden=true; }
-function setTab(t){ const g=t==="gal"; $("#tabMk").setAttribute("aria-selected",String(!g)); $("#tabGal").setAttribute("aria-selected",String(g)); $("#mkPane").hidden=g; $("#galPane").hidden=!g; if(g){ galLoad(true); setTimeout(()=>$("#tabGal").focus({preventScroll:true}),80); } }
+function setTab(t){ const g=t==="gal"; $("#tabMk").setAttribute("aria-selected",String(!g)); $("#tabGal").setAttribute("aria-selected",String(g)); $("#mkPane").hidden=g; $("#galPane").hidden=!g; if(g){ track("gal_open"); renderTheme(); galLoad(true); setTimeout(()=>$("#tabGal").focus({preventScroll:true}),80); } }
 $("#tabMk").onclick=()=>{ closeMk(); openEd(); }; $("#tabGal").onclick=()=>setTab("gal"); $("#galMake").onclick=()=>{ closeMk(); openEd(); };
 $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); $("#mkClose").onclick=closeMk;
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=9"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=9"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
-async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=10"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=10"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);
   ED.name=()=>life.name||"うちの子";
@@ -1812,7 +1828,9 @@ async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down
   ED.curHam=()=>ED_ASSETS.ham.find(h=>h.sp===sp&&!h.pose)||ED_ASSETS.ham[0];
   ED.snap=done=>snapCard(sn=>done(sn&&sn.url));
   ED.toApp=()=>setTimeout(()=>$("#applink").onclick(new Event("click")),120);
-  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; const url=postId?`https://oaiko-app.github.io/nade/?g=${postId}`:"https://oaiko-app.github.io/nade/"; const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
+  ED.track=track; ED.theme=curTheme; ED._th=!!curTheme(); if(gal.joinTh){ gal.joinTh=false; ED._th=true; }
+  ED.appOwn=()=>APP_OWN; ED.appWear=APP_WEAR_ITEM; ED.inApp=INAPP;
+  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; track("share"); const th=curTheme(), url=postId?`${GAL_URL}/p/${postId}`:"https://oaiko-hamu.com/nade/"; const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム${ED._th&&th?" "+th.tag:""}`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
     if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
     try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-card.png",{type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
@@ -1820,8 +1838,8 @@ async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down
     window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
   ED.post=async(jpg,txt,ph)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
     if(ph){ try{ const v=await (await fetch(GAL_URL.replace(/\/gal$/,""))).json(); if(!v.v||v.v<"1126c") return {msg:"写真を使ったカードの投稿は、いま準備中です。もう少し待ってね"}; }catch(e){ return {msg:"通信できませんでした"}; } }
-    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
-      if(r.ok&&d.id){ store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
+    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.id){ track("post"); if(ED._th&&curTheme()) track("theme_join"); store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
       return {msg:d.error==="photo"?"写真に、人の顔や住所などがわかるものが写っているかもしれません。別の写真で試してね":d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
   ED.open({opener:$("#mkBtnTop")}); }
 $("#mk").addEventListener("pointerdown",e=>e.stopPropagation());
@@ -1830,7 +1848,7 @@ $("#mkN").oninput=e=>{ if(e.isComposing) return; const v=graph(e.target.value).s
 $("#mkL").oninput=e=>{ mk.l=e.target.value.trim(); store.set("mkL",mk.l); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
 $("#mkPrevWrap").onclick=e=>{ if(!mk.snap) return; const r=$("#mkPrev").getBoundingClientRect(); const fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
   const X=170/1080,Y=140/1350,S=740/1080,Sy=740/1350; const px=(fx-X)/S, py=(fy-Y)/Sy; if(px<0||px>1||py<0||py>1) return; mk.pos=[px,py]; mkRender(); haptic("light"); };
-async function mkShareText(){ const nm=mk.n||NM(); const url=mk.postId?`https://oaiko-app.github.io/nade/?g=${mk.postId}`:"https://oaiko-app.github.io/nade/";
+async function mkShareText(){ const nm=mk.n||NM(); const url=mk.postId?`https://oaiko-hamu.com/nade/?g=${mk.postId}`:"https://oaiko-hamu.com/nade/";
   return {text:`うちの子「${nm}」できた${mk.l?"\n"+mk.l:""}\nあなたのハムも作ってみて #おあいこ #うちのハム`,url}; }
 $("#mkShare").onclick=async()=>{ const c=await drawCard(1080), png=c.toDataURL("image/png"); const {text,url}=await mkShareText(); const full=`${text}\n${url}\n`;
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
@@ -1855,13 +1873,31 @@ function askDlg(msg,okLabel){ return new Promise(res=>{ const w=document.createE
   addEventListener("keydown",kd,true); document.body.appendChild(w); w.querySelector(".yes").focus(); }); }
 async function confirmPost(){ if(store.get("galOk",0)) return true; const ok=await askDlg("「みんなのハム」に載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。\n本名・住所・SNSのIDなどが入っていないか、確かめてね。","載せる"); if(ok) store.set("galOk",1); return ok; }
 $("#mkApp").onclick=()=>{ closeMk(); setTimeout(()=>$("#applink").onclick(new Event("click")),80); };
+// SNSで出る絵（1200×630）：カードを真ん中に、うしろはぼかし
+function ogImage(jpg){ return new Promise((ok,ng)=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement("canvas"); c.width=1200; c.height=630; const g=c.getContext("2d");
+  const k=Math.max(1200/im.width,630/im.height); g.filter="blur(28px) saturate(1.2)"; g.drawImage(im,(1200-im.width*k)/2,(630-im.height*k)/2,im.width*k,im.height*k); g.filter="none"; g.fillStyle="rgba(40,26,16,.35)"; g.fillRect(0,0,1200,630);
+  const h=560, w=h*im.width/im.height, x=90, y=35; g.save(); g.shadowColor="rgba(0,0,0,.35)"; g.shadowBlur=30; g.shadowOffsetY=10; g.fillStyle="#fff"; g.fillRect(x-10,y-10,w+20,h+20); g.restore(); g.drawImage(im,x,y,w,h);
+  const tx=x+w+60, F="'Hiragino Maru Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif"; g.fillStyle="#fff"; g.textBaseline="top";
+  g.font=`800 34px ${F}`; g.fillText("みんなのハム",tx,150); g.font=`900 64px ${F}`; const nm=`「${(life.name||"うちの子").slice(0,8)}」`; g.fillText(nm.length>6?nm.slice(0,6)+"…」":nm,tx-14,205);
+  g.font=`700 30px ${F}`; g.fillText("ハムスターをなでて、",tx,330); g.fillText("うちの子カードをつくろう",tx,374); g.font=`800 28px ${F}`; g.fillStyle="#ffd6a8"; g.fillText("#おあいこ",tx,450);
+  ok(c.toDataURL("image/jpeg",.82)); }catch(e){ ng(e); } }; im.onerror=ng; im.src=jpg; }); }
+// 今週のお題
+const THEMES=[
+  {id:"fuyu",from:"2026-11-26",to:"2026-12-03",name:"冬じたくハム",tag:"#冬じたくハム",hint:"ニット帽やマフラーで、ぬくぬくに"},
+  {id:"oyatsu",from:"2026-12-04",to:"2026-12-10",name:"おやつタイム",tag:"#おやつハム",hint:"いちごやケーキをそえて"},
+  {id:"xmas",from:"2026-12-11",to:"2026-12-25",name:"クリスマスのうちの子",tag:"#クリスマスハム",hint:"パーティーの背景や、おうかんで"},
+  {id:"oshogatsu",from:"2026-12-26",to:"2027-01-07",name:"年越し・お正月ハム",tag:"#お正月ハム",hint:"ことしの目標をひとことに"}];
+function curTheme(){ return THEMES.find(t=>t.from<=TODAY&&TODAY<=t.to)||null; }
+function renderTheme(){ const t=curTheme(), el=$("#galTheme"); if(!el) return; el.hidden=!t; if(!t) return; const md=d=>{ const [,m,dd]=d.split("-"); return `${+m}/${+dd}`; };
+  el.innerHTML=`<div><small>今週のお題（〜${md(t.to)}）</small><b>${esc(t.name)}</b><span>${esc(t.hint)}</span></div><button type="button" class="t" id="thJoin">参加する</button><button type="button" class="t" id="thOnly" aria-pressed="${gal.th?"true":"false"}">お題の投稿だけ</button>`;
+  $("#thJoin").onclick=()=>{ gal.joinTh=true; openEd(); }; $("#thOnly").onclick=()=>{ gal.th=gal.th?"":t.id; galLoad(true); renderTheme(); }; }
 // みんなのハム
 const gal={s:"new",next:0,busy:false,focus:Q.get("g")||null,liked:new Set(store.get("galLiked",[]))};
 async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$("#galGrid");
   if(reset){ gal.next=0; grid.innerHTML=`<p class="note" role="status">カードを読み込んでいます…</p>`; $("#galEmpty").hidden=true; } grid.setAttribute("aria-busy","true");
   try{ let items=[];
     if(reset && gal.focus){ const r=await fetch(`${GAL_URL}/list?id=${encodeURIComponent(gal.focus)}`); const d=await r.json(); items=items.concat((d.items||[]).map(x=>Object.assign(x,{hl:1}))); }
-    const r=await fetch(`${GAL_URL}/list?s=${gal.s}&c=${gal.next||0}`); const d=await r.json();
+    const r=await fetch(`${GAL_URL}/list?s=${gal.s}&c=${gal.next||0}${gal.th?"&th="+gal.th:""}`); const d=await r.json();
     items=items.concat((d.items||[]).filter(x=>!items.some(y=>y.id===x.id))); gal.next=d.next;
     if(reset) grid.innerHTML=""; grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿を知らせる">…</button></div></div>`).join(""));
     $("#galEmpty").hidden=!!grid.children.length; $("#galMore").hidden=d.next==null;
@@ -1870,7 +1906,7 @@ async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$(
   grid.removeAttribute("aria-busy"); gal.busy=false; }
 $("#galMore").onclick=()=>galLoad(false);
 // 一覧のカードを大きく見る（左右で前後へ）
-function galView(id){ const items=[...$("#galGrid").querySelectorAll(".gi")]; let i=items.findIndex(x=>x.dataset.id===id); if(i<0) return;
+function galView(id){ track("gal_view"); const items=[...$("#galGrid").querySelectorAll(".gi")]; let i=items.findIndex(x=>x.dataset.id===id); if(i<0) return;
   let v=$("#galView"); if(!v){ v=document.createElement("div"); v.id="galView"; v.setAttribute("role","dialog"); v.setAttribute("aria-modal","true"); v.setAttribute("aria-label","カードを大きく見る");
     v.innerHTML=`<div class="gvc"><button class="gvx" type="button" aria-label="とじる">×</button><img alt=""><div class="gvb"><button class="gvp" type="button" aria-label="前のカード">‹</button><button class="lk gvl" type="button" aria-label="いいね">♡ <b>0</b></button><button class="gvs" type="button">シェア</button><button class="gvn" type="button" aria-label="次のカード">›</button></div></div>`;
     document.body.appendChild(v); v.addEventListener("pointerdown",e=>e.stopPropagation());
@@ -1879,7 +1915,7 @@ function galView(id){ const items=[...$("#galGrid").querySelectorAll(".gi")]; le
   function show(){ const it=items[i], id=it.dataset.id, src=it.querySelector("img").src, alt=it.querySelector("img").alt, b=it.querySelector(".lk b");
     img.src=src; img.alt=alt; lk.querySelector("b").textContent=b?b.textContent:"0"; lk.classList.toggle("on",gal.liked.has(id));
     lk.onclick=()=>{ const o=it.querySelector("[data-lk]"); if(o&&!gal.liked.has(id)){ o.click(); setTimeout(show,30); } };
-    v.querySelector(".gvs").onclick=async()=>{ const url=`https://oaiko-app.github.io/nade/?g=${id}`, text=`「みんなのハム」で見つけた子 #おあいこ #みんなのハム`;
+    v.querySelector(".gvs").onclick=async()=>{ track("share"); const url=`${GAL_URL}/p/${id}`, text=`「みんなのハム」で見つけた子 #おあいこ #みんなのハム`;
       try{ if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
       window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
     v.querySelector(".gvp").disabled=i<=0; v.querySelector(".gvn").disabled=i>=items.length-1; }

@@ -193,7 +193,7 @@ function build(){
   <div class="edsel" id="edSel" hidden></div>
   <div class="edpanel" id="edPanel"></div>
   <nav class="edtabs" id="edTabs" role="tablist" aria-label="編集の道具">${[["tpl","テンプレ"],["ham","ハム"],["item","きせかえ"],["bg","背景"],["text","文字"],["pen","ペン"],["fx","仕上げ"]].map(([k,n])=>`<button data-t="${k}" role="tab" aria-selected="false" aria-pressed="false">${IC[k]}<span>${n}</span></button>`).join("")}</nav>
-  <div class="edsheet" id="edDoneSheet" hidden><div class="edsc"><img id="edOut" alt="できあがったカード"><p class="edmsg" id="edMsg" role="status"></p>
+  <div class="edsheet" id="edDoneSheet" hidden><div class="edsc"><img id="edOut" alt="できあがったカード"><p class="edmsg" id="edMsg" role="status"></p><label class="edth" id="edThL" hidden><input type="checkbox" id="edTh"><span></span></label>
     <button class="edbtn main" id="edShare">${IC.share}画像を保存・シェア</button>
     <button class="edbtn" id="edPost">${IC.post}「みんなのハム」に載せる</button>
     <p class="ednote" id="edPostNote">載せると、カードの絵・名前が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。</p>
@@ -223,7 +223,10 @@ function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button")
   const L=selL(); selBar(L);
   if(tool==="tpl") p.innerHTML=`<div class="edrow">${TPLS.map((t,i)=>`<button class="tplb" data-tp="${i}" aria-pressed="${S.tpl===i}"><b>${t.n}</b><small>${t.d}</small></button>`).join("")}</div><div class="edrow">${chips(RATIOS.map(r=>[r[0],r[0]]),S.ratio,"ra")}</div>`;
   else if(tool==="ham") p.innerHTML=(L&&(L.type==="ham"||L.type==="photo"||L.type==="snap")?(L.type==="ham"?hamTint(L):photoOpts(L)):`<div class="edcall">${IC.ham}<div><b>ハムの色も大きさも、自由に変えられます</b><small>カードの上のハムをタップすると、毛色・あざやかさ・明るさ・大きさを変えられます</small></div></div>`)+`<button class="edbtn own" id="edOwn">${IC.photo}うちの子の写真をのせる</button>${secRow()}<p class="edlbl">ハム</p><div class="edrow grid">${HAMS.map((h,i)=>`<button class="thb" data-hm="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}<button class="thb tx" id="edSnap">${IC.snap}<small>いまの写真</small></button></div>`;
-  else if(tool==="item") p.innerHTML=`<p class="edhint">ハムを選んでから押すと、その子に合わせて置かれます</p><div class="edrow grid">${ITEMS.map((h,i)=>`<button class="thb" data-it="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}</div>`;
+  else if(tool==="item"){ const own=new Set(ED.appOwn?ED.appOwn():[]), mine=ITEMS.map((h,i)=>[h,i]).filter(([h])=>own.has(h.id)), excl=ITEMS.map((h,i)=>[h,i]).filter(([h])=>h.app);
+    const btn=([h,i])=>{ const lock=h.app&&!own.has(h.id); return `<button class="thb ${lock?"lock":""}" data-it="${i}" aria-label="${h.name}${lock?"（アプリで持っていると使える）":""}"><img src="${h.src}" alt="">${lock?`<small>アプリ</small>`:""}</button>`; };
+    p.innerHTML=`<p class="edhint">ハムを選んでから押すと、その子に合わせて置かれます</p>`+(mine.length?`<p class="edlbl">アプリで持っているきせかえ</p><div class="edrow grid">${mine.map(btn).join("")}</div><p class="edlbl">みんな使えるきせかえ</p>`:"")+`<div class="edrow grid">${ITEMS.map((h,i)=>[h,i]).filter(([h])=>!h.app).map(btn).join("")}</div>`
+      +(excl.length?`<p class="edlbl">アプリのきせかえ</p><p class="edhint">アプリ「おあいこ」で手に入れると、カードでも使えます</p><div class="edrow grid">${excl.filter(x=>!own.has(x[0].id)).map(btn).join("")}</div>`:""); }
   else if(tool==="bg") p.innerHTML=`<div class="edrow grid">${BGS.map((b,i)=>`<button class="thb" data-bgi="${i}" aria-label="${b.name}"><img src="${b.t||b.src}" alt=""></button>`).join("")}<button class="thb tx" id="edPhoto">${IC.photo}<small>自分の写真</small></button></div>
     <div class="edrow">${BGCOL.map((c,i)=>`<button class="sw" data-bgc="${i}" style="background:linear-gradient(${c[0]},${c[1]})" aria-label="色${i+1}"></button>`).join("")}</div>
     <div class="edrow">${chips([["dots","水玉"],["stripe","ストライプ"],["check","チェック"]],S.bg.t,"pat")}</div>`;
@@ -258,7 +261,7 @@ function bindPanel(p){ const on=(q,f)=>p.querySelectorAll(q).forEach(b=>b.onclic
   on("[data-tp]",b=>{ applyTpl(TPLS[+b.dataset.tp]); });
   on("[data-ra]",b=>{ const r=RATIOS.find(x=>x[0]===b.dataset.ra); const k=r[2]/S.H; S.layers.forEach(l=>{ if(l.type!=="draw") l.y*=k; }); S.ratio=r[0]; S.W=r[1]; S.H=r[2]; commit(); refresh(); });
   on("[data-hm]",b=>ED.addHam(HAMS[+b.dataset.hm]));
-  on("[data-it]",b=>ED.addItem(ITEMS[+b.dataset.it]));
+  on("[data-it]",b=>{ const h=ITEMS[+b.dataset.it], own=new Set(ED.appOwn?ED.appOwn():[]); if(h.app&&!own.has(h.id)){ toast(ED.inApp?`「${h.name}」は、アプリのおへやで交換すると使えます`:`「${h.name}」は、アプリ「おあいこ」で手に入れると使えます`); return; } ED.addItem(h); });
   on("[data-bgi]",b=>{ const x=BGS[+b.dataset.bgi]; S.bg={t:"img",src:x.src}; commit(); draw(); });
   on("[data-bgc]",b=>{ const c=BGCOL[+b.dataset.bgc]; S.bg={t:"grad",a:c[0],b:c[1]}; commit(); draw(); });
   on("[data-pat]",b=>{ const a=S.bg.t==="grad"?S.bg.a:"#fbf5ec"; S.bg={t:b.dataset.pat,a,b:shade(a)}; commit(); panel(); draw(); });
@@ -347,7 +350,7 @@ async function cutBg(L){ if(!L||(L.type!=="photo"&&L.type!=="snap")) return;
   if(x1<=x0){ toast("うまく見つけられませんでした。ハムが大きく写った写真でためしてね"); return; }
   const t=document.createElement("canvas"); t.width=x1-x0+2; t.height=y1-y0+2; t.getContext("2d").drawImage(c,-x0,-y0);
   const oldW=L.w, [ow]=layerSize(L); L.orig=src; L.src=t.toDataURL("image/png"); L.cut=true; L.round=0; L.border=""; L.w=Math.min(1,oldW*t.width/im.width);
-  img(L.src); setTimeout(()=>{ keepIn(L); commit(); panel(); draw(); },60); toast("背景を消しました。もとに戻すボタンで戻せます"); }
+  img(L.src); setTimeout(()=>{ keepIn(L); commit(); panel(); draw(); },60); ED.track&&ED.track("cut"); toast("背景を消しました。もとに戻すボタンで戻せます"); }
 function draftBar(){ const b=document.createElement("div"); b.className="eddraft"; b.innerHTML=`<span>前につくった下書きを開いています</span><button class="chp" data-d="keep">つづける</button><button class="chp" data-d="new">いまの子で新しく</button>`;
   b.querySelector('[data-d="keep"]').onclick=()=>b.remove(); b.querySelector('[data-d="new"]').onclick=()=>{ b.remove(); const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; TPLS[0].f(s); s.tpl=0; S=s; sel=null; commit(); refresh(); };
   root.insertBefore(b,$("#edStage")); setTimeout(()=>{ if(b.isConnected) b.remove(); },12000); }
@@ -372,9 +375,10 @@ function applyTpl(t){ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; t.f(s)
 // ---------- 完成 ----------
 function exportCanvas(w){ const c=document.createElement("canvas"); c.width=W(); c.height=H(); const g=c.getContext("2d"); render(g,true);
   if(w&&w!==W()){ const d=document.createElement("canvas"); d.width=w; d.height=Math.round(w*H()/W()); d.getContext("2d").drawImage(c,0,0,d.width,d.height); return d; } return c; }
-function watermark(c){ const g=c.getContext("2d"), k=c.width/1080; g.save(); g.font=`700 ${26*k}px "Zen Maru Gothic", sans-serif`; g.textAlign="right"; g.textBaseline="bottom"; g.fillStyle="rgba(255,255,255,.85)"; g.shadowColor="rgba(0,0,0,.35)"; g.shadowBlur=6*k; g.fillText("#おあいこ  oaiko-app.github.io/nade",c.width-24*k,c.height-20*k); g.restore(); return c; }
+function watermark(c){ const g=c.getContext("2d"), k=c.width/1080; g.save(); g.font=`700 ${26*k}px "Zen Maru Gothic", sans-serif`; g.textAlign="right"; g.textBaseline="bottom"; g.fillStyle="rgba(255,255,255,.85)"; g.shadowColor="rgba(0,0,0,.35)"; g.shadowBlur=6*k; g.fillText("#おあいこ  oaiko-hamu.com/nade",c.width-24*k,c.height-20*k); g.restore(); return c; }
 let outPng=null, postedId=null;
-function finish(){ sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
+function finish(){ ED.track&&ED.track("card_done"); const th=ED.theme&&ED.theme(), tl=$("#edThL"); tl.hidden=!th; if(th){ $("#edTh").checked=!!ED._th; tl.querySelector("span").textContent=`今週のお題「${th.name}」に参加する（${th.tag}）`; $("#edTh").onchange=()=>{ ED._th=$("#edTh").checked; }; }
+  sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
   const ph=usesPhoto(); $("#edPost").hidden=false; $("#edPostNote").textContent=(ph?"写真には、人の顔・名札・住所や窓の外の景色など、身元がわかるものが写っていないか確かめてね。写真は載せる前に自動で確認します。":"")+"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。";
   $("#edDoneSheet").hidden=false; setTimeout(()=>$("#edShare").focus(),40); $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
   $("#edShare").classList.remove("pulse"); $("#edShare").lastChild.textContent="画像を保存・シェア"; $("#edShare").onclick=()=>ED.share&&ED.share(outPng,postedId);
@@ -390,6 +394,7 @@ let opener=null, inerted=[];
 function setInert(on){ if(on){ inerted=[...document.body.children].filter(x=>x!==root&&x.tagName!=="SCRIPT"&&!x.inert); inerted.forEach(x=>x.inert=true); } else { inerted.forEach(x=>x.inert=false); inerted=[]; } }
 ED.open=async(opt={})=>{ if(!root) build(); opener=opt.opener||document.activeElement; root.hidden=false; document.documentElement.classList.add("edopen"); zoomLock(true); setInert(true); try{ window.scrollTo(0,0); }catch(e){}
   let restored=false; if(!S){ S=load()||null; restored=!!S; if(!S){ S=blank(); TPLS[0].f(S); } hist=[snapshot()]; fut=[]; }
+  if(!restored&&ED.appWear&&!ED._wearDone){ ED._wearDone=1; const it=ITEMS.find(h=>h.id===ED.appWear); if(it) setTimeout(()=>{ const h=S.layers.find(l=>l.type==="ham"); if(h) sel=h.id; ED.addItem(it); sel=null; draw(); toast(`アプリで着ている「${it.name}」をのせました`); },400); }
   setTimeout(()=>{ const t=$("#edTitle"); if(t&&t.offsetParent) t.focus({preventScroll:true}); else { const x=$("#edX"); if(x) x.focus({preventScroll:true}); } },50);
   if(restored&&ED.curHam){ const cur=ED.curHam(), hs=S.layers.filter(l=>l.type==="ham"); if(hs.length&&!hs.some(l=>String(l.src).split("?")[0]===String(cur.src).split("?")[0])) draftBar(); }
   tool=opt.tool||tool||"tpl"; penOn=tool==="pen"; refresh(); loadFonts().then(draw); setTimeout(fit,60); };
