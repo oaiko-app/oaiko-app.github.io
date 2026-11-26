@@ -45,6 +45,11 @@
   .chip.on{background:var(--accent);color:#fff;font-weight:700}
   #status{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 56px);display:flex;justify-content:space-between;align-items:center;z-index:5;pointer-events:none;color:#fff8ef;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
   #hearts{letter-spacing:1px;font-size:13px}
+  #bondPill{position:absolute;left:12px;top:calc(env(safe-area-inset-top) + 112px);z-index:6;display:flex;align-items:center;gap:3px;background:#fffdf9cc;color:#3b2a20;border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.12);pointer-events:none;transition:transform .25s,opacity .4s}
+  #bondPill svg{width:14px;height:14px}
+  #bondPill.up{transform:scale(1.12)}
+  #app.inapp #bondPill,#app.calm #bondPill,#app.sheetopen #bondPill{opacity:0}
+  @media (orientation:landscape) and (max-height:600px){ #bondPill{top:auto;bottom:calc(env(safe-area-inset-bottom) + 150px)} }
   .pill{background:rgba(40,26,16,.55);padding:4px 10px;border-radius:999px}
   #gear{pointer-events:auto;margin-left:8px;border:0;border-radius:50%;width:34px;height:34px;background:rgba(255,248,239,.85);font-size:15px;vertical-align:middle}
   #hand{position:absolute;left:0;top:0;width:50%;max-width:290px;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3;will-change:transform;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
@@ -355,6 +360,7 @@
   </div></div>
   <button id="pill" hidden></button>
   <button id="noDoku" hidden>しばらく毒にしない</button>
+  <div id="bondPill" aria-live="polite"></div>
   <button id="galBtnTop">みんなのハム</button>
   <button id="mkBtnTop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>うちの子カード</button>
   <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg></button>
@@ -508,6 +514,9 @@ function glDraw(){
   let a=null, b=cur, m=1;
   if(fadeGL){ const t=(now-fadeGL.t0)/fadeGL.d; if(t>=1) fadeGL=null; else { a=fadeGL.from; b=fadeGL.to; m=t; } }
   if(!b || b.readyState<2 || !b.videoWidth) return;
+  // 電池の節約：動画の新しいコマが来たときと、指でさわって動いているあいだだけ描きなおす
+  { const vt=b.currentTime, busy=fadeGL||FUR.down||FUR.p>.01||Math.abs(FUR.sx)+Math.abs(FUR.sy)+Math.abs(FUR.svx)+Math.abs(FUR.svy)>1e-5||Math.abs(FUR.vx)+Math.abs(FUR.vy)+Math.abs(FUR.tx)+Math.abs(FUR.ty)>1e-6||FIELD.live||Math.abs(dokuAmt-(Date.now()<dokuUntil?1:0))>.001||(dokuKind===1&&dokuAmt>0)||capReq||glDraw._mv||cv.width!==b.videoWidth||glDraw._k!==(life.body.s+','+life.body.c+','+POSE);
+    if(!busy && b===glDraw._b && vt===glDraw._t && !b.paused===glDraw._pl) return; glDraw._b=b; glDraw._t=vt; glDraw._pl=!b.paused; glDraw._k=life.body.s+','+life.body.c+','+POSE; glDraw._m0=MO; }
   try{
     if(cv.width!==b.videoWidth||cv.height!==b.videoHeight){ cv.width=b.videoWidth; cv.height=b.videoHeight; gl.viewport(0,0,cv.width,cv.height); }
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,texB); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,b);
@@ -524,7 +533,7 @@ function glDraw(){
       gl.uniform2f(U.SK,FUR.sx,FUR.sy); gl.uniform2f(U.SA,FUR.ax,FUR.ay);
       if(POSE==="four"){ gl.uniform2f(U.FCE,-.72,-.05); gl.uniform2f(U.FRA,.42,.62); } else { gl.uniform2f(U.FCE,0.,-.5); gl.uniform2f(U.FRA,.62,.42); } }
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
-    gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); { const up=POSE==="four"&&!SCENE&&MUP[state]; const tm=up?up[0]:(MOFF[state]||0), tx=up?up[1]:1, ty=up?up[2]:1; MO+=(tm-MO)*0.05; MSX+=(tx-MSX)*0.05; MSY+=(ty-MSY)*0.05; } gl.uniform1f(U.MO,MO); gl.uniform2f(U.MS,MSX,MSY);
+    gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); { const up=POSE==="four"&&!SCENE&&MUP[state]; const tm=up?up[0]:(MOFF[state]||0), tx=up?up[1]:1, ty=up?up[2]:1; MO+=(tm-MO)*0.05; MSX+=(tx-MSX)*0.05; MSY+=(ty-MSY)*0.05; glDraw._mv=Math.abs(tm-MO)+Math.abs(tx-MSX)+Math.abs(ty-MSY)>2e-3; if(!glDraw._mv){ MO=tm; MSX=tx; MSY=ty; } } gl.uniform1f(U.MO,MO); gl.uniform2f(U.MS,MSX,MSY);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     if(capReq){ const f=capReq; capReq=null; f(cv); }
     if(!glGood){ // 端末によっては動画を描けない（真っ黒になる）。そのときはふつうの動画に戻す
@@ -1169,7 +1178,11 @@ function haptic(kind){
   if(INAPP){ toApp({t:"haptic",ms:kind==="heavy"?40:kind==="medium"?20:8}); return; }
   try{ if(navigator.vibrate) navigator.vibrate(kind==="heavy"?30:kind==="medium"?15:8); }catch(e){}
 }
-function renderHearts(){ const n=Math.round(life.bond/20); $("#hearts").textContent="なつき "+"♥".repeat(n)+"♡".repeat(5-n); }
+function renderHearts(){ const n=Math.round(life.bond/20); $("#hearts").textContent="なつき "+"♥".repeat(n)+"♡".repeat(5-n);
+  const P="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", el=$("#bondPill"); if(!el) return;
+  const h=i=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${P}" fill="${i<n?"#e8954c":"none"}" stroke="#e8954c" stroke-width="2"/></svg>`;
+  const k=n; if(renderHearts._n!==undefined&&k>renderHearts._n){ el.classList.add("up"); setTimeout(()=>el.classList.remove("up"),300); } renderHearts._n=k;
+  el.innerHTML=`<span>なつき</span>${[0,1,2,3,4].map(h).join("")}`; el.setAttribute("aria-label",`なつき度 5のうち${n}`); }
 function renderClock(){ $("#clock").textContent=(isDaytime()?"昼 ":"夜 ")+(life.timeMode==="real"?new Date().toTimeString().slice(0,5):"（テスト）"); app.classList.toggle("night",!isDaytime()); app.classList.toggle("day",isDaytime()); }
 function renderTraces(){
   const n=Date.now(), sinceFed=n-life.fed, sinceClean=n-life.cleaned;
@@ -1337,17 +1350,17 @@ let touched=false;
 (function demo(){
   let t0=0, cyc=0;
   function step(ts){
-    if(touched || cyc>=6){ if(!touched) hideHand(0); return; }
+    if(touched || cyc>=6){ if(!touched){ hideHand(0); FUR.down=false; } return; }
     if(!t0) t0=ts; const t=(ts-t0)/1000;
     const r=box.getBoundingClientRect(), sr=stage.getBoundingClientRect(), B=life.body;
-    if(asleep() || $("#loading").classList.contains("hide")===false){ requestAnimationFrame(step); return; }
+    if(asleep() || $("#loading").classList.contains("hide")===false){ if(FUR.down){ FUR.down=false; hideHand(150); } t0=0; requestAnimationFrame(step); return; }
     if(t<1.6){ const k=t/1.6, e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
       const u=HC[0]-.11*B.s*B.c+.22*B.s*B.c*e, v=HC[1]-.165*B.s+.025*Math.sin(e*Math.PI);
       const x=r.left+r.width*u, y=r.top+r.height*v;
       showHand("stroke",x-sr.left,y-sr.top); FUR.down=true;
       const px=FUR.x>0?(x-(r.left+r.width*FUR.x)):0, py=FUR.y>0?(y-(r.top+r.height*FUR.y)):0; furMove(x,y,px,py);
-    } else if(t<1.7){ FUR.down=false; hideHand(150); }
-    else if(t>4.2){ t0=ts; cyc++; FUR.x=-1; FUR.y=-1; }
+    } else { if(FUR.down){ FUR.down=false; hideHand(150); } // コマ落ちしても、指を離した状態に必ず戻す
+      if(t>4.2){ t0=ts; cyc++; FUR.x=-1; FUR.y=-1; } }
     requestAnimationFrame(step);
   }
   setTimeout(()=>requestAnimationFrame(step),2200);
