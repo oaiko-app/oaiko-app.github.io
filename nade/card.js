@@ -70,11 +70,15 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 let S=null, sel=null, hist=[], fut=[], tool="tpl", penOn=false, penCol="#ffffff", penW=10, penEraser=false;
 const W=()=>S.W, H=()=>S.H;
 function blank(){ return {W:1080,H:1350,ratio:"4:5",bg:{t:"grad",a:"#fbf5ec",b:"#fbf5ec"},layers:[],filter:"none",frame:"none",usesPhoto:false}; }
-function snapshot(){ return JSON.stringify(S); }
+// 写真などの大きなデータは1回だけ持ち、履歴にはその番号だけを入れる（メモリを使いすぎないように）
+const BL=new Map(), BK=new Map(); let bn=0;
+const intern=v=>{ let k=BK.get(v); if(!k){ k="@b"+(++bn); BK.set(v,k); BL.set(k,v); } return k; };
+function snapshot(){ return JSON.stringify(S,(k,v)=>typeof v==="string"&&v.length>200&&v.startsWith("data:")?intern(v):v); }
+function parseS(t){ return JSON.parse(t,(k,v)=>typeof v==="string"&&v.startsWith("@b")&&BL.has(v)?BL.get(v):v); }
 function commit(){ hist.push(snapshot()); if(hist.length>60) hist.shift(); fut=[]; save(); updBtns(); }
-function undo(){ if(hist.length<2) return; fut.push(hist.pop()); S=JSON.parse(hist[hist.length-1]); sel=null; refresh(); save(); }
-function redo(){ if(!fut.length) return; const s=fut.pop(); hist.push(s); S=JSON.parse(s); sel=null; refresh(); save(); }
-function save(){ try{ const t=snapshot(); if(t.length<3.5e6) localStorage.setItem("oaiko_ed",t); }catch(e){} }
+function undo(){ if(hist.length<2) return; fut.push(hist.pop()); S=parseS(hist[hist.length-1]); sel=null; refresh(); save(); }
+function redo(){ if(!fut.length) return; const s=fut.pop(); hist.push(s); S=parseS(s); sel=null; refresh(); save(); }
+function save(){ try{ const t=JSON.stringify(S); if(t.length<3.5e6) localStorage.setItem("oaiko_ed",t); else localStorage.removeItem("oaiko_ed"); }catch(e){ try{ localStorage.removeItem("oaiko_ed"); }catch(_){} } }
 function load(){ try{ const t=localStorage.getItem("oaiko_ed"); if(t) return JSON.parse(t); }catch(e){} return null; }
 function usesPhoto(){ return S.bg.t==="photo" || S.layers.some(l=>l.type==="photo"); }
 // ---------- 描画 ----------
@@ -129,10 +133,18 @@ let raf=0;
 function draw(){ if(raf) return; raf=requestAnimationFrame(()=>{ raf=0; if(!S||!cv) return; render(ctx,false); cv.style.filter=CSSF[S.filter]||"none"; drawSel(); }); }
 // 選択枠・ハンドル
 function corners(L){ const [w,h]=layerSize(L), c=Math.cos(L.r||0), s=Math.sin(L.r||0); return [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y])=>[L.x+x*c-y*s, L.y+x*s+y*c]); }
-function drawSel(){ octx.clearRect(0,0,ov.width,ov.height); const L=selL(); if(!L||L.type==="draw"||penOn) return; const k=ov.width/W(); const p=corners(L).map(([x,y])=>[x*k,y*k]);
+function drawSel(){ octx.setTransform(1,0,0,1,0,0); octx.clearRect(0,0,ov.width,ov.height); const L=selL(); if(!L||L.type==="draw"||penOn) return; const d0=ov._d||1, pad=22*d0; octx.setTransform(1,0,0,1,pad,pad); const k=(ov.width-2*pad)/W(); const p=corners(L).map(([x,y])=>[x*k,y*k]);
   octx.save(); octx.strokeStyle="#fff"; octx.lineWidth=3; octx.setLineDash([]); octx.shadowColor="rgba(0,0,0,.45)"; octx.shadowBlur=4; octx.beginPath(); p.forEach(([x,y],i)=>i?octx.lineTo(x,y):octx.moveTo(x,y)); octx.closePath(); octx.stroke();
-  octx.shadowBlur=0; const [hx,hy]=p[2]; octx.fillStyle="#b8743c"; octx.beginPath(); octx.arc(hx,hy,15,0,7); octx.fill(); octx.strokeStyle="#fff"; octx.lineWidth=3; octx.stroke();
-  octx.strokeStyle="#fff"; octx.lineWidth=2.2; octx.beginPath(); octx.arc(hx,hy,6,-.3,4.4); octx.stroke(); octx.restore(); }
+  octx.shadowBlur=0; const dpr=d0, R=15*dpr;
+  const knob=(x,y,col)=>{ octx.fillStyle=col; octx.beginPath(); octx.arc(x,y,R,0,7); octx.fill(); octx.strokeStyle="#fff"; octx.lineWidth=2.5*dpr; octx.stroke(); octx.lineWidth=2.2*dpr; octx.lineCap="round"; };
+  { const [hx,hy]=p[2]; knob(hx,hy,"#b8743c"); octx.beginPath(); octx.arc(hx,hy,6*dpr,-.3,4.4); octx.stroke(); }
+  { const [x,y]=p[0]; knob(x,y,"#d9534f"); const d=5*dpr; octx.beginPath(); octx.moveTo(x-d,y-d); octx.lineTo(x+d,y+d); octx.moveTo(x+d,y-d); octx.lineTo(x-d,y+d); octx.stroke(); }
+  if(L.type==="text"){ const [x,y]=p[1]; knob(x,y,"#3d4470"); const d=5*dpr; octx.beginPath(); octx.moveTo(x-d,y+d); octx.lineTo(x-d+2*dpr,y+d-6*dpr); octx.lineTo(x+d,y-d); octx.stroke(); }
+  if(GUIDE.v||GUIDE.h){ octx.strokeStyle="#ff5c8a"; octx.lineWidth=1.5*dpr; octx.setLineDash([6*dpr,5*dpr]); octx.beginPath(); if(GUIDE.v) { octx.moveTo(GUIDE.v*k,0); octx.lineTo(GUIDE.v*k,H()*k); } if(GUIDE.h){ octx.moveTo(0,GUIDE.h*k); octx.lineTo(W()*k,GUIDE.h*k); } octx.stroke(); }
+  octx.restore(); }
+const GUIDE={v:0,h:0};
+function handleAt(L,e){ const r=cv.getBoundingClientRect(), cs=corners(L); const near=i=>{ const c=cs[i]; return Math.hypot(e.clientX-((c[0]/W())*r.width+r.left), e.clientY-((c[1]/H())*r.height+r.top))<26; };
+  if(near(2)) return "scale"; if(near(0)) return "del"; if(L.type==="text"&&near(1)) return "edit"; return null; }
 const selL=()=>S&&S.layers.find(l=>l.id===sel);
 // ---------- 操作 ----------
 function toCanvas(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*W(), (e.clientY-r.top)/r.height*H()]; }
@@ -140,22 +152,30 @@ function hit(x,y){ for(let i=S.layers.length-1;i>=0;i--){ const L=S.layers[i]; i
 const P=new Map(); let gest=null, curStroke=null;
 function onDown(e){ e.preventDefault(); cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); const [x,y]=toCanvas(e); P.set(e.pointerId,[x,y]);
   if(penOn){ const DL=penLayer(); curStroke={c:penCol,w:penW,er:penEraser,p:[x,y]}; DL.strokes.push(curStroke); draw(); return; }
-  if(P.size===1){ const L=selL(); if(L){ const k=ov.width/W(), c=corners(L)[2]; const r=cv.getBoundingClientRect(); const px=(c[0]/W())*r.width+r.left, py=(c[1]/H())*r.height+r.top; if(Math.hypot(e.clientX-px,e.clientY-py)<30){ const [w,h]=layerSize(L); gest={t:"handle",L,d0:Math.hypot(x-L.x,y-L.y),a0:Math.atan2(y-L.y,x-L.x),w0:L.w||.5,size0:L.size,r0:L.r||0}; return; } }
+  if(P.size===1){ const L=selL(); if(L){ const hd=handleAt(L,e);
+      if(hd==="scale"){ gest={t:"handle",L,d0:Math.hypot(x-L.x,y-L.y),a0:Math.atan2(y-L.y,x-L.x),w0:L.w||.5,size0:L.size,r0:L.r||0}; return; }
+      if(hd==="del"){ P.delete(e.pointerId); delSel(); return; }
+      if(hd==="edit"){ P.delete(e.pointerId); editText(); return; } }
     const h=hit(x,y); if(h&&h.type==="text"&&h.id===sel&&Date.now()-(ED._lt||0)<350){ ED._lt=0; editText(); return; } ED._lt=Date.now(); if(h){ sel=h.id; gest={t:"move",L:h,x0:x,y0:y,lx:h.x,ly:h.y}; } else { sel=null; gest=S.bg.t==="img"||S.bg.t==="photo"?{t:"bg",x0:x,y0:y,ox:S.bg.ox||0,oy:S.bg.oy||0}:null; } panel(); draw(); }
   else if(P.size===2){ const L=selL(); const pts=[...P.values()]; if(L) gest={t:"pinch",L,d0:Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]),a0:Math.atan2(pts[1][1]-pts[0][1],pts[1][0]-pts[0][0]),w0:L.w||.5,size0:L.size,r0:L.r||0}; else if(S.bg.t==="img"||S.bg.t==="photo") gest={t:"bgz",d0:Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]),z0:S.bg.z||1}; } }
 function onMove(e){ if(!P.has(e.pointerId)) return; const [x,y]=toCanvas(e); P.set(e.pointerId,[x,y]);
   if(curStroke){ const p=curStroke.p; const lx=p[p.length-2], ly=p[p.length-1]; if(Math.hypot(x-lx,y-ly)>2){ p.push(x,y); draw(); } return; }
   if(!gest) return; const L=gest.L;
-  if(gest.t==="move"){ L.x=gest.lx+(x-gest.x0); L.y=gest.ly+(y-gest.y0); snap(L); }
-  else if(gest.t==="handle"){ const d=Math.hypot(x-L.x,y-L.y), a=Math.atan2(y-L.y,x-L.x); scaleL(L,d/gest.d0); L.r=gest.r0+(a-gest.a0); L.r=snapAng(L.r); }
-  else if(gest.t==="pinch"&&P.size>=2){ const pts=[...P.values()]; const d=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]), a=Math.atan2(pts[1][1]-pts[0][1],pts[1][0]-pts[0][0]); scaleL(L,d/gest.d0); L.r=snapAng(gest.r0+(a-gest.a0)); }
+  if(gest.t==="move"){ L.x=gest.lx+(x-gest.x0); L.y=gest.ly+(y-gest.y0); snap(L); keepIn(L); }
+  else if(gest.t==="handle"){ const d=Math.hypot(x-L.x,y-L.y), a=Math.atan2(y-L.y,x-L.x); scaleL(L,d/gest.d0); L.r=gest.r0+(a-gest.a0); L.r=snapAng(L.r); keepIn(L); }
+  else if(gest.t==="pinch"&&P.size>=2){ const pts=[...P.values()]; const d=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]), a=Math.atan2(pts[1][1]-pts[0][1],pts[1][0]-pts[0][0]); scaleL(L,d/gest.d0); L.r=snapAng(gest.r0+(a-gest.a0)); keepIn(L); }
   else if(gest.t==="bg"){ S.bg.ox=gest.ox+(x-gest.x0); S.bg.oy=gest.oy+(y-gest.y0); }
   else if(gest.t==="bgz"&&P.size>=2){ const pts=[...P.values()]; const d=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]); S.bg.z=Math.max(1,Math.min(4,gest.z0*d/gest.d0)); }
   draw(); }
-function scaleL(L,k){ if(L.type==="text") L.size=Math.max(14,Math.min(420,gest.size0*k)); else L.w=Math.max(.04,Math.min(3,gest.w0*k)); }
+function scaleL(L,k){ if(L.type==="text") L.size=Math.max(14,Math.min(420,gest.size0*k)); else L.w=Math.max(.04,Math.min(1,gest.w0*k)); }
 function snapAng(r){ const d=Math.PI/2; const n=Math.round(r/d)*d; return Math.abs(r-n)<.06?n:r; }
-function snap(L){ if(Math.abs(L.x-W()/2)<14) L.x=W()/2; }
-function onUp(e){ P.delete(e.pointerId); if(curStroke){ curStroke=null; commit(); return; } if(gest && P.size===0){ const moved=gest.t!=="move"||Math.hypot(gest.L.x-gest.lx,gest.L.y-gest.ly)>1; gest=null; if(moved) commit(); } else if(P.size===1 && gest && gest.t==="pinch"){ const [id,pt]=[...P.entries()][0]; gest={t:"move",L:gest.L,x0:pt[0],y0:pt[1],lx:gest.L.x,ly:gest.L.y}; } }
+function ext(L){ const cs=corners(L), xs=cs.map(c=>c[0]), ys=cs.map(c=>c[1]); return [(Math.max(...xs)-Math.min(...xs))/2,(Math.max(...ys)-Math.min(...ys))/2]; }
+function snap(L){ GUIDE.v=GUIDE.h=0; const T=16; if(Math.abs(L.x-W()/2)<T){ L.x=W()/2; GUIDE.v=W()/2; } if(Math.abs(L.y-H()/2)<T){ L.y=H()/2; GUIDE.h=H()/2; } }
+// カードの外にはみ出さない（カードより大きいときは、まん中にそろえる）
+function keepIn(L){ if(L.type==="draw") return; const [hw,hh]=ext(L), m=8;
+  L.x = hw*2>=W()-m*2 ? Math.min(Math.max(L.x,W()-hw-m),hw+m) : Math.min(Math.max(L.x,hw+m),W()-hw-m);
+  L.y = hh*2>=H()-m*2 ? Math.min(Math.max(L.y,H()-hh-m),hh+m) : Math.min(Math.max(L.y,hh+m),H()-hh-m); }
+function onUp(e){ P.delete(e.pointerId); if(P.size===0&&(GUIDE.v||GUIDE.h)){ GUIDE.v=GUIDE.h=0; draw(); } if(curStroke){ curStroke=null; commit(); return; } if(gest && P.size===0){ const moved=gest.t!=="move"||Math.hypot(gest.L.x-gest.lx,gest.L.y-gest.ly)>1; gest=null; if(moved) commit(); } else if(P.size===1 && gest && gest.t==="pinch"){ const [id,pt]=[...P.entries()][0]; gest={t:"move",L:gest.L,x0:pt[0],y0:pt[1],lx:gest.L.x,ly:gest.L.y}; } }
 function penLayer(){ let L=S.layers.find(l=>l.type==="draw"&&l.id===ED._pen); if(!L){ L={id:uid(),type:"draw",strokes:[]}; S.layers.push(L); ED._pen=L.id; } return L; }
 // ---------- 追加 ----------
 function add(L){ L.id=uid(); L.x=L.x==null?W()/2:L.x; L.y=L.y==null?H()*.5:L.y; L.r=L.r||0; S.layers.push(L); sel=L.id; commit(); panel(); draw(); }
@@ -180,7 +200,7 @@ function build(){
     <button class="edbtn app" id="edApp">${IC.app}この子と、アプリで暮らす</button>
     <p class="ednote">アプリに引き継ぐのは、名前・種類・からだ・見つけたかくし図鑑です。カードのきせかえ・背景・色・文字は、アプリのハムにはそのまま反映されません。</p>
     <button class="edbtn ghost" id="edBack">編集にもどる</button></div></div>
-  <div class="edte" id="edTE" hidden><div class="edtec"><textarea id="edTA" rows="3" maxlength="80" aria-label="カードの文字"></textarea><button class="edgo" id="edTEok">できた</button></div></div>
+  <div class="edte" id="edTE" hidden><div class="edtec"><div class="edtel"><textarea id="edTA" rows="2" maxlength="80" aria-label="カードの文字" placeholder="ここに文字を入れる"></textarea><button class="edgo" id="edTEok">できた</button></div><div class="edrow" id="edTF"></div><div class="edrow" id="edTC"></div><label class="edsl">大きさ<input type="range" id="edTS" min="24" max="300"></label></div></div>
   <input type="file" accept="image/*" id="edFile" hidden>`;
   document.body.appendChild(root);
   cv=$("#edC"); ctx=cv.getContext("2d"); ov=$("#edO"); octx=ov.getContext("2d"); stageEl=$("#edStage");
@@ -192,7 +212,7 @@ function build(){
   addEventListener("resize",fit); addEventListener("keydown",e=>{ if(!root||root.hidden) return; if((e.key==="Delete"||e.key==="Backspace")&&sel&&document.activeElement===document.body){ delSel(); } if((e.metaKey||e.ctrlKey)&&e.key==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); } });
 }
 function fit(){ if(!root||root.hidden) return; const r=stageEl.getBoundingClientRect(); const ar=W()/H(); let w=r.width-24, h=w/ar; if(h>r.height-16){ h=r.height-16; w=h*ar; } const wr=$("#edWrap"); wr.style.width=w+"px"; wr.style.height=h+"px";
-  const dpr=Math.min(2,devicePixelRatio||1); cv.width=W(); cv.height=H(); ov.width=Math.round(w*dpr); ov.height=Math.round(h*dpr); draw(); }
+  const dpr=Math.min(2,devicePixelRatio||1); cv.width=W(); cv.height=H(); ov.width=Math.round((w+44)*dpr); ov.height=Math.round((h+44)*dpr); ov._d=dpr; draw(); }
 function updBtns(){ $("#edU").disabled=hist.length<2; $("#edR").disabled=!fut.length; }
 function refresh(){ panel(); fit(); updBtns(); }
 const chips=(arr,cur,attr)=>arr.map(([v,n])=>`<button class="chp" data-${attr}="${v}" aria-pressed="${cur===v}">${n}</button>`).join("");
@@ -209,7 +229,7 @@ function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button")
   else if(tool==="fx") p.innerHTML=`<p class="edlbl">フィルター</p><div class="edrow">${chips(FILTERS,S.filter,"fl")}</div><p class="edlbl">枠</p><div class="edrow">${chips(FRAMES,S.frame,"fr")}</div>`;
   bindPanel(p); requestAnimationFrame(fit); }
 function sizeSl(L){ return `<label class="edsl">大きさ<input type="range" data-szl min="8" max="140" value="${Math.round((L.w||.5)*100)}"></label>`; }
-function photoOpts(L){ return `<p class="edlbl">うちの子の写真</p><div class="edrow">${chips([["0.06","角まる"],["0.5","まる"],["0","四角"]],String(L.round==null?0.06:L.round),"rd")}${chips([["#ffffff","白ふち"],["","ふちなし"]],L.border||"","bd")}</div>${sizeSl(L)}<p class="edhint">「みんなのハム」に載せるときは、人の顔や住所がわかるものが写っていないか確かめてね</p>`; }
+function photoOpts(L){ return `<p class="edlbl">うちの子の写真</p><button class="edbtn own ai" id="edCut">${IC.ham}${L.cut?"背景を消しました（もう一度ためす）":"AIで背景を消す"}</button><div class="edrow">${chips([["0.06","角まる"],["0.5","まる"],["0","四角"]],String(L.round==null?0.06:L.round),"rd")}${chips([["#ffffff","白ふち"],["","ふちなし"]],L.border||"","bd")}</div>${sizeSl(L)}<p class="edhint">「みんなのハム」に載せるときは、人の顔や住所がわかるものが写っていないか確かめてね</p>`; }
 function hamTint(L){ const t=L.tint||{h:0,s:100,b:100}; return `<p class="edlbl">この子の色と大きさ</p><div class="edtint">${sizeSl(L)}<label class="edsl">毛色<input type="range" data-tn="h" min="-180" max="180" value="${t.h}"></label><label class="edsl">あざやかさ<input type="range" data-tn="s" min="0" max="220" value="${t.s}"></label><label class="edsl">明るさ<input type="range" data-tn="b" min="40" max="150" value="${t.b}"></label><button class="chp" id="edTR">色をもとに戻す</button></div>`; }
 function textOpts(L){ return `<div class="edrow"><button class="chp big" id="edEditT">${IC.edit}文字を書きかえる</button></div><div class="edrow">${FONTS.map(([f,n])=>`<button class="chp" data-fo="${f}" aria-pressed="${L.font===f}" style="font-family:'${f}'">${n}</button>`).join("")}</div>
   <div class="edrow">${COLORS.map(c=>`<button class="sw" data-tc="${c}" style="background:${c}" aria-pressed="${L.color===c}" aria-label="文字色"></button>`).join("")}</div>
@@ -249,18 +269,71 @@ function bindPanel(p){ const on=(q,f)=>p.querySelectorAll(q).forEach(b=>b.onclic
   if(q("#edPhoto")) q("#edPhoto").onclick=()=>{ ED._fileFor="bg"; $("#edFile").click(); };
   if(q("#edSnap")) q("#edSnap").onclick=()=>{ if(ED.snap) ED.snap(u=>{ if(u) add({type:"snap",src:u,w:.62,border:"#ffffff",y:H()*.5}); }); };
   p.querySelectorAll("[data-tn]").forEach(r=>{ r.oninput=()=>{ const L=selL(); L.tint=Object.assign({h:0,s:100,b:100},L.tint); L.tint[r.dataset.tn]=+r.value; draw(); }; r.onchange=()=>commit(); });
+  if(q("#edCut")) q("#edCut").onclick=()=>cutBg(selL());
   if(q("#edOwn")) q("#edOwn").onclick=()=>{ ED._fileFor="ham"; $("#edFile").click(); };
   p.querySelectorAll("[data-szl]").forEach(r=>{ r.oninput=()=>{ const L=selL(); if(!L) return; L.w=+r.value/100; draw(); }; r.onchange=()=>commit(); });
   on("[data-rd]",b=>{ const L=selL(); if(!L) return; L.round=+b.dataset.rd; commit(); panel(); draw(); });
   on("[data-bd]",b=>{ const L=selL(); if(!L) return; L.border=b.dataset.bd||""; commit(); panel(); draw(); });
   if(q("#edTR")) q("#edTR").onclick=()=>{ selL().tint={h:0,s:100,b:100}; commit(); panel(); draw(); }; }
 function shade(hex){ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; r=Math.max(0,r-26); g=Math.max(0,g-26); b=Math.max(0,b-18); return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
-function editText(){ const L=selL(); if(!L||L.type!=="text") return; const box=$("#edTE"), ta=$("#edTA"); ta.value=L.text; box.hidden=false; setTimeout(()=>{ ta.focus(); ta.select(); },30);
-  ta.oninput=()=>{ L.text=ta.value.slice(0,80)||" "; draw(); };
-  $("#edTEok").onclick=()=>{ box.hidden=true; ta.blur(); commit(); draw(); }; }
+function editText(){ const L=selL(); if(!L||L.type!=="text") return; const box=$("#edTE"), ta=$("#edTA"); ta.value=L.text==="テキスト"?"":L.text; box.hidden=false; root.classList.add("typing"); setTimeout(()=>{ ta.focus(); },30);
+  const fill=()=>{ $("#edTF").innerHTML=FONTS.map(([f,n])=>`<button class="chp" data-f="${f}" aria-pressed="${L.font===f}" style="font-family:'${f}'">${n}</button>`).join("");
+    $("#edTC").innerHTML=COLORS.map(c=>`<button class="sw" data-c="${c}" style="background:${c}" aria-pressed="${L.color===c}" aria-label="文字色"></button>`).join("");
+    $("#edTF").querySelectorAll("button").forEach(b=>b.onpointerdown=ev=>{ ev.preventDefault(); L.font=b.dataset.f; fill(); draw(); });
+    $("#edTC").querySelectorAll("button").forEach(b=>b.onpointerdown=ev=>{ ev.preventDefault(); L.color=b.dataset.c; fill(); draw(); }); };
+  fill(); const sz=$("#edTS"); sz.value=Math.round(L.size); sz.oninput=()=>{ L.size=+sz.value; keepIn(L); draw(); };
+  ta.oninput=()=>{ L.text=ta.value.slice(0,80)||" "; keepIn(L); draw(); };
+  const lift=()=>{ const vv=window.visualViewport; if(!vv) return; const gap=Math.max(0,innerHeight-vv.height-vv.offsetTop); box.style.bottom=gap+"px"; };
+  if(window.visualViewport){ visualViewport.addEventListener("resize",lift); visualViewport.addEventListener("scroll",lift); lift(); }
+  $("#edTEok").onclick=()=>{ if(!ta.value.trim()){ S.layers=S.layers.filter(x=>x!==L); sel=null; } box.hidden=true; box.style.bottom="0px"; root.classList.remove("typing"); ta.blur(); if(window.visualViewport){ visualViewport.removeEventListener("resize",lift); visualViewport.removeEventListener("scroll",lift); } commit(); panel(); draw(); }; }
 function onFile(e){ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); const s=Math.min(1,1600/Math.max(im.width,im.height)); c.width=im.width*s; c.height=im.height*s; c.getContext("2d").drawImage(im,0,0,c.width,c.height); const u=c.toDataURL("image/jpeg",.86);
   if(ED._fileFor==="ham"){ ED._fileFor=null; add({type:"photo",src:u,w:.62,round:.06,border:"#ffffff",y:H()*.52}); toast("のせました。指で動かす・2本指で大きさと向きを変えられます"); return; }
   S.bg={t:"photo",src:u}; commit(); draw(); toast("自分の写真を背景にしました"); }; im.src=rd.result; }; rd.readAsDataURL(f); }
+// ---------- AIで背景を消す（スマホの中で処理。写真は外に送らない） ----------
+const CUT_MODEL="d30social/ormbg-ortweb", CUT_REV="b66cbea6744d43dc4177649ec21000d9da71d142";
+let cutW=null;
+function cutWorker(){ if(cutW) return cutW; const code=`import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1';
+env.allowLocalModels=false; let seg=null;
+self.onmessage=async e=>{ try{
+  if(!seg){ const gpu=!!(self.navigator&&navigator.gpu&&await navigator.gpu.requestAdapter().catch(()=>null));
+    seg=await pipeline('image-segmentation','${CUT_MODEL}',{revision:'${CUT_REV}',dtype:'fp16',device:gpu?'webgpu':'wasm',progress_callback:p=>{ if(p.status==='progress'&&/onnx/.test(p.file||'')) self.postMessage({t:'dl',p:p.progress}); }}); }
+  self.postMessage({t:'run'});
+  const out=await seg(e.data.url); const m=(Array.isArray(out)?out[0]:out).mask;
+  self.postMessage({t:'ok',w:m.width,h:m.height,ch:m.channels,data:m.data},[m.data.buffer]);
+}catch(err){ self.postMessage({t:'err',m:String(err&&err.message||err)}); } };`;
+  cutW=new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"})),{type:"module"}); return cutW; }
+function edAsk(msg,ok){ return new Promise(res=>{ const w=document.createElement("div"); w.className="edask"; w.innerHTML=`<div class="edaskc"><p></p><div class="edaskb"><button class="edbtn ghost" data-v="0">やめる</button><button class="edbtn main" data-v="1"></button></div></div>`; w.querySelector("p").textContent=msg; w.querySelector('[data-v="1"]').textContent=ok;
+  w.querySelectorAll("button").forEach(b=>b.onclick=()=>{ w.remove(); res(b.dataset.v==="1"); }); root.appendChild(w); }); }
+async function cutBg(L){ if(!L||L.type!=="photo") return;
+  if(!localStorage.getItem("oaiko_cutok")){ if(!await edAsk("はじめてのときだけ、背景を消すAI（約85MB）を読みこみます。Wi-Fiのときがおすすめです。写真はどこにも送らず、このスマホの中だけで処理します。","読みこんで消す")) return; try{ localStorage.setItem("oaiko_cutok","1"); }catch(e){} }
+  const ov2=document.createElement("div"); ov2.className="edbusy"; ov2.innerHTML=`<div><div class="edspin"></div><p>準備しています…</p></div>`; root.appendChild(ov2); const msg=t=>ov2.querySelector("p").textContent=t;
+  const src=L.orig||L.src; const W0=cutWorker();
+  const done=r=>{ W0.onmessage=null; ov2.remove(); return r; };
+  const res=await new Promise(rs=>{ const to=setTimeout(()=>rs({t:"err",m:"timeout"}),240000);
+    W0.onmessage=e=>{ const d=e.data; if(d.t==="dl") msg(`AIを読みこんでいます… ${Math.round(d.p||0)}%`); else if(d.t==="run") msg("背景を消しています…"); else { clearTimeout(to); rs(d); } };
+    W0.onerror=e=>{ clearTimeout(to); rs({t:"err",m:e.message||"worker"}); };
+    W0.postMessage({url:src}); });
+  done();
+  if(res.t!=="ok"){ cutW&&cutW.terminate(); cutW=null; toast("この端末では、背景を消せませんでした。通信を確かめて、もう一度ためしてね"); return; }
+  const im=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; });
+  const c=document.createElement("canvas"); c.width=im.width; c.height=im.height; const g=c.getContext("2d"); g.drawImage(im,0,0);
+  const mc=document.createElement("canvas"); mc.width=res.w; mc.height=res.h; const mg=mc.getContext("2d"), md=mg.createImageData(res.w,res.h);
+  // いちばん大きいかたまり（ハム）と、それに近い大きさのものだけ残す（えさ入れなどを消す）
+  const N=res.w*res.h, lab=new Int32Array(N), sizes=[0]; let nl=0; const st=[];
+  for(let i=0;i<N;i++){ if(lab[i]||res.data[i*res.ch]<100) continue; nl++; let sz=0; st.push(i); lab[i]=nl; while(st.length){ const p=st.pop(); sz++; const x=p%res.w, y=(p/res.w)|0;
+      for(const q of [x>0?p-1:-1, x<res.w-1?p+1:-1, y>0?p-res.w:-1, y<res.h-1?p+res.w:-1]){ if(q>=0&&!lab[q]&&res.data[q*res.ch]>=100){ lab[q]=nl; st.push(q); } } } sizes.push(sz); }
+  const big=Math.max(...sizes), keep=new Uint8Array(nl+1); sizes.forEach((s,i)=>{ if(i&&s>=big*.25) keep[i]=1; });
+  // 残すかたまりのまわり（半透明の毛先）は残すため、少し広げて判定
+  const near=new Uint8Array(N); for(let i=0;i<N;i++) if(keep[lab[i]]) near[i]=1;
+  for(let r=0;r<6;r++){ const n2=near.slice(); for(let i=0;i<N;i++){ if(near[i]) continue; const x=i%res.w; if((x>0&&near[i-1])||(x<res.w-1&&near[i+1])||(i>=res.w&&near[i-res.w])||(i<N-res.w&&near[i+res.w])) n2[i]=1; } near.set(n2); }
+  for(let i=0,j=0;i<N;i++,j+=res.ch){ const a=near[i]?res.data[j]:0; md.data[i*4]=md.data[i*4+1]=md.data[i*4+2]=0; md.data[i*4+3]=a; } mg.putImageData(md,0,0);
+  g.globalCompositeOperation="destination-in"; g.drawImage(mc,0,0,c.width,c.height);
+  // 透明なふちを切りつめる
+  const d=g.getImageData(0,0,c.width,c.height).data; let x0=c.width,y0=c.height,x1=0,y1=0; for(let y=0;y<c.height;y+=2) for(let x=0;x<c.width;x+=2){ if(d[(y*c.width+x)*4+3]>24){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  if(x1<=x0){ toast("うまく見つけられませんでした。ハムが大きく写った写真でためしてね"); return; }
+  const t=document.createElement("canvas"); t.width=x1-x0+2; t.height=y1-y0+2; t.getContext("2d").drawImage(c,-x0,-y0);
+  const oldW=L.w, [ow]=layerSize(L); L.orig=src; L.src=t.toDataURL("image/png"); L.cut=true; L.round=0; L.border=""; L.w=Math.min(1,oldW*t.width/im.width);
+  img(L.src); setTimeout(()=>{ keepIn(L); commit(); panel(); draw(); },60); toast("背景を消しました。もとに戻すボタンで戻せます"); }
 function toast(t){ const el=document.createElement("div"); el.className="edtoast"; el.textContent=t; root.appendChild(el); setTimeout(()=>el.remove(),3600); }
 // ---------- テンプレート ----------
 const H0=()=>HAMS[0]||{src:""};

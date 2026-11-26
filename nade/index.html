@@ -1712,10 +1712,10 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__t={card:()=>se
 // ---------- うちの子カード ＆ みんなのハム ----------
 const ICS={on:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>',off:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'};
 const ED_ASSETS={ham:[
-  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp?v=2",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp?v=2",name:"キンクマ（ふっくら）"},
-  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp?v=2",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp?v=2",name:"ごろん"},
-  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp?v=2",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp?v=2",name:"ロボロフスキー"},
-  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp?v=2",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp?v=2",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp?v=2",name:"パールホワイト"}],
+  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp?v=3",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp?v=3",name:"キンクマ（ふっくら）"},
+  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp?v=3",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp?v=3",name:"ごろん"},
+  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp?v=3",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp?v=3",name:"ロボロフスキー"},
+  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp?v=3",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp?v=3",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp?v=3",name:"パールホワイト"}],
  item:[
   {id:"crown",src:"ed/it_crown.webp",name:"王冠",at:[0,-.43],rel:.42},{id:"beanie",src:"ed/it_beanie.webp",name:"ニット帽",at:[0,-.4],rel:.56},
   {id:"strawhat",src:"ed/it_strawhat.webp",name:"むぎわら帽子",at:[0,-.43],rel:.72},{id:"beret",src:"ed/it_beret.webp",name:"ベレー帽",at:[.05,-.44],rel:.56},
@@ -1770,8 +1770,8 @@ $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); 
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=3"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=3"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=4"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=4"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
 async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);

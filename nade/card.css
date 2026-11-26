@@ -10,9 +10,10 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .ib:active{background:#ffffff14}
 .edgo{border:0;background:#e8924a;color:#fff!important;font-weight:800;border-radius:999px;min-height:40px;padding:0 18px;margin-left:4px}
 .edstage{flex:1;min-height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
-.edwrap{position:relative;box-shadow:0 10px 40px rgba(0,0,0,.45);border-radius:6px;overflow:hidden;background:#fff}
+.edwrap{position:relative;box-shadow:0 10px 40px rgba(0,0,0,.45);border-radius:6px;background:#fff}
+#edC{border-radius:6px}
 .edwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-#edO{pointer-events:none}
+#edO{pointer-events:none;inset:-22px!important;width:calc(100% + 44px)!important;height:calc(100% + 44px)!important;z-index:2}
 #edC{touch-action:none}
 .edsel{display:flex;justify-content:center;gap:2px;padding:4px 8px}
 .edsel button{border:0;background:#ffffff12;border-radius:12px;min-width:56px;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px}
@@ -52,9 +53,11 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .ednote{margin:-2px 2px 2px;font-size:11px;opacity:.65;line-height:1.5}
 .edtoast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:#f6efe6;color:#2a2420;border-radius:14px;padding:10px 14px;font-size:12.5px;font-weight:700;max-width:88%;box-shadow:0 6px 20px rgba(0,0,0,.4);z-index:5}
 @media (min-width:760px){ #ed{flex-direction:column} .edpanel{max-height:28vh} }
-.edte{position:absolute;left:0;right:0;bottom:0;top:0;background:#0006;display:flex;align-items:flex-end;z-index:4}
+.edte{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;z-index:4}
 .edte[hidden]{display:none}
-.edtec{width:100%;background:#2a2420;padding:12px 12px calc(env(safe-area-inset-bottom) + 12px);display:flex;gap:10px;align-items:flex-end;border-radius:18px 18px 0 0}
+.edtec{width:100%;background:#2a2420;padding:12px 12px calc(env(safe-area-inset-bottom) + 12px);display:flex;flex-direction:column;gap:8px;border-radius:18px 18px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+.edtel{display:flex;gap:10px;align-items:flex-end}
+#ed.typing .edpanel,#ed.typing .edtabs,#ed.typing .edsel{visibility:hidden}
 .edtec textarea{flex:1;font:inherit;font-size:17px;border-radius:12px;border:0;padding:10px 12px;background:#f6efe6;color:#2a2420;resize:none}
 .edcall{display:flex;gap:10px;align-items:center;background:#3a2c22;border:1px solid #e8954c;border-radius:14px;padding:10px 12px;margin:2px 0 8px}
 .edcall svg{width:30px;height:30px;flex:none;color:#ffb877}
@@ -64,3 +67,13 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 #ed .edbtn.own svg{color:#2a1f19}
 #ed .ednote{font-size:11px;line-height:1.6}
 .edt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px}
+
+.edask{position:absolute;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:9;padding:20px}
+.edaskc{background:#2a2420;border-radius:18px;padding:18px;max-width:340px;width:100%}
+.edaskc p{margin:0 0 14px;font-size:14px;line-height:1.7}
+.edaskb{display:flex;gap:8px}.edaskb .edbtn{flex:1;min-height:46px}
+.edbusy{position:absolute;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9;text-align:center}
+.edbusy p{margin:12px 0 0;font-size:14px;font-weight:700}
+.edspin{width:38px;height:38px;margin:auto;border-radius:50%;border:4px solid #ffffff33;border-top-color:#ffb877;animation:edsp 1s linear infinite}
+@keyframes edsp{to{transform:rotate(360deg)}}
+#ed .edbtn.own.ai{background:#e8954c;color:#fff}#ed .edbtn.own.ai svg{color:#fff}
