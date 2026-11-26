@@ -1446,7 +1446,7 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               2:{id:"doku_aka",no:22,name:"激辛毒ハム",desc:"ほっぺをつつかれすぎて、真っ赤になった。1分で元に戻る。",tag:"#激辛ハム",tint:1,hint:"毒ハムのほっぺを、つついていると"},
               3:{id:"doku_mido",no:23,name:"青汁毒ハム",desc:"おやつの時間になですぎて、緑になった。健康には、なっていない。",tag:"#青汁ハム",tint:1,hint:"おやつの場面で、しつこくなでると"},
               4:{id:"doku_yami",no:24,name:"闇毒ハム",desc:"真夜中になですぎて、闇に染まった。朝になれば、もどる。",tag:"#闇ハム",tint:1,hint:"真夜中（0〜4時）に、毒ハムにすると"},
-              hampter:{id:"hampter",no:20,name:"はむぷたー",desc:"はむすたー、だよ。……まあ、いいけど。",tag:"#はむぷたー",how:"名前を「はむぷたー」にしたら",hint:"名前を、ちょっとまちがえると"},
+              hampter:{id:"hampter",no:20,name:"はむぷたー",desc:"鼻をつつかれすぎて、なまえが ちょっとずれた。はむすたー、だよ。……まあ、いいけど。",tag:"#はむぷたー",how:"鼻を、つんつんしつづけたら",hint:"鼻を、つんつんしつづけると"},
               kyomu:{id:"kyomu",no:13,name:"虚無ハム",desc:"見つめられすぎて、無になった。",tag:"#虚無ハム",how:"1分じっと見つめたら",hint:"さわらずに、じっと見つめていると"},
               bikkuri:{id:"bikkuri",no:5,name:"びっくり顔",desc:"ひさしぶりに会ったら、固まった。",tag:"#びっくりハム",how:"3日ぶりに会いにきたら",hint:"ひさしぶりに会いにくると"},
               yofukashi:{id:"yofukashi",no:9,name:"夜ふかし仲間",desc:"こんな時間に起こされた。おたがいさま。",tag:"#夜ふかし",how:"夜中に起こしたら",hint:"夜おそく（23〜3時）に、寝ている子を起こすと"},
@@ -1589,11 +1589,13 @@ function tidyAt(x,y){ // 散らかった床材を指でならす
     const r=el.getBoundingClientRect(), pad=14; if(x>r.left-pad&&x<r.right+pad&&y>r.top-pad&&y<r.bottom+pad){ life.cl=life.cl||{}; life.cl[k]=Date.now(); save(); el.classList.remove("show"); haptic("light"); return true; } }
   return false;
 }
+let noseTaps=[];
 function onTap(z){
   const now=performance.now();
   if(z){ nadeCount++; countNade(); if(aizuTap(z)) return;
     if(/^(belly|feet|rear|side)$/.test(z) && Date.now()-likedAt<12000){ badTaps=badTaps.filter(t=>now-t<6000); badTaps.push(now); if(badTaps.length>=3){ badTaps=[]; likedAt=0; sayText("……なかよし、だよね？"); unlock(SECRET.hamnemy,{wait:1500}); return; } }
     if(dokuOn() && dokuKind===0 && (z==="cheek"||z==="nose")){ cheekTaps=cheekTaps.filter(t=>now-t<5000); cheekTaps.push(now); if(cheekTaps.length>=6){ cheekTaps=[]; dokuTaps=[]; taps=[]; goDoku(2); return; } }
+    if(z==="nose"&&!dokuOn()&&!secSeen.has("hampter")){ noseTaps=noseTaps.filter(t=>now-t<4000); noseTaps.push(now); if(noseTaps.length>=5){ noseTaps=[]; dokuTaps=[]; taps=[]; sayText("……はむぷたー、だよ"); request("startle"); unlock(SECRET.hampter,{wait:1200}); return; } }
     dokuTaps=dokuTaps.filter(t=>now-t<6000); dokuTaps.push(now);
     if(dokuTaps.length>=10){ dokuTaps=[]; taps=[]; nextDoku(); return; } }
   taps=taps.filter(t=>now-t<900); taps.push(now);
