@@ -56,3 +56,11 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .edte[hidden]{display:none}
 .edtec{width:100%;background:#2a2420;padding:12px 12px calc(env(safe-area-inset-bottom) + 12px);display:flex;gap:10px;align-items:flex-end;border-radius:18px 18px 0 0}
 .edtec textarea{flex:1;font:inherit;font-size:17px;border-radius:12px;border:0;padding:10px 12px;background:#f6efe6;color:#2a2420;resize:none}
+.edcall{display:flex;gap:10px;align-items:center;background:#3a2c22;border:1px solid #e8954c;border-radius:14px;padding:10px 12px;margin:2px 0 8px}
+.edcall svg{width:30px;height:30px;flex:none;color:#ffb877}
+.edcall b{display:block;font-size:14px;color:#ffd6ad}
+.edcall small{display:block;font-size:11.5px;color:#d9cbbd;margin-top:2px;line-height:1.5}
+#ed .edbtn.own{width:100%;margin:0 0 8px;background:#f6efe6;color:#2a1f19;min-height:46px}
+#ed .edbtn.own svg{color:#2a1f19}
+#ed .ednote{font-size:11px;line-height:1.6}
+.edt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px}

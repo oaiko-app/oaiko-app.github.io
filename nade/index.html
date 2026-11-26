@@ -153,7 +153,9 @@
   #mkMsg{margin:0;font-size:13px;font-weight:700;text-align:center;color:#b8743c;min-height:1.2em}
   #galGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .gi{background:#fbf5ec;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-  .gi img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#efe5d8}
+  .gi img{width:100%;aspect-ratio:4/5;object-fit:contain;display:block;background:#efe5d8}
+  #galSort button{border:1px solid #e3d3c3;background:#fff;color:#3b2a20;border-radius:999px;min-height:36px;padding:0 16px;font:inherit;font-weight:700;font-size:13px}
+  #galSort button[aria-pressed="true"]{background:#3b2a20;color:#fff;border-color:#3b2a20}
   .gi .gb{display:flex;align-items:center;gap:4px;padding:4px}
   .gi .gb button{border:0;background:none;font:inherit;min-height:36px;min-width:36px;border-radius:10px;color:#8a7262;font-size:13px}
   .gi .gb .lk{font-weight:800;color:#c0566b}.gi .gb .lk.on{background:#ffe9ee}
@@ -323,7 +325,7 @@
   </div></div>
   <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
-    <p class="slv" style="font-size:22px"><span id="mvName" style="display:block;word-break:break-all"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
+    <p class="slv" style="font-size:22px"><span id="mvName" style="display:block;word-break:break-all"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリに引き継げます（無料）。アプリでは、アプリの中のハムとして暮らします。カードのきせかえ・背景・色は引き継がれません。</small></p>
     <div class="mvwhat">アプリでは…<br>・自分にやさしくできた日は、この子の暮らしも育つ<br>・きせかえ・おでかけ・お部屋づくり<br>・かくし図鑑は全53種。ここでは見つからない子も</div>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
@@ -353,7 +355,7 @@
       <div class="mkrow" id="galSort"><button class="t" data-s="new" aria-pressed="true">新着</button><button class="t" data-s="top" aria-pressed="false">人気</button></div>
       <div id="galGrid"></div><p id="galEmpty" hidden>まだだれも載せていません。いちばん乗りしよう</p>
       <button class="sub" id="galMore" hidden>もっと見る</button>
-      <p class="note">いやな投稿は「…」から知らせてください。2人から知らせがあると、すぐ見えなくなります。</p>
+      <p class="note">いやな投稿は「…」から知らせてください。何人かから知らせがあると、見えなくなります。</p>
       <button class="main" id="galMake">自分の子もつくる</button><div class="legal"><a href="https://oaiko-app.github.io/#terms" target="_blank" rel="noopener">利用規約</a><a href="https://oaiko-app.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a><a href="https://oaiko-app.github.io/#support" target="_blank" rel="noopener">お問い合わせ・通報</a></div>
     </div>
     <button class="sub" id="mkClose">とじる</button>
@@ -512,7 +514,7 @@ function glDraw(){
   if(!glOK) return;
   const now=performance.now();
   let a=null, b=cur, m=1;
-  if(fadeGL){ const t=(now-fadeGL.t0)/fadeGL.d; if(t>=1) fadeGL=null; else { a=fadeGL.from; b=fadeGL.to; m=t; } }
+  if(fadeGL){ const t=(now-fadeGL.t0)/fadeGL.d; if(t>=1) fadeGL=null; else { a=fadeGL.from; b=fadeGL.to; const u=Math.min(1,Math.max(0,(t-.38)/.24)); m=u*u*(3-2*u); } } // 切りかえで顔が二重に見えないよう、まざる時間をごく短くする
   if(!b || b.readyState<2 || !b.videoWidth) return;
   // 電池の節約：動画の新しいコマが来たときと、指でさわって動いているあいだだけ描きなおす
   { const vt=b.currentTime, busy=fadeGL||FUR.down||FUR.p>.01||Math.abs(FUR.sx)+Math.abs(FUR.sy)+Math.abs(FUR.svx)+Math.abs(FUR.svy)>1e-5||Math.abs(FUR.vx)+Math.abs(FUR.vy)+Math.abs(FUR.tx)+Math.abs(FUR.ty)>1e-6||FIELD.live||Math.abs(dokuAmt-(Date.now()<dokuUntil?1:0))>.001||(dokuKind===1&&dokuAmt>0)||capReq||glDraw._mv||cv.width!==b.videoWidth||glDraw._k!==(life.body.s+','+life.body.c+','+POSE);
@@ -1710,10 +1712,10 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__t={card:()=>se
 // ---------- うちの子カード ＆ みんなのハム ----------
 const ICS={on:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>',off:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'};
 const ED_ASSETS={ham:[
-  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp",name:"キンクマ（ふっくら）"},
-  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp",name:"ごろん"},
-  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp",name:"ロボロフスキー"},
-  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp",name:"パールホワイト"}],
+  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp?v=2",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp?v=2",name:"キンクマ（ふっくら）"},
+  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp?v=2",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp?v=2",name:"ごろん"},
+  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp?v=2",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp?v=2",name:"ロボロフスキー"},
+  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp?v=2",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp?v=2",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp?v=2",name:"パールホワイト"}],
  item:[
   {id:"crown",src:"ed/it_crown.webp",name:"王冠",at:[0,-.43],rel:.42},{id:"beanie",src:"ed/it_beanie.webp",name:"ニット帽",at:[0,-.4],rel:.56},
   {id:"strawhat",src:"ed/it_strawhat.webp",name:"むぎわら帽子",at:[0,-.43],rel:.72},{id:"beret",src:"ed/it_beret.webp",name:"ベレー帽",at:[.05,-.44],rel:.56},
@@ -1768,8 +1770,8 @@ $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); 
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=2"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=2"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=3"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=3"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
 async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);
@@ -1783,10 +1785,11 @@ async function openEd(){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
     const a=document.createElement("a"); a.href=png; a.download="oaiko-card.png"; document.body.appendChild(a); a.click(); a.remove();
     window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
-  ED.post=async(jpg,txt)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
-    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,n:life.name||"うちの子",l:txt||"",sp})}); const d=await r.json().catch(()=>({}));
+  ED.post=async(jpg,txt,ph)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
+    if(ph){ try{ const v=await (await fetch(GAL_URL.replace(/\/gal$/,""))).json(); if(!v.v||v.v<"1126c") return {msg:"写真を使ったカードの投稿は、いま準備中です。もう少し待ってね"}; }catch(e){ return {msg:"通信できませんでした"}; } }
+    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
       if(r.ok&&d.id){ store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
-      return {msg:d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう3回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
+      return {msg:d.error==="photo"?"写真に、人の顔や住所などがわかるものが写っているかもしれません。別の写真で試してね":d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
   ED.open(); }
 $("#mk").addEventListener("pointerdown",e=>e.stopPropagation());
 $("#mkN").addEventListener("compositionend",e=>$("#mkN").oninput(e));
@@ -1809,7 +1812,7 @@ $("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。
   try{ const c=await drawCard(540); const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:c.toDataURL("image/jpeg",.82),n:mk.n||NM(),l:mk.l,sp})});
     const d=await r.json().catch(()=>({}));
     if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました"; return; }
-    mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう3回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
+    mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
   }catch(e){ mkMsg("通信できませんでした"); }
   bt.disabled=false; bt.textContent="「みんなのハム」に載せる"; };
 function askDlg(msg,okLabel){ return new Promise(res=>{ const w=document.createElement("div"); w.className="ask"; w.setAttribute("role","alertdialog"); w.setAttribute("aria-modal","true");

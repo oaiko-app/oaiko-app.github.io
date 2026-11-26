@@ -7,6 +7,7 @@ const $=q=>document.querySelector(q);
 const SVG=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const IC={
   close:SVG('<path d="M6 6l12 12M18 6L6 18"/>'),
+  reset:SVG('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'),
   undo:SVG('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),
   redo:SVG('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>'),
   tpl:SVG('<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>'),
@@ -167,7 +168,7 @@ ED.addText=(o={})=>{ add(Object.assign({type:"text",text:"テキスト",font:"Ze
 let root;
 function build(){
   root=document.createElement("div"); root.id="ed"; root.setAttribute("role","dialog"); root.setAttribute("aria-modal","true"); root.setAttribute("aria-label","うちの子カードをつくる");
-  root.innerHTML=`<div class="edtop"><button class="ib" id="edX" aria-label="とじる">${IC.close}</button><span class="edt">うちの子カード</span><button class="ib" id="edU" aria-label="もとに戻す">${IC.undo}</button><button class="ib" id="edR" aria-label="やり直す">${IC.redo}</button><button class="edgo" id="edDone">完成</button></div>
+  root.innerHTML=`<div class="edtop"><button class="ib" id="edX" aria-label="とじる">${IC.close}</button><span class="edt">うちの子カード</span><button class="ib" id="edZ" aria-label="最初からにする">${IC.reset}</button><button class="ib" id="edU" aria-label="もとに戻す">${IC.undo}</button><button class="ib" id="edR" aria-label="やり直す">${IC.redo}</button><button class="edgo" id="edDone">完成</button></div>
   <div class="edstage" id="edStage"><div class="edwrap" id="edWrap"><canvas id="edC"></canvas><canvas id="edO"></canvas></div></div>
   <div class="edsel" id="edSel" hidden></div>
   <div class="edpanel" id="edPanel"></div>
@@ -175,8 +176,9 @@ function build(){
   <div class="edsheet" id="edDoneSheet" hidden><div class="edsc"><img id="edOut" alt="できあがったカード"><p class="edmsg" id="edMsg" role="status"></p>
     <button class="edbtn main" id="edShare">${IC.share}画像を保存・シェア</button>
     <button class="edbtn" id="edPost">${IC.post}「みんなのハム」に載せる</button>
-    <p class="ednote" id="edPostNote">載せると、カードの絵・名前が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日3回まで。</p>
+    <p class="ednote" id="edPostNote">載せると、カードの絵・名前が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。</p>
     <button class="edbtn app" id="edApp">${IC.app}この子と、アプリで暮らす</button>
+    <p class="ednote">アプリに引き継ぐのは、名前・種類・からだ・見つけたかくし図鑑です。カードのきせかえ・背景・色・文字は、アプリのハムにはそのまま反映されません。</p>
     <button class="edbtn ghost" id="edBack">編集にもどる</button></div></div>
   <div class="edte" id="edTE" hidden><div class="edtec"><textarea id="edTA" rows="3" maxlength="80" aria-label="カードの文字"></textarea><button class="edgo" id="edTEok">できた</button></div></div>
   <input type="file" accept="image/*" id="edFile" hidden>`;
@@ -184,8 +186,8 @@ function build(){
   cv=$("#edC"); ctx=cv.getContext("2d"); ov=$("#edO"); octx=ov.getContext("2d"); stageEl=$("#edStage");
   cv.addEventListener("pointerdown",onDown); cv.addEventListener("pointermove",onMove); ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,onUp));
   root.addEventListener("pointerdown",e=>e.stopPropagation()); root.addEventListener("wheel",e=>{ const L=selL(); if(!L) return; e.preventDefault(); gest={size0:L.size,w0:L.w||.5}; scaleL(L,e.deltaY<0?1.06:.94); gest=null; draw(); clearTimeout(root._w); root._w=setTimeout(commit,300); },{passive:false});
-  $("#edX").onclick=()=>ED.close(); $("#edU").onclick=undo; $("#edR").onclick=redo; $("#edDone").onclick=finish; $("#edBack").onclick=()=>{ $("#edDoneSheet").hidden=true; };
-  $("#edTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ tool=b.dataset.t; penOn=tool==="pen"; if(penOn) sel=null; panel(); draw(); });
+  $("#edX").onclick=()=>ED.close(); $("#edZ").onclick=()=>{ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; TPLS[0].f(s); S=s; sel=null; tool="ham"; penOn=false; commit(); refresh(); toast("最初からにしました。左の矢印で、前の状態に戻せます"); }; $("#edU").onclick=undo; $("#edR").onclick=redo; $("#edDone").onclick=finish; $("#edBack").onclick=()=>{ $("#edDoneSheet").hidden=true; };
+  $("#edTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ tool=b.dataset.t; penOn=tool==="pen"; if(penOn) sel=null; if(tool==="ham"&&!(selL()&&/ham|photo/.test(selL().type))){ const h=[...S.layers].reverse().find(l=>l.type==="ham"||l.type==="photo"); if(h) sel=h.id; } panel(); draw(); });
   $("#edFile").onchange=onFile;
   addEventListener("resize",fit); addEventListener("keydown",e=>{ if(!root||root.hidden) return; if((e.key==="Delete"||e.key==="Backspace")&&sel&&document.activeElement===document.body){ delSel(); } if((e.metaKey||e.ctrlKey)&&e.key==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); } });
 }
@@ -197,7 +199,7 @@ const chips=(arr,cur,attr)=>arr.map(([v,n])=>`<button class="chp" data-${attr}="
 function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.t===tool)));
   const L=selL(); selBar(L);
   if(tool==="tpl") p.innerHTML=`<div class="edrow">${TPLS.map((t,i)=>`<button class="tplb" data-tp="${i}"><b>${t.n}</b><small>${t.d}</small></button>`).join("")}</div><div class="edrow">${chips(RATIOS.map(r=>[r[0],r[0]]),S.ratio,"ra")}</div>`;
-  else if(tool==="ham") p.innerHTML=(L&&L.type==="ham"?hamTint(L):"")+`<div class="edrow grid">${HAMS.map((h,i)=>`<button class="thb" data-hm="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}<button class="thb tx" id="edSnap">${IC.snap}<small>いまの写真</small></button></div>`;
+  else if(tool==="ham") p.innerHTML=(L&&(L.type==="ham"||L.type==="photo")?(L.type==="ham"?hamTint(L):photoOpts(L)):`<div class="edcall">${IC.ham}<div><b>ハムの色も大きさも、自由に変えられます</b><small>カードの上のハムをタップすると、毛色・あざやかさ・明るさ・大きさを変えられます</small></div></div>`)+`<button class="edbtn own" id="edOwn">${IC.photo}うちの子の写真をのせる</button><div class="edrow grid">${HAMS.map((h,i)=>`<button class="thb" data-hm="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}<button class="thb tx" id="edSnap">${IC.snap}<small>いまの写真</small></button></div>`;
   else if(tool==="item") p.innerHTML=`<p class="edhint">ハムを選んでから押すと、その子に合わせて置かれます</p><div class="edrow grid">${ITEMS.map((h,i)=>`<button class="thb" data-it="${i}" aria-label="${h.name}"><img src="${h.src}" alt=""></button>`).join("")}</div>`;
   else if(tool==="bg") p.innerHTML=`<div class="edrow grid">${BGS.map((b,i)=>`<button class="thb" data-bgi="${i}" aria-label="${b.name}"><img src="${b.t||b.src}" alt=""></button>`).join("")}<button class="thb tx" id="edPhoto">${IC.photo}<small>自分の写真</small></button></div>
     <div class="edrow">${BGCOL.map((c,i)=>`<button class="sw" data-bgc="${i}" style="background:linear-gradient(${c[0]},${c[1]})" aria-label="色${i+1}"></button>`).join("")}</div>
@@ -206,7 +208,9 @@ function panel(){ const p=$("#edPanel"); $("#edTabs").querySelectorAll("button")
   else if(tool==="pen") p.innerHTML=`<p class="edhint">カードの上を指でなぞると描けます</p><div class="edrow">${COLORS.map(c=>`<button class="sw" data-pc="${c}" style="background:${c}" aria-pressed="${penCol===c&&!penEraser}" aria-label="${c}"></button>`).join("")}<button class="chp" id="edEr" aria-pressed="${penEraser}">${IC.eraser}消しゴム</button></div><label class="edsl">太さ<input type="range" id="edPw" min="3" max="60" value="${penW}"></label>`;
   else if(tool==="fx") p.innerHTML=`<p class="edlbl">フィルター</p><div class="edrow">${chips(FILTERS,S.filter,"fl")}</div><p class="edlbl">枠</p><div class="edrow">${chips(FRAMES,S.frame,"fr")}</div>`;
   bindPanel(p); requestAnimationFrame(fit); }
-function hamTint(L){ const t=L.tint||{h:0,s:100,b:100}; return `<div class="edtint"><label class="edsl">毛色<input type="range" data-tn="h" min="-180" max="180" value="${t.h}"></label><label class="edsl">あざやかさ<input type="range" data-tn="s" min="0" max="220" value="${t.s}"></label><label class="edsl">明るさ<input type="range" data-tn="b" min="40" max="150" value="${t.b}"></label><button class="chp" id="edTR">色をもとに戻す</button></div>`; }
+function sizeSl(L){ return `<label class="edsl">大きさ<input type="range" data-szl min="8" max="140" value="${Math.round((L.w||.5)*100)}"></label>`; }
+function photoOpts(L){ return `<p class="edlbl">うちの子の写真</p><div class="edrow">${chips([["0.06","角まる"],["0.5","まる"],["0","四角"]],String(L.round==null?0.06:L.round),"rd")}${chips([["#ffffff","白ふち"],["","ふちなし"]],L.border||"","bd")}</div>${sizeSl(L)}<p class="edhint">「みんなのハム」に載せるときは、人の顔や住所がわかるものが写っていないか確かめてね</p>`; }
+function hamTint(L){ const t=L.tint||{h:0,s:100,b:100}; return `<p class="edlbl">この子の色と大きさ</p><div class="edtint">${sizeSl(L)}<label class="edsl">毛色<input type="range" data-tn="h" min="-180" max="180" value="${t.h}"></label><label class="edsl">あざやかさ<input type="range" data-tn="s" min="0" max="220" value="${t.s}"></label><label class="edsl">明るさ<input type="range" data-tn="b" min="40" max="150" value="${t.b}"></label><button class="chp" id="edTR">色をもとに戻す</button></div>`; }
 function textOpts(L){ return `<div class="edrow"><button class="chp big" id="edEditT">${IC.edit}文字を書きかえる</button></div><div class="edrow">${FONTS.map(([f,n])=>`<button class="chp" data-fo="${f}" aria-pressed="${L.font===f}" style="font-family:'${f}'">${n}</button>`).join("")}</div>
   <div class="edrow">${COLORS.map(c=>`<button class="sw" data-tc="${c}" style="background:${c}" aria-pressed="${L.color===c}" aria-label="文字色"></button>`).join("")}</div>
   <div class="edrow">${chips([["#ffffff","白ふち"],["#3b2a20","茶ふち"],["#000000","黒ふち"],["","ふちなし"]],L.stroke||"","ts")}${chips([["","吹き出しなし"],["#ffffff","白い吹き出し"],["#fff1c9","黄の吹き出し"]],L.bubble||"","tb")}</div>`; }
@@ -245,13 +249,18 @@ function bindPanel(p){ const on=(q,f)=>p.querySelectorAll(q).forEach(b=>b.onclic
   if(q("#edPhoto")) q("#edPhoto").onclick=()=>{ ED._fileFor="bg"; $("#edFile").click(); };
   if(q("#edSnap")) q("#edSnap").onclick=()=>{ if(ED.snap) ED.snap(u=>{ if(u) add({type:"snap",src:u,w:.62,border:"#ffffff",y:H()*.5}); }); };
   p.querySelectorAll("[data-tn]").forEach(r=>{ r.oninput=()=>{ const L=selL(); L.tint=Object.assign({h:0,s:100,b:100},L.tint); L.tint[r.dataset.tn]=+r.value; draw(); }; r.onchange=()=>commit(); });
+  if(q("#edOwn")) q("#edOwn").onclick=()=>{ ED._fileFor="ham"; $("#edFile").click(); };
+  p.querySelectorAll("[data-szl]").forEach(r=>{ r.oninput=()=>{ const L=selL(); if(!L) return; L.w=+r.value/100; draw(); }; r.onchange=()=>commit(); });
+  on("[data-rd]",b=>{ const L=selL(); if(!L) return; L.round=+b.dataset.rd; commit(); panel(); draw(); });
+  on("[data-bd]",b=>{ const L=selL(); if(!L) return; L.border=b.dataset.bd||""; commit(); panel(); draw(); });
   if(q("#edTR")) q("#edTR").onclick=()=>{ selL().tint={h:0,s:100,b:100}; commit(); panel(); draw(); }; }
 function shade(hex){ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; r=Math.max(0,r-26); g=Math.max(0,g-26); b=Math.max(0,b-18); return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
 function editText(){ const L=selL(); if(!L||L.type!=="text") return; const box=$("#edTE"), ta=$("#edTA"); ta.value=L.text; box.hidden=false; setTimeout(()=>{ ta.focus(); ta.select(); },30);
   ta.oninput=()=>{ L.text=ta.value.slice(0,80)||" "; draw(); };
   $("#edTEok").onclick=()=>{ box.hidden=true; ta.blur(); commit(); draw(); }; }
 function onFile(e){ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); const s=Math.min(1,1600/Math.max(im.width,im.height)); c.width=im.width*s; c.height=im.height*s; c.getContext("2d").drawImage(im,0,0,c.width,c.height); const u=c.toDataURL("image/jpeg",.86);
-  S.bg={t:"photo",src:u}; commit(); draw(); toast("自分の写真を使ったカードは、シェアはできますが「みんなのハム」には載せられません"); }; im.src=rd.result; }; rd.readAsDataURL(f); }
+  if(ED._fileFor==="ham"){ ED._fileFor=null; add({type:"photo",src:u,w:.62,round:.06,border:"#ffffff",y:H()*.52}); toast("のせました。指で動かす・2本指で大きさと向きを変えられます"); return; }
+  S.bg={t:"photo",src:u}; commit(); draw(); toast("自分の写真を背景にしました"); }; im.src=rd.result; }; rd.readAsDataURL(f); }
 function toast(t){ const el=document.createElement("div"); el.className="edtoast"; el.textContent=t; root.appendChild(el); setTimeout(()=>el.remove(),3600); }
 // ---------- テンプレート ----------
 const H0=()=>HAMS[0]||{src:""};
@@ -276,18 +285,21 @@ function exportCanvas(w){ const c=document.createElement("canvas"); c.width=W();
 function watermark(c){ const g=c.getContext("2d"), k=c.width/1080; g.save(); g.font=`700 ${26*k}px "Zen Maru Gothic", sans-serif`; g.textAlign="right"; g.textBaseline="bottom"; g.fillStyle="rgba(255,255,255,.85)"; g.shadowColor="rgba(0,0,0,.35)"; g.shadowBlur=6*k; g.fillText("#おあいこ  oaiko-app.github.io/nade",c.width-24*k,c.height-20*k); g.restore(); return c; }
 let outPng=null, postedId=null;
 function finish(){ sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
-  const ph=usesPhoto(); $("#edPost").hidden=ph; $("#edPostNote").textContent=ph?"自分の写真を使ったカードは「みんなのハム」には載せられません。シェアはできます。":"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日3回まで。";
+  const ph=usesPhoto(); $("#edPost").hidden=false; $("#edPostNote").textContent=(ph?"写真には、人の顔・名札・住所や窓の外の景色など、身元がわかるものが写っていないか確かめてね。写真は載せる前に自動で確認します。":"")+"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。";
   $("#edDoneSheet").hidden=false; $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
   $("#edShare").onclick=()=>ED.share&&ED.share(outPng,postedId);
   $("#edPost").onclick=async()=>{ if(!ED.post) return; const bt=$("#edPost"); bt.disabled=true; bt.lastChild.textContent="載せています…"; const j=watermark(exportCanvas(540)).toDataURL("image/jpeg",.84);
-    const r=await ED.post(j, texts()); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました。シェアすると、このカードのページも広まります"; bt.lastChild.textContent="載せました"; } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
+    const r=await ED.post(j, texts(), usesPhoto()); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました。シェアすると、このカードのページも広まります"; bt.lastChild.textContent="載せました"; } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
   $("#edApp").onclick=()=>{ ED.close(); ED.toApp&&ED.toApp(); }; }
 function texts(){ return S.layers.filter(l=>l.type==="text").map(l=>l.text).join(" ").slice(0,60); }
 // ---------- 開く・閉じる ----------
-ED.open=async(opt={})=>{ if(!root) build(); root.hidden=false; document.documentElement.classList.add("edopen");
+function zoomLock(on){ const m=document.querySelector('meta[name="viewport"]'); if(!m) return; if(on){ if(m.dataset.c==null) m.dataset.c=m.content; m.content=m.dataset.c.replace(/,?\s*(maximum-scale|user-scalable)=[^,]*/g,"")+",maximum-scale=1,user-scalable=no"; } else if(m.dataset.c!=null) m.content=m.dataset.c; }
+const noGest=e=>{ if(root&&!root.hidden) e.preventDefault(); };
+["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,noGest,{passive:false}));
+ED.open=async(opt={})=>{ if(!root) build(); root.hidden=false; document.documentElement.classList.add("edopen"); zoomLock(true); try{ window.scrollTo(0,0); }catch(e){}
   if(!S){ S=load()||null; if(!S){ S=blank(); TPLS[0].f(S); } hist=[snapshot()]; fut=[]; }
   tool=opt.tool||tool||"tpl"; penOn=tool==="pen"; refresh(); loadFonts().then(draw); setTimeout(fit,60); };
-ED.close=()=>{ if(root){ root.hidden=true; document.documentElement.classList.remove("edopen"); } if(ED.onClose) ED.onClose(); };
+ED.close=()=>{ if(root){ root.hidden=true; document.documentElement.classList.remove("edopen"); zoomLock(false); } if(ED.onClose) ED.onClose(); };
 ED.reset=()=>{ S=null; localStorage.removeItem("oaiko_ed"); };
 ED._state=()=>S;
 })();
