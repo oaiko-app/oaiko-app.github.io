@@ -290,7 +290,7 @@ function bindPanel(p){ const on=(q,f)=>p.querySelectorAll(q).forEach(b=>b.onclic
   on("[data-bd]",b=>{ const L=selL(); if(!L) return; L.border=b.dataset.bd||""; commit(); panel(); draw(); });
   if(q("#edTR")) q("#edTR").onclick=()=>{ selL().tint={h:0,s:100,b:100}; commit(); panel(); draw(); }; }
 function shade(hex){ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; r=Math.max(0,r-26); g=Math.max(0,g-26); b=Math.max(0,b-18); return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
-function editText(){ const L=selL(); if(!L||L.type!=="text") return; const box=$("#edTE"), ta=$("#edTA"); ta.value=L.text==="テキスト"?"":L.text; box.hidden=false; root.classList.add("typing"); setTimeout(()=>{ ta.focus(); },30);
+function editText(){ const L=selL(); if(!L||L.type!=="text") return; const box=$("#edTE"), ta=$("#edTA"); ta.value=L.text==="テキスト"?"":L.text; box.hidden=false; root.classList.add("typing"); setTimeout(()=>{ ta.focus({preventScroll:true}); },30);
   const fill=()=>{ $("#edTF").innerHTML=FONTS.map(([f,n])=>`<button class="chp" data-f="${f}" aria-pressed="${L.font===f}" style="font-family:'${f}'">${n}</button>`).join("");
     $("#edTC").innerHTML=COLORS.map(c=>`<button class="sw" data-c="${c}" style="background:${c}" aria-pressed="${L.color===c}" aria-label="文字色"></button>`).join("");
     $("#edTF").querySelectorAll("button").forEach(b=>b.onpointerdown=ev=>{ ev.preventDefault(); L.font=b.dataset.f; fill(); draw(); });

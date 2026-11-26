@@ -99,3 +99,4 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 .thb.sec.lock{background:#ffffff10!important;border:1px dashed #ffffff40}.thb.sec.lock b{font-size:22px;opacity:.6}
 
 @keyframes edpl{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}#ed .edbtn.pulse{animation:edpl 1.2s ease-in-out 3}
+@media not ((orientation:landscape) and (max-height:520px)){ #ed .edpanel{height:min(30vh,250px)} }
