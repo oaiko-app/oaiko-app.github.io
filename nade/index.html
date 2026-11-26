@@ -108,6 +108,40 @@
   #bReset{background:transparent;color:#8a7262}
   #bNote{margin:6px 0 0;font-size:11px;color:#9b8573;line-height:1.5}
   #app.sheetopen #bar,#app.sheetopen #hint{opacity:0;pointer-events:none}
+
+  #mk{position:absolute;inset:0;z-index:21;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:12px}
+  #mk[hidden]{display:none}
+  #mk .scard{max-width:420px;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;gap:8px;padding:14px 16px 14px;transform:none}
+  #mk .tabs{display:flex;gap:6px;position:sticky;top:-14px;background:#fffdf9;padding:6px 0 4px;z-index:2}
+  #mk .tabs button{flex:1;min-height:42px;border-radius:12px;border:1px solid #e3d3c3;background:#fff;font:inherit;font-weight:800;color:#8a7262}
+  #mk .tabs button[aria-selected="true"]{background:#3b2a20;color:#fff;border-color:#3b2a20}
+  #mkPrevWrap{position:relative;border-radius:16px;overflow:hidden;background:#fbf5ec;cursor:crosshair}
+  #mkPrev{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}
+  #mkTip{position:absolute;left:8px;bottom:8px;font-size:11px;background:rgba(255,253,249,.9);border-radius:999px;padding:3px 9px;color:#8a7262;pointer-events:none}
+  .mkrow{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+  .mkrow::-webkit-scrollbar{display:none}
+  .mkrow button{flex:0 0 auto;min-width:44px;min-height:44px;border-radius:12px;border:1px solid #e3d3c3;background:#fff;font:inherit;font-size:20px}
+  .mkrow button.t{font-size:13px;font-weight:700;padding:0 10px}
+  .mkrow button[aria-pressed="true"]{border:2px solid #b8743c;background:#fff4e6}
+  #mk label{font-size:12px;font-weight:800;color:#3b2a20;margin-top:2px}
+  #mk input[type=text]{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #e3d3c3;border-radius:12px;background:#fff}
+  #mk .note{margin:0;font-size:11px;line-height:1.5;color:#8a7262}
+  #mk .main,#mk .sub,#mk .app{width:100%}
+  #mk .main{background:#b8743c;color:#fff;border:0;border-radius:14px;min-height:48px;font:inherit;font-weight:800;font-size:15px}
+  #mk .sub{background:#fff;color:#3b2a20;border:1px solid #e3d3c3;border-radius:14px;min-height:44px;font:inherit;font-weight:700}
+  #mk .app{background:#3d4470;color:#fff;border:0;border-radius:14px;min-height:46px;font:inherit;font-weight:700}
+  #mkMsg{margin:0;font-size:13px;font-weight:700;text-align:center;color:#b8743c;min-height:1.2em}
+  #galGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .gi{background:#fbf5ec;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .gi img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#efe5d8}
+  .gi .gb{display:flex;align-items:center;gap:4px;padding:4px}
+  .gi .gb button{border:0;background:none;font:inherit;min-height:36px;min-width:36px;border-radius:10px;color:#8a7262;font-size:13px}
+  .gi .gb .lk{font-weight:800;color:#c0566b}.gi .gb .lk.on{background:#ffe9ee}
+  .gi .gb span{flex:1}
+  #galMore{margin-top:4px}
+  #galEmpty{text-align:center;color:#8a7262;font-size:13px;margin:16px 0}
+  .gi.hl{outline:3px solid #b8743c}
+  #mkBtnTop{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 92px);z-index:6;border:0;border-radius:999px;background:#fffdf9e6;color:#3b2a20;font:inherit;font-size:13px;font-weight:800;min-height:40px;padding:0 14px;box-shadow:0 3px 12px rgba(0,0,0,.15)}
   #secret{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px;opacity:0;transition:opacity .35s}
   #secret.show{opacity:1}
   #secret[hidden]{display:none}
@@ -270,8 +304,33 @@
     <button id="mvCopy">ひきつぎコードをコピー</button>
     <button id="mvClose">あとで</button>
   </div></div>
+  <div id="mk" hidden role="dialog" aria-modal="true" aria-label="うちの子カード"><div class="scard">
+    <div class="tabs" role="tablist"><button role="tab" id="tabMk" aria-selected="true">🎨 つくる</button><button role="tab" id="tabGal" aria-selected="false">👀 みんなのハム</button></div>
+    <div id="mkPane">
+      <div id="mkPrevWrap"><img id="mkPrev" alt="うちの子カードの見本"><span id="mkTip">写真をタップすると、ステッカーの位置を変えられます</span></div>
+      <label>ステッカー</label><div class="mkrow" id="mkSt"></div>
+      <label>カードの色</label><div class="mkrow" id="mkFr"></div>
+      <label for="mkN">名前（8文字まで）</label><input type="text" id="mkN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
+      <label for="mkL">ひとこと（24文字まで）</label><input type="text" id="mkL" maxlength="24" placeholder="すきなもの：ひまわりの種" autocomplete="off">
+      <p class="note">種類・体つき・場面は、なでる画面で変えたものがそのまま使われます。</p>
+      <p id="mkMsg" role="status"></p>
+      <button class="main" id="mkShare">カードをシェアする</button>
+      <button class="sub" id="mkPost">「みんなのハム」に載せる</button>
+      <p class="note">載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは書かないでください。1日3回まで。</p>
+      <button class="app" id="mkApp">この子と、アプリで暮らす →</button>
+    </div>
+    <div id="galPane" hidden>
+      <div class="mkrow" id="galSort"><button class="t" data-s="new" aria-pressed="true">新着</button><button class="t" data-s="top" aria-pressed="false">人気</button></div>
+      <div id="galGrid"></div><p id="galEmpty" hidden>まだだれも載せていません。いちばん乗りしよう</p>
+      <button class="sub" id="galMore" hidden>もっと見る</button>
+      <p class="note">いやな投稿は「…」から知らせてください。2人から知らせがあると、すぐ見えなくなります。</p>
+      <button class="main" id="galMake">自分の子もつくる</button>
+    </div>
+    <button class="sub" id="mkClose">とじる</button>
+  </div></div>
   <button id="pill" hidden></button>
   <button id="noDoku" hidden>しばらく毒にしない</button>
+  <button id="mkBtnTop">🎨 うちの子カード</button>
   <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド">🎮</button>
   <div id="pad" hidden role="dialog" aria-modal="true" aria-label="ひみつのコマンド">
     <div class="padBody">
@@ -347,7 +406,7 @@ function initGL(){
     const p=gl.createProgram();
     gl.attachShader(p,sh(gl.VERTEX_SHADER,"attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}"));
     gl.attachShader(p,sh(gl.FRAGMENT_SHADER,`precision mediump float;
-varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform vec2 MS;uniform sampler2D D;
+varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform vec2 MS;uniform sampler2D D;uniform vec2 SK,SA;
 vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
   float s=(1.+(sz-1.)*w)*(1.+BR*w); vec2 q=F+(p-F)/s;
   float cw=1.+(ch-1.)*w; q.x=C.x+(q.x-C.x)/cw;
@@ -362,15 +421,22 @@ vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float 
   float dkm=1.; for(int i=0;i<12;i++){ float a=float(i)*.5236; vec2 o=vec2(cos(a),sin(a)/AS)*(i<6?.02:.042); float l=dot(texture2D(B,p+o).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l)); }
   { float l0=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l0)); }
   body*=dkm;
-  vec2 q=p-(V*g*.4+fd)*body;
+  vec2 da=(p-SA)*vec2(1.,AS); float gb=exp(-dot(da,da)/.026); // 皮ごと、ゆっくり指についてくる（離すと、ぷるんと戻る）
+  vec2 q=p-(V*g*.4+fd+SK*gb)*body;
   q+= (p-T)*.16*TP*exp(-r2/.0016)*body;
   return q; }
+float dkm2(vec2 p){ float l=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); return smoothstep(.2,.38,l); }
 void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rgb,mx);
   { // 毛なみのつや：流れにそってなでると明るく、逆なでると少し暗く。指の下には、うすい影
     vec2 e=(uv-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
     vec2 fd=(texture2D(D,uv).rg-.5)*.1; float sh=clamp(1.+fd.y*3.2-abs(fd.x)*.8,.9,1.06);
     vec2 dd=(uv-T)*vec2(1.,AS); float cs=TP*.14*exp(-dot(dd,dd)/.0011);
-    c*=mix(1.,sh*(1.-cs),body); }
+    // なでた跡に、毛の筋（流れの向きにそった細いすじ）が見える
+    float fm=length(fd); if(fm>.0015){ vec2 dir=fd/fm; vec2 pp=uv*vec2(1.,AS); float st=sin(dot(pp,vec2(-dir.y,dir.x))*1100.+sin(dot(pp,dir)*160.)*1.6);
+      sh+=st*min(fm*9.,.07)*body*dkm2(uv); }
+    // 指のまわりはふわっとふくらみ（押しこんだ分の毛が逃げる）
+    float ring=TP*.05*exp(-dot(dd,dd)/.004)*(1.-exp(-dot(dd,dd)/.0012));
+    c*=mix(1.,sh*(1.-cs)*(1.+ring),body); }
   if(dk>.001){ vec2 d=(uv-vec2(C.x,C.y+.01+MO))/(HB2*vec2(ch*sz,sz)*MS); float m=dk*(1.-smoothstep(.62,1.04,length(d)));
     // 床材はザラザラ（細かい明暗が多い）、毛はなめらか。ザラザラしたところには色をのせない
     float gs=0.; for(int i=0;i<4;i++){ vec2 o=PX*2.5*vec2(i==0?1.:i==1?-1.:0., i==2?1.:i==3?-1.:0.);
@@ -388,7 +454,7 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     gl.useProgram(p);
     const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     const loc=gl.getAttribLocation(p,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D","MS"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D","MS","SK","SA"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
     const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE)); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); return t; };
     texA=mk(); texB=mk(); texD=mk();
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,DW,DH,0,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf);
@@ -417,6 +483,8 @@ function glDraw(){
     if(FIELD.live){ const k=FUR.down?0.985:0.955; let mx2=0; for(let i=0;i<DW*DH;i++){ const a=FIELD.x[i]*=k, b=FIELD.y[i]*=k; const m=Math.abs(a)+Math.abs(b); if(m>mx2) mx2=m; FIELD.buf[i*4]=128+Math.max(-127,Math.min(127,a*2540))|0; FIELD.buf[i*4+1]=128+Math.max(-127,Math.min(127,b*2540))|0; }
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,DW,DH,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf); if(mx2<.0004) FIELD.live=false; }
     { const asl=state==="sleep"||state==="sleeploop", f=asl?0.75:(state==="startle"?3.2:1.6), a=asl?0.009:(state==="startle"?0.008:0.005); gl.uniform1f(U.BR,a*Math.sin(now/1000*Math.PI*2*f)); }
+    { const tx=FUR.down?FUR.dx:0, ty=FUR.down?FUR.dy:0; FUR.svx=(FUR.svx+(tx-FUR.sx)*0.16)*0.74; FUR.svy=(FUR.svy+(ty-FUR.sy)*0.16)*0.74; FUR.sx+=FUR.svx; FUR.sy+=FUR.svy; if(!FUR.down){ FUR.dx*=0.6; FUR.dy*=0.6; }
+      gl.uniform2f(U.SK,FUR.sx,FUR.sy); gl.uniform2f(U.SA,FUR.ax,FUR.ay); }
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
     gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); { const up=POSE==="four"&&!SCENE&&MUP[state]; const tm=up?up[0]:(MOFF[state]||0), tx=up?up[1]:1, ty=up?up[2]:1; MO+=(tm-MO)*0.05; MSX+=(tx-MSX)*0.05; MSY+=(ty-MSY)*0.05; } gl.uniform1f(U.MO,MO); gl.uniform2f(U.MS,MSX,MSY);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
@@ -427,7 +495,7 @@ function glDraw(){
     }
   }catch(e){ glOff(); }
 }
-const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false};
+const FUR={x:-1,y:-1,vx:0,vy:0,tx:0,ty:0,p:0,down:false,sx:0,sy:0,svx:0,svy:0,dx:0,dy:0,ax:-1,ay:-1};
 function boxUV(cx,cy){ const r=box.getBoundingClientRect(); return [(cx-r.left)/r.width,(cy-r.top)/r.height]; }
 function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウスでにじませる）
   const cx=u*DW, cy=v*DH, rad=2.8, lim=.02;
@@ -438,6 +506,7 @@ function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウ�
 }
 function furMove(cx,cy,dx,dy){ { const g=$("#glow"); if(g){ g.style.transform=`translate(${cx}px,${cy}px)`; g.classList.toggle("on",!!FUR.down); } } const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
   if(dx) furSplat(u,v,dx/r.width,dy/r.height);
+  if(FUR.down){ if(FUR.ax<0||!furMove._d){ FUR.ax=u; FUR.ay=v; } furMove._d=1; if(dx){ const L=.028; FUR.dx=Math.max(-L,Math.min(L,FUR.dx+dx/r.width*0.5)); FUR.dy=Math.max(-L,Math.min(L,FUR.dy+dy/r.height*0.5)); FUR.ax+=(u-FUR.ax)*0.08; FUR.ay+=(v-FUR.ay)*0.08; } } else furMove._d=0;
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
 function fxImg(url,fx,done){ if(!fx||!url){ done(url); return; } const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); c.width=im.width; c.height=im.height; const g=c.getContext("2d"); g.drawImage(im,0,0); try{ const d=g.getImageData(0,0,c.width,c.height), a=d.data;
@@ -1262,7 +1331,7 @@ function up(e){
   const p=ptr.get(e.pointerId); ptr.delete(e.pointerId); clearTimeout(holdT);
   if(p && p.moved<12 && performance.now()-p.t<300){ if(!tidyAt(e.clientX,e.clientY)) onTap(zoneAt(e.clientX,e.clientY)); }
   if(ptr.size===0 && gStroke){ gStroke=false; nadeCount++; countNade(); }
-  if(ptr.size===0){ strokeDist=0; FUR.down=false; hideHand(220); $("#glow").classList.remove("on"); }
+  if(ptr.size===0){ strokeDist=0; FUR.down=false; furMove._d=0; hideHand(220); $("#glow").classList.remove("on"); }
 }
 stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
 
@@ -1572,6 +1641,95 @@ fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}); // 切�
 (()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
 renderSecList();
 window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
+
+// ---------- うちの子カード ＆ みんなのハム ----------
+const GAL_URL="https://oaiko-ai.yukiya1013.workers.dev/gal";
+const STICK=["","🎀","👑","🌸","🎩","🍓","⭐","🍀","🧢","🌻","💤","❤️"];
+const FRAMES=[["#fbf5ec","#b8743c","クリーム"],["#eaf4ff","#3d6fb0","そら"],["#fff0f3","#c0566b","さくら"],["#eef6e9","#4f8a3c","はっぱ"],["#2b2320","#f0c27a","よる"]];
+const mk={st:store.get("mkSt","🎀"),fr:store.get("mkFr",0),l:store.get("mkL",""),pos:null,snap:null,png:null,postId:null};
+function headGuess(){ const B=life.body; return POSE==="four"?[HC[0]-.7*HB[0]*B.s*B.c, HC[1]-.36*HB[1]*B.s]:[HC[0], HC[1]-1.02*HB[1]*B.s]; }
+function snapCard(done){
+  const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=Math.min(W,Hh)*.86, x=Math.max(0,Math.min(W-side,W*HC[0]-side/2)), y=Math.max(0,Math.min(Hh-side,Hh*(HC[1]-.07)-side/2));
+      const c=document.createElement("canvas"); c.width=c.height=640; c.getContext("2d").drawImage(src,x,y,side,side,0,0,640,640);
+      const [hu,hv]=headGuess(); done({url:c.toDataURL("image/jpeg",.92),hx:(W*hu-x)/side,hy:(Hh*hv-y)/side,hs:HB[0]*W/side}); }catch(e){ done(null); } };
+  if(glOK && glGood){ capReq=grab; setTimeout(()=>{ if(capReq===grab){ capReq=null; grab(cur); } },600); } else grab(cur);
+}
+function drawCard(W){ return new Promise(res=>{
+  const H=Math.round(W*1.25), k=W/1080, c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d"); const [bg,ac]=FRAMES[mk.fr]||FRAMES[0];
+  const dark=mk.fr===4, F="'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
+  g.fillStyle=bg; g.fillRect(0,0,W,H);
+  const fin=()=>{ g.textAlign="center";
+    g.fillStyle=ac; g.font=`800 ${36*k}px ${F}`; g.fillText("うちの子",W/2,96*k);
+    const nm=(mk.n||NM()); g.fillStyle=dark?"#fff":"#3b2a20"; g.font=`800 ${(nm.length>6?80:96)*k}px ${F}`; g.fillText(nm,W/2,1035*k);
+    if(mk.l){ g.fillStyle=dark?"#e8dccf":"#8a7262"; g.font=`400 ${(mk.l.length>16?34:40)*k}px ${F}`; g.fillText(mk.l,W/2,1110*k); }
+    g.fillStyle=ac; g.font=`700 ${30*k}px ${F}`; g.fillText("#おあいこ　ハムスターを撫でられるページ",W/2,1235*k);
+    g.fillStyle=dark?"#bfae9c":"#a8927f"; g.font=`400 ${26*k}px ${F}`; g.fillText("oaiko-app.github.io/nade",W/2,1282*k);
+    res(c); };
+  if(!mk.snap){ fin(); return; }
+  const im=new Image(); im.onload=()=>{ const X=170*k,Y=140*k,S=740*k,r=60*k; g.save(); g.beginPath(); g.moveTo(X+r,Y); g.arcTo(X+S,Y,X+S,Y+S,r); g.arcTo(X+S,Y+S,X,Y+S,r); g.arcTo(X,Y+S,X,Y,r); g.arcTo(X,Y,X+S,Y,r); g.closePath(); g.clip(); g.drawImage(im,X,Y,S,S);
+    if(mk.st){ const p=mk.pos||[mk.snap.hx,mk.snap.hy], fs=Math.max(70,Math.min(170,mk.snap.hs*S/k*.55))*k; g.font=`${fs}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; g.textAlign="center"; g.textBaseline="middle"; g.fillText(mk.st,X+S*p[0],Y+S*p[1]); g.textBaseline="alphabetic"; }
+    g.restore(); g.strokeStyle=ac; g.lineWidth=6*k; g.beginPath(); g.moveTo(X+r,Y); g.arcTo(X+S,Y,X+S,Y+S,r); g.arcTo(X+S,Y+S,X,Y+S,r); g.arcTo(X,Y+S,X,Y,r); g.arcTo(X,Y,X+S,Y,r); g.closePath(); g.stroke(); fin(); };
+  im.onerror=fin; im.src=mk.snap.url; }); }
+async function mkRender(){ const c=await drawCard(540); $("#mkPrev").src=c.toDataURL("image/jpeg",.85); mk.png=null; }
+function mkChips(){
+  $("#mkSt").innerHTML=STICK.map(e=>`<button data-st="${e}" aria-pressed="${mk.st===e}" ${e?"":'class="t"'} aria-label="${e||"なし"}">${e||"なし"}</button>`).join("");
+  $("#mkFr").innerHTML=FRAMES.map((f,i)=>`<button class="t" data-fr="${i}" aria-pressed="${mk.fr===i}" style="background:${f[0]};color:${f[1]}">${f[2]}</button>`).join("");
+  $("#mkSt").querySelectorAll("button").forEach(b=>b.onclick=()=>{ mk.st=b.dataset.st; store.set("mkSt",mk.st); mkChips(); mkRender(); });
+  $("#mkFr").querySelectorAll("button").forEach(b=>b.onclick=()=>{ mk.fr=+b.dataset.fr; store.set("mkFr",mk.fr); mkChips(); mkRender(); }); }
+function mkMsg(t){ $("#mkMsg").textContent=t||""; }
+function openMk(tab){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; mk.n=life.name||""; $("#mkN").value=mk.n; $("#mkL").value=mk.l; mk.pos=null; mk.postId=null; mkMsg("");
+  $("#mk").hidden=false; mkChips(); setTab(tab||"mk"); openDlg($("#mk"),$("#mkBtnTop"),closeMk);
+  $("#mkPrev").removeAttribute("src"); snapCard(sn=>{ mk.snap=sn; mkRender(); }); }
+function closeMk(){ closeDlg(); $("#mk").hidden=true; }
+function setTab(t){ const g=t==="gal"; $("#tabMk").setAttribute("aria-selected",String(!g)); $("#tabGal").setAttribute("aria-selected",String(g)); $("#mkPane").hidden=g; $("#galPane").hidden=!g; if(g) galLoad(true); }
+$("#tabMk").onclick=()=>setTab("mk"); $("#tabGal").onclick=()=>setTab("gal"); $("#galMake").onclick=()=>setTab("mk");
+$("#mkBtnTop").onclick=()=>openMk(); $("#mkClose").onclick=closeMk;
+$("#mk").addEventListener("pointerdown",e=>e.stopPropagation());
+$("#mkN").oninput=e=>{ const v=[...(new Intl.Segmenter?new Intl.Segmenter("ja",{granularity:"grapheme"}).segment(e.target.value):e.target.value)].map(x=>x.segment||x).slice(0,8).join(""); if(v!==e.target.value) e.target.value=v; mk.n=v.trim(); life.name=mk.n; save(); nameCount(); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
+$("#mkL").oninput=e=>{ mk.l=e.target.value.trim(); store.set("mkL",mk.l); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
+$("#mkPrevWrap").onclick=e=>{ if(!mk.snap) return; const r=$("#mkPrev").getBoundingClientRect(); const fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
+  const X=170/1080,Y=140/1350,S=740/1080,Sy=740/1350; const px=(fx-X)/S, py=(fy-Y)/Sy; if(px<0||px>1||py<0||py>1) return; mk.pos=[px,py]; mkRender(); haptic("light"); };
+async function mkShareText(){ const nm=mk.n||NM(); const url=mk.postId?`https://oaiko-app.github.io/nade/?g=${mk.postId}`:"https://oaiko-app.github.io/nade/";
+  return {text:`うちの子「${nm}」できた🐹${mk.l?"\n"+mk.l:""}\nあなたのハムも作ってみて #おあいこ #うちのハム`,url}; }
+$("#mkShare").onclick=async()=>{ const c=await drawCard(1080), png=c.toDataURL("image/png"); const {text,url}=await mkShareText(); const full=`${text}\n${url}\n`;
+  if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
+  try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-uchinoko.png",{type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; }
+    if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+  const a=document.createElement("a"); a.href=png; a.download="oaiko-uchinoko.png"; a.click();
+  window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+$("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。少し待ってね"); return; }
+  if(!confirmPost()) return;
+  const bt=$("#mkPost"); bt.disabled=true; bt.textContent="載せています…";
+  try{ const c=await drawCard(540); const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:c.toDataURL("image/jpeg",.82),n:mk.n||NM(),l:mk.l,sp})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました ✓"; return; }
+    mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう3回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
+  }catch(e){ mkMsg("通信できませんでした"); }
+  bt.disabled=false; bt.textContent="「みんなのハム」に載せる"; };
+function confirmPost(){ if(store.get("galOk",0)) return true; const ok=confirm("「みんなのハム」に載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。\n本名・住所・SNSのIDなどは入っていませんか？\n\n載せてよければ「OK」"); if(ok) store.set("galOk",1); return ok; }
+$("#mkApp").onclick=()=>{ closeMk(); setTimeout(()=>$("#applink").onclick(new Event("click")),80); };
+// みんなのハム
+const gal={s:"new",next:0,busy:false,focus:Q.get("g")||null,liked:new Set(store.get("galLiked",[]))};
+async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$("#galGrid");
+  if(reset){ gal.next=0; grid.innerHTML=""; }
+  try{ let items=[];
+    if(reset && gal.focus){ const r=await fetch(`${GAL_URL}/list?id=${encodeURIComponent(gal.focus)}`); const d=await r.json(); items=items.concat((d.items||[]).map(x=>Object.assign(x,{hl:1}))); }
+    const r=await fetch(`${GAL_URL}/list?s=${gal.s}&c=${gal.next||0}`); const d=await r.json();
+    items=items.concat((d.items||[]).filter(x=>!items.some(y=>y.id===x.id))); gal.next=d.next;
+    grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿を知らせる">…</button></div></div>`).join(""));
+    $("#galEmpty").hidden=!!grid.children.length; $("#galMore").hidden=d.next==null;
+    if(reset && gal.focus){ const el=grid.querySelector(".hl"); if(el) el.scrollIntoView({block:"nearest"}); }
+  }catch(e){ if(reset) grid.innerHTML=`<p class="note">読みこめませんでした。通信を確かめてね</p>`; }
+  gal.busy=false; }
+$("#galMore").onclick=()=>galLoad(false);
+$("#galSort").querySelectorAll("button").forEach(b=>b.onclick=()=>{ gal.s=b.dataset.s; gal.focus=null; $("#galSort").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); galLoad(true); });
+$("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[data-lk]"), rp=e.target.closest("[data-rp]");
+  if(lk){ const id=lk.dataset.lk; if(gal.liked.has(id)) return; gal.liked.add(id); store.set("galLiked",[...gal.liked].slice(-300)); lk.classList.add("on"); const b=lk.querySelector("b"); b.textContent=(+b.textContent||0)+1; haptic("light");
+    fetch(GAL_URL+"/like",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); }
+  if(rp){ if(!confirm("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）")) return; const id=rp.dataset.rp;
+    fetch(GAL_URL+"/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); const it=rp.closest(".gi"); if(it) it.remove(); } });
+if(Q.get("g")) setTimeout(()=>openMk("gal"),1500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
