@@ -208,6 +208,8 @@
   .dpad button{border:0;color:#bbb;font-size:13px;grid-row:2}.dpad button[data-k=L]{grid-column:1;border-radius:6px 0 0 6px}.dpad button[data-k=R]{grid-column:3;border-radius:0 6px 6px 0}
   .dpad button:active,.ab button:active{filter:brightness(1.5)}
   .ab{display:flex;gap:10px}.ab button{width:46px;height:46px;border-radius:50%;border:0;background:#b8322c;color:#fff;font-weight:800;font-size:16px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+  #padHint{position:absolute;left:-24px;right:-24px;bottom:calc(100% + 8px);margin:0;text-align:center;font:700 13px/1.5 inherit;color:#5a4a3a;background:#fffdf9ee;border-radius:12px;padding:6px 10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #padHint:empty{display:none}
   #padShow{min-width:70px;font:800 14px/1 ui-monospace,monospace;color:#5a4a3a;letter-spacing:2px}
   #pad.ok .padBody{background:linear-gradient(#fff6c8,#f0dc8a)}
   #padClose{margin-top:8px;border:0;background:rgba(255,250,240,.85);border-radius:999px;padding:6px 16px;font:inherit;font-size:13px}
@@ -338,6 +340,7 @@
     <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
     <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
     <p id="sNote" hidden style="margin:0;font-size:11px;line-height:1.5;color:#8a7262;text-align:center"></p>
+    <p id="sCmd" hidden style="margin:0;font-size:12px;line-height:1.6;color:#5a4a3a;text-align:center;background:#f6efe6;border-radius:10px;padding:6px 8px"></p>
     <p id="sFound" style="margin:0;font-size:12px;color:#b8743c;text-align:center;font-weight:700"></p>
     <button id="sShare">カードにする</button>
     <button id="sApp">アプリで、のこりのかくし図鑑を集める →</button>
@@ -390,6 +393,7 @@
     <div class="padBody">
       <div class="dpad"><span class="du"></span><button data-k="L" aria-label="左">◀</button><span class="dc"></span><button data-k="R" aria-label="右">▶</button><span class="dd"></span></div>
       <div id="padShow"></div>
+      <p id="padHint" aria-live="polite"></p>
       <div class="ab"><button data-k="B">B</button><button data-k="A">A</button></div>
     </div>
     <button id="padClose">とじる</button>
@@ -612,6 +616,7 @@ function showSecret(x,img){ if(x&&!x.img&&!x.tint) saveSecImg(x.id,img); setTime
   $("#sFound").textContent=`このページのかくし図鑑 ${SEC_ALL.filter(y=>secSeen.has(y.id)).length}/${SEC_ALL.length}`;
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
+  cmdOnSecret(x);
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
 }
 function hideSecret(){ closeDlg(); if(!INAPP) setTimeout(showAL,1500); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
@@ -1457,7 +1462,7 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、ひみつのコマンドを"},
               nukunuku:{id:"nukunuku",no:54,from:"2026-11-27",name:"ぬくぬくハム",desc:"ねぶくろの中でなでられて、とけた。もう出てこない。",tag:"#ぬくぬくハム",how:"ねぶくろの中で、10回なでたら",hint:"ねぶくろの中で、たくさんなでると",img:"img/sec_nukunuku.jpg"},
               ichigo:{id:"ichigo",no:55,from:"2026-12-04",name:"いちごほおばりハム",desc:"おやつの時間に、いちごをもらった。ほっぺが、いちごの形になった。",tag:"#いちごほおばり",how:"おやつの場面で、種を3こあげたら",hint:"おやつの場面で、種をあげると",img:"img/sec_ichigo.jpg"},
-              santa:{id:"santa",no:56,from:"2026-12-11",name:"サンタハム",desc:"名前をよばれて、その気になった。ふくろの中身は、ぜんぶ種。",tag:"#サンタハム",how:"名前を「サンタ」にしたら",hint:"冬の、あの人の名前でよぶと",img:"img/sec_santa.jpg"},
+              santa:{id:"santa",no:56,from:"2026-12-11",name:"サンタハム",desc:"夜に種をたくさんもらって、くばる側になりたくなった。ふくろの中身は、ぜんぶ種。",tag:"#サンタハム",how:"夜に、種を3こあげたら",hint:"夜おそく（19〜5時）に、プレゼントをあげると",img:"img/sec_santa.jpg"},
               kotatsu:{id:"kotatsu",no:57,from:"2026-12-18",name:"こたつハム",desc:"こたつに入ったら、出られなくなった。みかんは、まだ食べていない。",tag:"#こたつハム",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、← ← からはじまるコマンドを",img:"img/sec_kotatsu.jpg"}};
 const TODAY=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
 const secOpen=x=>!x.from||x.from<=TODAY; // 週ごとに増えるかくしハム（from の日から出てくる）
@@ -1476,16 +1481,35 @@ function sceneKey(){ return "scene_"+SCENE; }
 // かくしコマンド：コントローラーで「← → A B」と入れると、本物の鏡餅になる
 let padLog=[];
 const PAD_CMDS=["LRAB","BABA"].concat(secOpen(SECRET.kotatsu)?["LLRR"]:[]);
+// コマンドの見つけ方：①なつくと、ハムがこっそり教えてくれる ②かくしハムを見つけると、つぎのコマンドが少しずつわかる ③コントローラーでまちがえ続けると、最初の1文字を教えてくれる
+const CMD_LIST=[{c:"LRAB",id:"kagami",lv:2},{c:"BABA",id:"yuki",lv:3},{c:"LLRR",id:"kotatsu",lv:4}];
+const ARW={L:"←",R:"→",A:"A",B:"B"}, cmdTxt=c=>[...c].map(k=>ARW[k]).join(" ");
+const cmdTold=new Set(store.get("cmdTold",[])), cmdPart=store.get("cmdPart",{})||{};
+let padMiss=0;
+const cmdOpen=()=>CMD_LIST.filter(x=>secOpen(SECRET[x.id])&&!secSeen.has(x.id));
+function cmdNext(){ return cmdOpen().find(x=>!cmdTold.has(x.c))||cmdOpen()[0]; }
+function sayLong(t,ms=4500){ sayText(t); clearTimeout(sayT); sayT=setTimeout(()=>sayEl.classList.remove("show"),ms); }
+function tellCmd(x){ cmdTold.add(x.c); store.set("cmdTold",[...cmdTold]); }
+function cmdBond(){ if(cmdBond._done||DLG||life.nade%6) return; const n=Math.round((life.bond||0)/20);
+  const x=cmdOpen().find(x=>!cmdTold.has(x.c)&&n>=x.lv); if(!x) return; cmdBond._done=true;
+  setTimeout(()=>{ sayLong(`……ないしょの合図、おしえる。${cmdTxt(x.c)}`); tellCmd(x); },1300); }
+function cmdPartHint(x){ const k=Math.min(x.c.length-1,(cmdPart[x.c]||0)); return [...x.c].map((c,i)=>i<k?ARW[c]:"＿").join(" "); }
+function cmdOnSecret(found){ const el=$("#sCmd"); if(!el) return; const x=cmdOpen().find(y=>y.id!==found.id&&!cmdTold.has(y.c));
+  if(!x){ el.hidden=true; return; } cmdPart[x.c]=Math.min(x.c.length-1,(cmdPart[x.c]||0)+1); store.set("cmdPart",cmdPart);
+  el.textContent=`ひみつのコマンドのかけら：${cmdPartHint(x)}`; el.hidden=false; }
+function padHintRender(){ const el=$("#padHint"); if(!el) return; const t=cmdOpen().filter(x=>cmdTold.has(x.c));
+  el.textContent=t.length?"ハムから聞いた合図："+t.map(x=>cmdTxt(x.c)).join(" ／ "):""; }
 function padPress(k){
   haptic("light"); const now=Date.now(); padLog=padLog.filter(x=>now-x.t<5000); padLog.push({k,t:now});
-  let q=padLog.map(x=>x.k).join(""); while(q && !PAD_CMDS.some(c=>c.startsWith(q))) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
+  const before=padLog.length-1; let q=padLog.map(x=>x.k).join(""); while(q && !PAD_CMDS.some(c=>c.startsWith(q))) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
+  if(q.length<=before||!q){ if(++padMiss>=8){ padMiss=0; const x=cmdNext(); if(x){ const k=Math.max(1,Math.min(x.c.length-1,cmdPart[x.c]||0)); $("#padHint").textContent=`ハム：「……${[...x.c].slice(0,k).map(c=>ARW[c]).join(" ")} から、だったかも」`; } } }
   $("#padShow").textContent=padLog.map(x=>({L:"←",R:"→",A:"A",B:"B"})[x.k]).join(" ")||"…";
   if(q==="LRAB"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); goKagami(); },500); }
   else if(q==="LLRR"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); sayText("……ここから、出ない"); haptic("medium"); request("happy"); unlock(SECRET.kotatsu,{wait:1200}); },500); }
   else if(q==="BABA"){ padLog=[]; $("#pad").classList.add("ok"); setTimeout(()=>{ closePad(); sayText("……これ、毒かも"); haptic("heavy"); request("startle"); unlock(SECRET.yuki,{wait:1200}); },500); }
 }
 
-function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; $("#pad").classList.remove("ok"); $("#pad").hidden=false; app.classList.add("padopen"); requestAnimationFrame(()=>$("#pad").classList.add("open")); }
+function openPad(){ setTimeout(()=>openDlg($("#pad"),$("#padBtn"),closePad),260); $("#hint").style.opacity=0; padLog=[]; $("#padShow").textContent=""; padMiss=0; padHintRender(); $("#pad").classList.remove("ok"); $("#pad").hidden=false; app.classList.add("padopen"); requestAnimationFrame(()=>$("#pad").classList.add("open")); }
 function closePad(){ closeDlg(); app.classList.remove("padopen"); $("#pad").classList.remove("open"); setTimeout(()=>$("#pad").hidden=true,250); }
 async function goKagami(){
   if(!GEO_SP[sp]) await loadSpecies("kinkuma");
@@ -1496,7 +1520,7 @@ const secSeen=new Set(INAPP?(Q.get("sec")||"").split(",").filter(Boolean):store.
 let capReq=null, secCur=null;
 let nadeCount=0, lastN=0, gStroke=false; // 1回＝指を置いてから離すまで（タップも1回）
 let awayLong=!INAPP&&AWAY3, aizuLog=[], yawnStrokes=0;
-let pouchN=0, greenSeed=0;
+let pouchN=0, greenSeed=0, nightSeed=0;
 function secOnNade(){ const h=new Date().getHours();
   if(SCENE==="pouch"&&++pouchN>=10){ pouchN=0; if(secOpen(SECRET.nukunuku)&&!secSeen.has("nukunuku")) sayText("……ぬくぬく"); unlock(SECRET.nukunuku,{wait:1200}); }
   if(life.nade>=100) unlock(SECRET.nadenade,{wait:600});
@@ -1592,7 +1616,7 @@ function wake(){ { const h=new Date().getHours(); if(h>=23||h<4) unlock(SECRET.y
 function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
 if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
 let seedLog=[];
-$("#seed").addEventListener("click",()=>{ const now=Date.now(); if(SCENE==="greens"&&++greenSeed>=3){ greenSeed=0; unlock(SECRET.ichigo,{wait:1500}); } seedLog=seedLog.filter(t=>now-t<10000); seedLog.push(now); if(seedLog.length>=5){ seedLog=[]; sayText("……もう1こ"); unlock(SECRET.dopa,{wait:1500}); } });
+$("#seed").addEventListener("click",()=>{ const now=Date.now(); if(SCENE==="greens"&&++greenSeed>=3){ greenSeed=0; unlock(SECRET.ichigo,{wait:1500}); } else { const hr=new Date().getHours(); if((hr>=19||hr<5)&&SCENE!=="greens"&&++nightSeed>=3){ nightSeed=0; unlock(SECRET.santa,{wait:1500}); } } seedLog=seedLog.filter(t=>now-t<10000); seedLog.push(now); if(seedLog.length>=5){ seedLog=[]; sayText("……もう1こ"); unlock(SECRET.dopa,{wait:1500}); } });
 $("#seed").onclick=()=>{ track("feed",1);
   const hand=EXTRA[sp] && life.bond>=35 && Math.random()<0.6, k=hand?"finger_seed":"eat";
   if(asleep()){ wake(); pending=k; return; }
@@ -1635,7 +1659,7 @@ const graph=t=>SEG?[...SEG.segment(t)].map(x=>x.segment):[...t];
 function nameCount(){ const n=graph($("#bN").value).length, el=$("#bNcount"); el.textContent=n>=8?"8文字まで":`${n}/8文字`; el.classList.toggle("max",n>=8); }
 $("#bN").addEventListener("compositionend",e=>$("#bN").oninput(e));
 $("#bN").oninput=e=>{ if(e.isComposing) return; const g=graph(e.target.value); if(g.length>8){ e.target.value=g.slice(0,8).join(""); } life.name=e.target.value.trim(); save(); nameCount(); nameChanged(); if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(life.name)) unlock(SECRET.hampter,{wait:900}); };
-function nameChanged(){ renderHint(false); if(/^(サンタ|さんた|santa)$/i.test(life.name||"")) unlock(SECRET.santa,{wait:900}); if(!ANDROID&&$("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
+function nameChanged(){ renderHint(false); if(!ANDROID&&$("#applink").classList.contains("show")) $("#alT").textContent=`${NM()}を、アプリでつづける →`; if(!$("#move").hidden) $("#mvName").textContent=NM(); } 
 // アプリへの引き継ぎ：ひきつぎコード（サーバーなし。中身は名前・種類・からだ・なつき・図鑑だけ）
 function moveCode(){
   if(HASHCODE) return HASHCODE;
@@ -1737,7 +1761,7 @@ if(!INAPP) SPECIES.forEach(([id,name])=>{ const b=document.createElement("button
 // Androidでは、アプリの案内のかわりに「準備中・このページはそのまま使える」と出す
 if(ANDROID && !INAPP){ const a=$("#applink"); $("#alT").textContent="Androidアプリは準備中です"; const sm=a.querySelector("small"); if(sm) sm.textContent="このブラウザ版は、そのままずっと無料で使えます"; a.onclick=e=>{ e.preventDefault(); location.href="https://oaiko-hamu.com/"; }; }
 $("#petBtn").onclick=()=>{ touched=true; if(asleep()){ sayText("……すやすや（ねてる）"); return; } onStroke({dx:80,dy:0,t:performance.now(),z:{head:90}},600); if(gStroke){ gStroke=false; nadeCount++; countNade(); } FUR.down=false; };
-function countNade(){ track("nade",1); life.nade=(life.nade||0)+1; save(); secOnNade(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); try{ const a=t.getBoundingClientRect(), b=$("#snd").getBoundingClientRect(); t.style.setProperty("--ax",Math.max(10,Math.min(a.width-22,a.right-(b.left+b.width/2)-6))+"px"); }catch(e){} setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
+function countNade(){ track("nade",1); life.nade=(life.nade||0)+1; save(); secOnNade(); cmdBond(); if(!sound&&!INAPP&&!store.get("sndTip",false)&&life.nade>=2){ store.set("sndTip",true); const t=$("#sndTip"); t.classList.add("show"); try{ const a=t.getBoundingClientRect(), b=$("#snd").getBoundingClientRect(); t.style.setProperty("--ax",Math.max(10,Math.min(a.width-22,a.right-(b.left+b.width/2)-6))+"px"); }catch(e){} setTimeout(()=>t.classList.remove("show"),5000); } if(life.nade===8) setTimeout(showAL,2000); }
 function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains("show")) return; if(Date.now()-(store.get("alX",0)||0)<3*864e5) return; if(!ANDROID) $("#alT").textContent=`${NM()}を、アプリでつづける →`; $("#applink").classList.add("show"); app.classList.add("alshow"); }
 if($("#alX")) $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
