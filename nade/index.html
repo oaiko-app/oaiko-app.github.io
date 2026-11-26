@@ -136,6 +136,7 @@
   #padClose{margin-top:8px;border:0;background:rgba(255,250,240,.85);border-radius:999px;padding:6px 16px;font:inherit;font-size:13px}
   #pill{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translate(-50%,12px);z-index:12;border:0;border-radius:999px;padding:12px 20px;font:inherit;font-size:14px;font-weight:800;background:#6a2a8a;color:#fff;box-shadow:0 6px 20px rgba(60,20,80,.4);opacity:0;transition:opacity .3s,transform .3s;white-space:nowrap}
   #pill.show{opacity:1;transform:translate(-50%,0)}
+  #noDoku{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 146px);transform:translateX(-50%);z-index:12;border:1px solid #d9c6e6;border-radius:999px;min-height:40px;padding:8px 16px;font:inherit;font-size:13px;font-weight:700;background:#fffdf9;color:#6a2a8a;box-shadow:0 3px 12px rgba(60,20,80,.18);white-space:nowrap}
   #mvCopy{background:var(--accent);color:#fff}
   #move{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:20px}
   #move[hidden]{display:none}
@@ -270,6 +271,7 @@
     <button id="mvClose">あとで</button>
   </div></div>
   <button id="pill" hidden></button>
+  <button id="noDoku" hidden>しばらく毒にしない</button>
   <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド">🎮</button>
   <div id="pad" hidden role="dialog" aria-modal="true" aria-label="ひみつのコマンド">
     <div class="padBody">
@@ -1329,12 +1331,14 @@ function secOnNade(){ const h=new Date().getHours();
 function aizuTap(z){ const now=Date.now(), m=z==="head"?"h":(z==="cheek"||z==="nose")?"f":"b"; aizuLog=aizuLog.filter(t=>now-t.t<9000); aizuLog.push({m,t:now}); if(aizuLog.length>5) aizuLog.shift();
   if(aizuLog.map(t=>t.m).join("")==="hfbfh"){ aizuLog=[]; sayText("……合図、わかった"); request("happy"); unlock(SECRET.aizu,{wait:1200}); return true; } return false; }
 let cheekTaps=[], likedAt=0, badTaps=[];
-function nextDoku(){ if(!dokuOn()){ const h=new Date().getHours(); goDoku(SCENE==="greens"?3:(h<5&&secSeen.has("doku"))?4:0); } else if(dokuKind===0) goDoku(1); }
+function nextDoku(){ if(Date.now()<store.get("noDoku",0)) return; if(!dokuOn()){ const h=new Date().getHours(); goDoku(SCENE==="greens"?3:(h<5&&secSeen.has("doku"))?4:0); } else if(dokuKind===0) goDoku(1); }
 function goDoku(k){
   lastN=nadeCount+(gStroke?1:0); nadeCount=0; gStroke=false;
   dokuKind=k; dokuUntil=Date.now()+60e3; haptic("heavy"); sayText(DOKU_WORD[k]||DOKU_WORD[0]);
   toApp({t:"doku",kind:["","game","aka","mido","yami"][k]});
-  unlock(SECRET[k],{nade:true}); // 2回目からは、シェアの小さなボタンだけ
+  const again=secSeen.has(SECRET[k]&&SECRET[k].id); unlock(SECRET[k],{nade:true}); // 2回目からは、シェアの小さなボタンだけ
+  if(again){ const nb=$("#noDoku"); nb.hidden=false; clearTimeout(nb._t); nb._t=setTimeout(()=>nb.hidden=true,12000);
+    nb.onclick=()=>{ nb.hidden=true; store.set("noDoku",Date.now()+24*3600e3); dokuUntil=0; clearTimeout(goDoku._t); box.classList.remove("doku","game","aka","mido","yami"); sayText("24時間、毒にならないよ"); }; }
   if(!glOK){ box.classList.remove("game","aka","mido","yami"); box.classList.add("doku"); const c=["","game","aka","mido","yami"][k]; if(c) box.classList.add(c); }
   clearTimeout(goDoku._t); goDoku._t=setTimeout(()=>box.classList.remove("doku","game","aka","mido","yami"),60e3);
 }
