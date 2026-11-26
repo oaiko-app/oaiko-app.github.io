@@ -23,7 +23,7 @@
   #box video,#box img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
   #box video{opacity:0}
   #box video.on{opacity:1}
-  .trace{position:absolute;height:auto;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+  .trace{display:none!important} /* 暮らしの痕跡（皿・巣材など）は、動画と合わず浮いて見えるので出さない */
   .trace.show{opacity:1}
   #night{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 55%,rgba(30,34,80,.12),rgba(8,10,30,.6));opacity:0;transition:opacity 1.6s}
   #app.night #night{opacity:1}
@@ -109,6 +109,8 @@
   #bNote{margin:6px 0 0;font-size:11px;color:#9b8573;line-height:1.5}
   #app.sheetopen #bar,#app.sheetopen #hint{opacity:0;pointer-events:none}
 
+  .ic{width:1.15em;height:1.15em;vertical-align:-.2em;margin-right:.3em;flex:none}
+  #padBtn .ic{margin:0;width:22px;height:22px}
   #mk{position:absolute;inset:0;z-index:21;display:flex;align-items:center;justify-content:center;background:rgba(30,20,12,.5);padding:12px}
   #mk[hidden]{display:none}
   #mk .scard{max-width:420px;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;gap:8px;padding:14px 16px 14px;transform:none}
@@ -247,9 +249,9 @@
   <div id="hint"><span id="hintMain">指で、ゆっくりなでてみて</span><br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
   <button id="close">‹ もどる</button>
   <div id="bar">
-    <button class="btn" id="seed">🌻 種をあげる</button>
+    <button class="btn" id="seed"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 3 4 7 3 11-1 3-2 5-3 7-1-2-2-4-3-7-1-4 0-8 3-11z"/></svg>種をあげる</button>
     <button class="btn" id="bodyBtn">この子のこと</button>
-    <button class="btn" id="snd">🔇 音</button>
+    <button class="btn" id="snd"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>音</button>
   </div>
   <div id="bodySheet" role="dialog" aria-modal="true" aria-label="この子のこと">
     <h3>この子のこと</h3>
@@ -294,7 +296,7 @@
   <div id="move" hidden role="dialog" aria-modal="true" aria-label="アプリでつづける"><div class="scard">
     <p class="smuted">アプリ「おあいこ」でつづける</p>
     <p class="slv" style="font-size:22px"><span id="mvName"></span>を、つれていく<small>名前・種類・からだ・見つけたかくし図鑑を、アプリにそのまま引き継げます（無料）。</small></p>
-    <div class="mvwhat">アプリでは…<br>🌱 自分にやさしくできた日は、この子の暮らしも育つ<br>👕 きせかえ・おでかけ・お部屋づくり<br>🔍 かくし図鑑は全53種。ここでは見つからない子も</div>
+    <div class="mvwhat">アプリでは…<br>・自分にやさしくできた日は、この子の暮らしも育つ<br>・きせかえ・おでかけ・お部屋づくり<br>・かくし図鑑は全53種。ここでは見つからない子も</div>
     <ol class="mvsteps"><li>下のボタンで「ひきつぎコード」をコピー</li><li>おあいこの最初の「どの子？」で「ウェブで会った子をつれてくる」に貼りつけ</li></ol>
     <p style="margin:6px 0;font-size:12px;background:#fff1dc;border-radius:10px;padding:8px 10px;text-align:left"><b>すでにおあいこを使っている人へ</b><br>ハムの「名前を変える」から貼りつけます。<b>いまいる子の名前・種類・からだは、この子に置き換わります</b>（記録や種はそのまま）。</p>
     <input id="mvCode" readonly aria-label="ひきつぎコード" style="display:none;width:100%;font:12px ui-monospace,monospace;padding:8px;border:1px solid #e3d3c3;border-radius:10px;margin:4px 0;background:#fff">
@@ -305,10 +307,10 @@
     <button id="mvClose">あとで</button>
   </div></div>
   <div id="mk" hidden role="dialog" aria-modal="true" aria-label="うちの子カード"><div class="scard">
-    <div class="tabs" role="tablist"><button role="tab" id="tabMk" aria-selected="true">🎨 つくる</button><button role="tab" id="tabGal" aria-selected="false">👀 みんなのハム</button></div>
+    <div class="tabs" role="tablist"><button role="tab" id="tabMk" aria-selected="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>つくる</button><button role="tab" id="tabGal" aria-selected="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>みんなのハム</button></div>
     <div id="mkPane">
-      <div id="mkPrevWrap"><img id="mkPrev" alt="うちの子カードの見本"><span id="mkTip">写真をタップすると、ステッカーの位置を変えられます</span></div>
-      <label>ステッカー</label><div class="mkrow" id="mkSt"></div>
+      <div id="mkPrevWrap"><img id="mkPrev" alt="うちの子カードの見本"></div>
+      <div class="mkrow" id="mkSt" hidden></div>
       <label>カードの色</label><div class="mkrow" id="mkFr"></div>
       <label for="mkN">名前（8文字まで）</label><input type="text" id="mkN" maxlength="8" placeholder="ちゃむ" autocomplete="off">
       <label for="mkL">ひとこと（24文字まで）</label><input type="text" id="mkL" maxlength="24" placeholder="すきなもの：ひまわりの種" autocomplete="off">
@@ -330,8 +332,8 @@
   </div></div>
   <button id="pill" hidden></button>
   <button id="noDoku" hidden>しばらく毒にしない</button>
-  <button id="mkBtnTop">🎨 うちの子カード</button>
-  <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド">🎮</button>
+  <button id="mkBtnTop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>うちの子カード</button>
+  <button id="padBtn" aria-label="ひみつのコマンド" title="ひみつのコマンド"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg></button>
   <div id="pad" hidden role="dialog" aria-modal="true" aria-label="ひみつのコマンド">
     <div class="padBody">
       <div class="dpad"><span class="du"></span><button data-k="L" aria-label="左">◀</button><span class="dc"></span><button data-k="R" aria-label="右">▶</button><span class="dd"></span></div>
@@ -340,7 +342,7 @@
     </div>
     <button id="padClose">とじる</button>
   </div>
-  <div id="sndTip" role="status">🔈 音をオンにすると、もぐもぐ音も聞こえるよ</div>
+  <div id="sndTip" role="status">音をオンにすると、もぐもぐ音も聞こえるよ</div>
   <div id="loading">よみこみ中…</div>
   <button id="tap">準備できたよ。タップしてはじめる</button>
 </div>
@@ -382,7 +384,7 @@ let HC=[.54,.555], HF=[.54,.75], HR=[.30,.28], HB=[.235,.215], POSE="stand";
 // ハムの位置と大きさ（動画の中の割合）。キンクマは四つ足の動画、場面ごとにも位置がちがう
 const GEO_STAND={C:[.54,.555],F:[.54,.75],R:[.30,.28],B:[.235,.215],pose:"stand"};
 const GEO_SP={kinkuma:{C:[.56,.64],F:[.56,.73],R:[.28,.16],B:[.21,.095],pose:"four"}};
-const SCENES=[["room","おへや"],["kagami","🍊鏡餅"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
+const SCENES=[["room","おへや"],["kagami","鏡餅"],["palm","てのひら"],["hug","だっこ"],["lap","ひざの上"],["pouch","ねぶくろ"],["fence","さく"],["greens","おやつ"]];
 const GEO_SCENE={kagami:{C:[.5,.43],F:[.5,.54],R:[.26,.09],B:[.3,.06]},palm:{C:[.5,.48],F:[.5,.62],R:[.27,.19],B:[.2,.14]},hug:{C:[.5,.51],F:[.5,.62],R:[.28,.15],B:[.21,.11]},lap:{C:[.48,.5],F:[.48,.63],R:[.23,.18],B:[.17,.13]},pouch:{C:[.5,.5],F:[.5,.6],R:[.24,.14],B:[.18,.1]},fence:{C:[.5,.41],F:[.5,.58],R:[.27,.23],B:[.2,.17]},greens:{C:[.5,.45],F:[.5,.62],R:[.24,.23],B:[.18,.17]}};
 let SCENE=null;
 function applyGeo(){
@@ -406,7 +408,7 @@ function initGL(){
     const p=gl.createProgram();
     gl.attachShader(p,sh(gl.VERTEX_SHADER,"attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}"));
     gl.attachShader(p,sh(gl.FRAGMENT_SHADER,`precision mediump float;
-varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform vec2 MS;uniform sampler2D D;uniform vec2 SK,SA;
+varying vec2 uv;uniform sampler2D A,B;uniform float mx,sz,ch,dk,hue,dm,TP,AS;uniform vec2 C,F,R,HB2,T,V,PX;uniform float MO,BR;uniform vec2 MS;uniform sampler2D D;uniform vec2 SK,SA,FCE,FRA;
 vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
   float s=(1.+(sz-1.)*w)*(1.+BR*w); vec2 q=F+(p-F)/s;
   float cw=1.+(ch-1.)*w; q.x=C.x+(q.x-C.x)/cw;
@@ -414,13 +416,15 @@ vec2 wp(vec2 p){ vec2 d=(p-C)/R; float w=1.-smoothstep(.45,1.15,length(d));
 vec3 hr(vec3 c,float a){ mat3 toY=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.322,.312); mat3 toR=mat3(1.,1.,1.,.956,-.272,-1.106,.621,-.647,1.703);
   vec3 y=toY*c; float cs=cos(a),sn=sin(a); y=vec3(y.x,y.y*cs-y.z*sn,y.y*sn+y.z*cs); return toR*y; }
 // 指の下の毛：指の動きの向きに毛を寄せ、指先はすこし押しこむ（ハムの体の中だけ）
+// 顔（目・鼻・口）のまわりは、毛を動かさない（目が二重になったり、うずを巻いたりしないように）
+float face(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)); vec2 d=(e-FCE)/FRA; return smoothstep(.85,1.35,length(d)); }
 vec2 fur(vec2 p){ vec2 e=(p-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
   vec2 d=(p-T)*vec2(1.,AS); float r2=dot(d,d); float g=exp(-r2/.0065);
   vec2 fd=(texture2D(D,p).rg-.5)*.1; // 指でなでた跡（毛の流れ）。ゆっくり戻る
   // 目・鼻のまわり（暗いところ）はゆがめない：近くに暗い点があれば、毛の動きを弱める
   float dkm=1.; for(int i=0;i<12;i++){ float a=float(i)*.5236; vec2 o=vec2(cos(a),sin(a)/AS)*(i<6?.02:.042); float l=dot(texture2D(B,p+o).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l)); }
   { float l0=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); dkm=min(dkm,smoothstep(.16,.34,l0)); }
-  body*=dkm;
+  body*=dkm*face(p);
   vec2 da=(p-SA)*vec2(1.,AS); float gb=exp(-dot(da,da)/.026); // 皮ごと、ゆっくり指についてくる（離すと、ぷるんと戻る）
   vec2 q=p-(V*g*.4+fd+SK*gb)*body;
   q+= (p-T)*.16*TP*exp(-r2/.0016)*body;
@@ -429,11 +433,11 @@ float dkm2(vec2 p){ float l=dot(texture2D(B,p).rgb,vec3(.3,.59,.11)); return smo
 void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rgb,mx);
   { // 毛なみのつや：流れにそってなでると明るく、逆なでると少し暗く。指の下には、うすい影
     vec2 e=(uv-vec2(C.x,C.y+.01))/(HB2*vec2(ch*sz,sz)*1.08); float body=1.-smoothstep(.78,1.02,length(e));
-    vec2 fd=(texture2D(D,uv).rg-.5)*.1; float sh=clamp(1.+fd.y*3.2-abs(fd.x)*.8,.9,1.06);
+    body*=face(uv); vec2 fd=(texture2D(D,uv).rg-.5)*.1; float sh=clamp(1.+fd.y*3.2-abs(fd.x)*.8,.9,1.06);
     vec2 dd=(uv-T)*vec2(1.,AS); float cs=TP*.14*exp(-dot(dd,dd)/.0011);
     // なでた跡に、毛の筋（流れの向きにそった細いすじ）が見える
     float fm=length(fd); if(fm>.0015){ vec2 dir=fd/fm; vec2 pp=uv*vec2(1.,AS); float st=sin(dot(pp,vec2(-dir.y,dir.x))*1100.+sin(dot(pp,dir)*160.)*1.6);
-      sh+=st*min(fm*9.,.07)*body*dkm2(uv); }
+      sh+=st*min(fm*6.,.045)*dkm2(uv); }
     // 指のまわりはふわっとふくらみ（押しこんだ分の毛が逃げる）
     float ring=TP*.05*exp(-dot(dd,dd)/.004)*(1.-exp(-dot(dd,dd)/.0012));
     c*=mix(1.,sh*(1.-cs)*(1.+ring),body); }
@@ -454,7 +458,7 @@ void main(){ vec2 q=wp(fur(uv)); vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rg
     gl.useProgram(p);
     const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     const loc=gl.getAttribLocation(p,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D","MS","SK","SA"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    ["A","B","mx","sz","ch","dk","hue","dm","C","F","R","HB2","T","V","TP","AS","PX","MO","BR","D","MS","SK","SA","FCE","FRA"].forEach(n=>U[n]=gl.getUniformLocation(p,n));
     const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE)); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); return t; };
     texA=mk(); texB=mk(); texD=mk();
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,DW,DH,0,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf);
@@ -484,7 +488,8 @@ function glDraw(){
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,texD); gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,DW,DH,gl.RGBA,gl.UNSIGNED_BYTE,FIELD.buf); if(mx2<.0004) FIELD.live=false; }
     { const asl=state==="sleep"||state==="sleeploop", f=asl?0.75:(state==="startle"?3.2:1.6), a=asl?0.009:(state==="startle"?0.008:0.005); gl.uniform1f(U.BR,a*Math.sin(now/1000*Math.PI*2*f)); }
     { const tx=FUR.down?FUR.dx:0, ty=FUR.down?FUR.dy:0; FUR.svx=(FUR.svx+(tx-FUR.sx)*0.16)*0.74; FUR.svy=(FUR.svy+(ty-FUR.sy)*0.16)*0.74; FUR.sx+=FUR.svx; FUR.sy+=FUR.svy; if(!FUR.down){ FUR.dx*=0.6; FUR.dy*=0.6; }
-      gl.uniform2f(U.SK,FUR.sx,FUR.sy); gl.uniform2f(U.SA,FUR.ax,FUR.ay); }
+      gl.uniform2f(U.SK,FUR.sx,FUR.sy); gl.uniform2f(U.SA,FUR.ax,FUR.ay);
+      if(POSE==="four"){ gl.uniform2f(U.FCE,-.72,-.05); gl.uniform2f(U.FRA,.42,.62); } else { gl.uniform2f(U.FCE,0.,-.5); gl.uniform2f(U.FRA,.62,.42); } }
     FUR.vx+=(FUR.tx-FUR.vx)*0.35; FUR.vy+=(FUR.ty-FUR.vy)*0.35; FUR.tx*=0.78; FUR.ty*=0.78; FUR.p+=((FUR.down?1:0)-FUR.p)*0.25;
     gl.uniform2f(U.T,FUR.x,FUR.y); gl.uniform2f(U.V,FUR.vx,FUR.vy); gl.uniform1f(U.TP,FUR.p); gl.uniform1f(U.AS,cv.height/cv.width); gl.uniform2f(U.PX,1/cv.width,1/cv.height); { const up=POSE==="four"&&!SCENE&&MUP[state]; const tm=up?up[0]:(MOFF[state]||0), tx=up?up[1]:1, ty=up?up[2]:1; MO+=(tm-MO)*0.05; MSX+=(tx-MSX)*0.05; MSY+=(ty-MSY)*0.05; } gl.uniform1f(U.MO,MO); gl.uniform2f(U.MS,MSX,MSY);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
@@ -506,7 +511,7 @@ function furSplat(u,v,du,dv){ // なでた方向に、毛を寄せる（ガウ�
 }
 function furMove(cx,cy,dx,dy){ { const g=$("#glow"); if(g){ g.style.transform=`translate(${cx}px,${cy}px)`; g.classList.toggle("on",!!FUR.down); } } const r=box.getBoundingClientRect(); const [u,v]=boxUV(cx,cy); FUR.x=u; FUR.y=v;
   if(dx) furSplat(u,v,dx/r.width,dy/r.height);
-  if(FUR.down){ if(FUR.ax<0||!furMove._d){ FUR.ax=u; FUR.ay=v; } furMove._d=1; if(dx){ const L=.028; FUR.dx=Math.max(-L,Math.min(L,FUR.dx+dx/r.width*0.5)); FUR.dy=Math.max(-L,Math.min(L,FUR.dy+dy/r.height*0.5)); FUR.ax+=(u-FUR.ax)*0.08; FUR.ay+=(v-FUR.ay)*0.08; } } else furMove._d=0;
+  if(FUR.down){ if(FUR.ax<0||!furMove._d){ FUR.ax=u; FUR.ay=v; } furMove._d=1; if(dx){ const L=.012; FUR.dx=Math.max(-L,Math.min(L,FUR.dx+dx/r.width*0.5)); FUR.dy=Math.max(-L,Math.min(L,FUR.dy+dy/r.height*0.5)); FUR.ax+=(u-FUR.ax)*0.08; FUR.ay+=(v-FUR.ay)*0.08; } } else furMove._d=0;
   if(dx!=null){ const k=0.9, lim=.05; FUR.tx=Math.max(-lim,Math.min(lim,FUR.tx+dx/r.width*k)); FUR.ty=Math.max(-lim,Math.min(lim,FUR.ty+dy/r.height*k)); } }
 // いまのハムのまわりを切り抜く（紫になった姿をそのまま図鑑の絵にする）
 function fxImg(url,fx,done){ if(!fx||!url){ done(url); return; } const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); c.width=im.width; c.height=im.height; const g=c.getContext("2d"); g.drawImage(im,0,0); try{ const d=g.getImageData(0,0,c.width,c.height), a=d.data;
@@ -1127,7 +1132,7 @@ function haptic(kind){
   try{ if(navigator.vibrate) navigator.vibrate(kind==="heavy"?30:kind==="medium"?15:8); }catch(e){}
 }
 function renderHearts(){ const n=Math.round(life.bond/20); $("#hearts").textContent="なつき "+"♥".repeat(n)+"♡".repeat(5-n); }
-function renderClock(){ $("#clock").textContent=(isDaytime()?"☀️ 昼 ":"🌙 夜 ")+(life.timeMode==="real"?new Date().toTimeString().slice(0,5):"（テスト）"); app.classList.toggle("night",!isDaytime()); app.classList.toggle("day",isDaytime()); }
+function renderClock(){ $("#clock").textContent=(isDaytime()?"昼 ":"夜 ")+(life.timeMode==="real"?new Date().toTimeString().slice(0,5):"（テスト）"); app.classList.toggle("night",!isDaytime()); app.classList.toggle("day",isDaytime()); }
 function renderTraces(){
   const n=Date.now(), sinceFed=n-life.fed, sinceClean=n-life.cleaned;
   const show=(k,v)=>$("#tr-"+k).classList.toggle("show",!!v);
@@ -1356,8 +1361,8 @@ const SECRET={0:{id:"doku",no:1,name:"毒ハム",desc:"なですぎて、紫に�
               dopa:{id:"dopa",no:50,name:"ドパハム",desc:"種をもらうたびに、脳がよろこぶ。もう1こ、もう1こ……。",tag:"#ドパハム",how:"種を立て続けにあげたら",hint:"種を、立て続けにあげると",img:"img/sec_dopa.jpg"},
               hamnemy:{id:"hamnemy",no:51,name:"ハムネミー",desc:"なかよしのふり。種は、うしろにかくしてある。",tag:"#ハムネミー",how:"なでたあとに、いやなところをつついたら",hint:"なでたあとに、いやがるところをつつくと",img:"img/sec_hamnemy.jpg"},
               squeeze:{id:"squeeze",no:52,name:"スクイーズハム",desc:"ぎゅっとすると、ゆっくりもどる。ストレスがへる（あなたの）。",tag:"#スクイーズハム",how:"何度もぎゅーっと長押ししたら",hint:"ぎゅーっと長押しを、何度も",img:"img/sec_squeeze.jpg"},
-              yuki:{id:"yuki",no:53,name:"これ毒かもハム",desc:"はじめて雪にさわった。つめたすぎて、毒だと思った。角刈りは、気合いのあらわれ。",tag:"#これ毒かも",how:"ひみつのコマンドを入れたら",hint:"🎮で、Bからはじまる もうひとつのコマンドを",img:"img/sec_yuki.jpg"},
-              kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"🎮で、ひみつのコマンドを"}};
+              yuki:{id:"yuki",no:53,name:"これ毒かもハム",desc:"はじめて雪にさわった。つめたすぎて、毒だと思った。角刈りは、気合いのあらわれ。",tag:"#これ毒かも",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、Bからはじまる もうひとつのコマンドを",img:"img/sec_yuki.jpg"},
+              kagami:{id:"kagami",no:49,name:"鏡餅ハム",desc:"ひみつのコマンドで、本物の鏡餅になった。白くて、まるくて、ありがたい。",tag:"#鏡餅ハム",how:"ひみつのコマンドを入れたら",hint:"コントローラーで、ひみつのコマンドを"}};
 const SEC_ALL=Object.values(SECRET).sort((a,b)=>a.no-b.no);
 const DOKU_WORD=["なですぎて、紫になった","……ゲーミング","……からい！","……にがい","……闇"];
 // 見つけたら：図鑑カード（はじめて）か、シェアの小さなボタン（2回目から）。fx は写真の色加工
@@ -1483,7 +1488,7 @@ function onTap(z){
 
 // ---------- ボタン ----------
 function wake(){ { const h=new Date().getHours(); if(h>=23||h<4) unlock(SECRET.yofukashi,{wait:2200,fx:"night"}); } manualSleep=false; wakeUntil=Date.now()+90e3; app.classList.remove("sleeping");  pending=null; say("yawn"); play("yawn"); }
-function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="☀️ おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
+function sleepNow(){ manualSleep=true; $("#moon").classList.add("on"); $("#moon").textContent="おこす"; pending=null; say("sleep"); app.classList.add("sleeping"); play("sleep"); }
 if($("#moon")) $("#moon").onclick=()=>{ (asleep()||manualSleep)?wake():sleepNow(); };
 let seedLog=[];
 $("#seed").addEventListener("click",()=>{ const now=Date.now(); seedLog=seedLog.filter(t=>now-t<10000); seedLog.push(now); if(seedLog.length>=5){ seedLog=[]; sayText("……もう1こ"); unlock(SECRET.dopa,{wait:1500}); } });
@@ -1494,7 +1499,7 @@ $("#seed").onclick=()=>{
   request(k);
 };
 if($("#clean")) $("#clean").onclick=()=>{ life.cleaned=Date.now(); save(); renderTraces(); haptic("light"); sayText("すっきり"); };
-$("#snd").onclick=()=>{ $("#sndTip").classList.remove("show"); sound=!sound; if(!INAPP) store.set("snd",sound); $("#snd").textContent=sound?"🔈 音":"🔇 音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
+$("#snd").onclick=()=>{ $("#sndTip").classList.remove("show"); sound=!sound; if(!INAPP) store.set("snd",sound); $("#snd").innerHTML=(sound?ICS.on:ICS.off)+"音"; cur.muted=!sound; cur.volume=sound?0.85:0; if(sound) cur.play().catch(()=>{}); };
 // からだ（大きさ・体つき）
 function openBody(){ if(!$("#pad").hidden) closePad(); openBody._n=life.name||""; touched=true; hideHand(0); FUR.down=false; const B=life.body; $("#bS").value=Math.round(B.s*100); $("#bC").value=Math.round(B.c*100);
   $("#bNote").textContent=glOK?"指を動かすと、その場で変わります":"この端末では、からだの調整が使えません";
@@ -1643,10 +1648,11 @@ renderSecList();
 window.__t={req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp};
 
 // ---------- うちの子カード ＆ みんなのハム ----------
+const ICS={on:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>',off:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'};
 const GAL_URL="https://oaiko-ai.yukiya1013.workers.dev/gal";
 const STICK=["","🎀","👑","🌸","🎩","🍓","⭐","🍀","🧢","🌻","💤","❤️"];
 const FRAMES=[["#fbf5ec","#b8743c","クリーム"],["#eaf4ff","#3d6fb0","そら"],["#fff0f3","#c0566b","さくら"],["#eef6e9","#4f8a3c","はっぱ"],["#2b2320","#f0c27a","よる"]];
-const mk={st:store.get("mkSt","🎀"),fr:store.get("mkFr",0),l:store.get("mkL",""),pos:null,snap:null,png:null,postId:null};
+const mk={st:"",fr:store.get("mkFr",0),l:store.get("mkL",""),pos:null,snap:null,png:null,postId:null};
 function headGuess(){ const B=life.body; return POSE==="four"?[HC[0]-.7*HB[0]*B.s*B.c, HC[1]-.36*HB[1]*B.s]:[HC[0], HC[1]-1.02*HB[1]*B.s]; }
 function snapCard(done){
   const grab=src=>{ try{ const W=src.videoWidth||src.width, Hh=src.videoHeight||src.height, side=Math.min(W,Hh)*.86, x=Math.max(0,Math.min(W-side,W*HC[0]-side/2)), y=Math.max(0,Math.min(Hh-side,Hh*(HC[1]-.07)-side/2));
@@ -1690,7 +1696,7 @@ $("#mkL").oninput=e=>{ mk.l=e.target.value.trim(); store.set("mkL",mk.l); clearT
 $("#mkPrevWrap").onclick=e=>{ if(!mk.snap) return; const r=$("#mkPrev").getBoundingClientRect(); const fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
   const X=170/1080,Y=140/1350,S=740/1080,Sy=740/1350; const px=(fx-X)/S, py=(fy-Y)/Sy; if(px<0||px>1||py<0||py>1) return; mk.pos=[px,py]; mkRender(); haptic("light"); };
 async function mkShareText(){ const nm=mk.n||NM(); const url=mk.postId?`https://oaiko-app.github.io/nade/?g=${mk.postId}`:"https://oaiko-app.github.io/nade/";
-  return {text:`うちの子「${nm}」できた🐹${mk.l?"\n"+mk.l:""}\nあなたのハムも作ってみて #おあいこ #うちのハム`,url}; }
+  return {text:`うちの子「${nm}」できた${mk.l?"\n"+mk.l:""}\nあなたのハムも作ってみて #おあいこ #うちのハム`,url}; }
 $("#mkShare").onclick=async()=>{ const c=await drawCard(1080), png=c.toDataURL("image/png"); const {text,url}=await mkShareText(); const full=`${text}\n${url}\n`;
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
   try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-uchinoko.png",{type:"image/png"});
