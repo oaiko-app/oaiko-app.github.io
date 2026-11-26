@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://oaiko-app.github.io/sitemap.xml
