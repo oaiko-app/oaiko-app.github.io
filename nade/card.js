@@ -116,7 +116,7 @@ function drawFrame(g){ const f=S.frame, w=W(), h=H();
   else if(f==="film"){ g.save(); g.fillStyle="#141210"; g.fillRect(0,0,70,h); g.fillRect(w-70,0,70,h); g.fillStyle="#efe8dc"; for(let y=24;y<h;y+=64){ g.beginPath(); rr(g,20,y,30,36,6); g.fill(); g.beginPath(); rr(g,w-50,y,30,36,6); g.fill(); } g.restore(); }
   else if(f==="stamp"){ g.save(); g.fillStyle="#fffdf9"; g.beginPath(); g.rect(0,0,w,h); g.rect(46,46,w-92,h-92); g.fill("evenodd"); g.globalCompositeOperation="destination-out"; for(let x=0;x<=w;x+=40){ g.beginPath(); g.arc(x,0,14,0,7); g.arc(x,h,14,0,7); g.fill(); } for(let y=0;y<=h;y+=40){ g.beginPath(); g.arc(0,y,14,0,7); g.arc(w,y,14,0,7); g.fill(); } g.restore(); }
   else if(f==="double"){ g.save(); g.strokeStyle="#fffdf9"; g.lineWidth=10; g.strokeRect(34,34,w-68,h-68); g.lineWidth=4; g.strokeRect(58,58,w-116,h-116); g.restore(); } }
-function render(g,forExport){ g.save(); g.clearRect(0,0,W(),H()); drawBg(g); S.layers.forEach(L=>drawLayer(g,L)); drawFrame(g); g.restore(); if(forExport) applyFilter(g); }
+function render(g,forExport){ g.save(); g.clearRect(0,0,W(),H()); drawBg(g); const top=L=>L.type==="text"||L.type==="draw"; S.layers.forEach(L=>{ if(!top(L)) drawLayer(g,L); }); drawFrame(g); S.layers.forEach(L=>{ if(top(L)) drawLayer(g,L); }); g.restore(); if(forExport) applyFilter(g); } // 枠の上に文字とペンをのせる（ポラロイドの下の余白に書けるように）
 function applyFilter(g){ const f=S.filter; if(f==="none") return; const d=g.getImageData(0,0,W(),H()), a=d.data;
   for(let i=0;i<a.length;i+=4){ let r=a[i],gg=a[i+1],b=a[i+2]; const l=.3*r+.59*gg+.11*b;
     if(f==="mono"){ r=gg=b=l*1.05; }
