@@ -64,6 +64,7 @@
   #bodySheet details{margin-top:8px;border-top:1px solid #eee3d6;padding-top:6px}#bodySheet summary{cursor:pointer;font-weight:700;font-size:13px;padding:6px 0;min-height:32px}
   .ask{position:fixed;inset:0;z-index:300;background:rgba(30,20,12,.55);display:flex;align-items:center;justify-content:center;padding:20px}
   .askc{background:#fffdf9;color:#3b2a20;border-radius:18px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .askv{display:flex;flex-direction:column;gap:8px}.askv button{border:0;border-radius:12px;min-height:46px;font:inherit;font-weight:700;background:#f3ebe1;color:#3b2a20}.askv button.no{background:none;color:#8a7262}
   .askc p{margin:0 0 14px;font-size:14px;line-height:1.7;white-space:pre-line}
   .askb{display:flex;gap:8px}.askb button{flex:1;min-height:44px;border-radius:12px;border:0;font:inherit;font-weight:700}
   .askb .no{background:#efe5da;color:#3b2a20}.askb .yes{background:#e8954c;color:#fff}
@@ -1795,22 +1796,22 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__t={card:()=>se
 // ---------- うちの子カード ＆ みんなのハム ----------
 const ICS={on:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>',off:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'};
 const ED_ASSETS={ham:[
-  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp?v=3",name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp?v=3",name:"キンクマ（ふっくら）"},
-  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp?v=3",name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp?v=3",name:"ごろん"},
-  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp?v=3",name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp?v=3",name:"ロボロフスキー"},
-  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp?v=3",name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp?v=3",name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp?v=3",name:"パールホワイト"}],
+  {id:"kinkuma",sp:"kinkuma",src:"ed/ham_kinkuma.webp?v=3",ey:0.23,name:"キンクマ"},{id:"kinkuma2",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma2.webp?v=3",ey:0.28,name:"キンクマ（ふっくら）"},
+  {id:"kstand",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_stand.webp?v=3",ey:0.09,name:"たっち"},{id:"kloaf",sp:"kinkuma",pose:1,src:"ed/ham_kinkuma_loaf.webp?v=3",name:"ごろん"},
+  {id:"djungarian",sp:"djungarian",src:"ed/ham_djungarian.webp?v=3",ey:0.22,name:"ジャンガリアン"},{id:"robo",sp:"robo",src:"ed/ham_robo.webp?v=3",ey:0.245,name:"ロボロフスキー"},
+  {id:"campbell",sp:"campbell",src:"ed/ham_campbell.webp?v=3",ey:0.26,name:"キャンベル"},{id:"longhair",sp:"longhair",src:"ed/ham_longhair.webp?v=3",ey:0.21,name:"長毛"},{id:"pearl",sp:"pearl",src:"ed/ham_pearl.webp?v=3",ey:0.255,name:"パールホワイト"}],
  item:[
-  {id:"crown",src:"ed/it_crown.webp",name:"王冠",at:[0,-.43],rel:.42},{id:"beanie",src:"ed/it_beanie.webp",name:"ニット帽",at:[0,-.4],rel:.56},
-  {id:"strawhat",src:"ed/it_strawhat.webp",name:"むぎわら帽子",at:[0,-.43],rel:.72},{id:"beret",src:"ed/it_beret.webp",name:"ベレー帽",at:[.05,-.44],rel:.56},
-  {id:"partyhat",src:"ed/it_partyhat.webp",name:"パーティー帽",at:[.08,-.5],rel:.42},{id:"ribbon",src:"ed/it_ribbon.webp",name:"リボン",at:[.24,-.4],rel:.32},
-  {id:"flowercrown",src:"ed/it_flowercrown.webp",name:"花かんむり",at:[0,-.41],rel:.62},{id:"glasses",src:"ed/it_glasses.webp",name:"まるメガネ",at:[0,-.21],rel:.5},
-  {id:"heartglasses",src:"ed/it_heartglasses.webp",name:"ハートのサングラス",at:[0,-.21],rel:.56},{id:"bowtie",src:"ed/it_bowtie.webp",name:"蝶ネクタイ",at:[0,.0],rel:.34},
-  {id:"scarf",src:"ed/it_scarf.webp",name:"マフラー",at:[0,.02],rel:.62},{id:"medal",src:"ed/it_medal.webp",name:"メダル",at:[0,.12],rel:.22},
-  {id:"seed",src:"ed/it_seed.webp",name:"ひまわりの種",at:[0,.1],rel:.16},{id:"strawberry",src:"ed/it_strawberry.webp",name:"いちご",at:[0,.12],rel:.22},
-  {id:"cake",src:"ed/it_cake.webp",name:"ショートケーキ",at:[.42,.32],rel:.34},{id:"onigiri",src:"ed/it_onigiri.webp",name:"おにぎり",at:[.42,.34],rel:.3},
-  {id:"apron",app:true,src:"ed/it_apron.webp",name:"エプロン",at:[0,.14],rel:.55},{id:"backpack",app:true,src:"ed/it_backpack.webp",name:"リュック",at:[.36,.08],rel:.3},
-  {id:"bedhead",app:true,src:"ed/it_bedhead.webp",name:"ねぐせ",at:[0,-.47],rel:.24},{id:"kigurumi",app:true,src:"ed/it_kigurumi.webp",name:"ひよこの着ぐるみ",at:[0,-.25],rel:.74},
-  {id:"mahou",app:true,src:"ed/it_mahou.webp",name:"まほうつかいの帽子",at:[0,-.5],rel:.52},{id:"tuxedo",app:true,src:"ed/it_tuxedo.webp",name:"タキシード",at:[0,.08],rel:.5}],
+  {id:"crown",ey:[-0.08,"b",0.755],src:"ed/it_crown.webp",name:"王冠",at:[0,-.43],rel:.42},{id:"beanie",ey:[-0.05,"b",1.012],src:"ed/it_beanie.webp",name:"ニット帽",at:[0,-.4],rel:.56},
+  {id:"strawhat",ey:[-0.07,"b",0.552],src:"ed/it_strawhat.webp",name:"むぎわら帽子",at:[0,-.43],rel:.72},{id:"beret",ey:[-0.08,"b",0.554],src:"ed/it_beret.webp",name:"ベレー帽",at:[.05,-.44],rel:.56},
+  {id:"partyhat",ey:[-0.1,"b",0.867],src:"ed/it_partyhat.webp",name:"パーティー帽",at:[.08,-.5],rel:.42},{id:"ribbon",ey:[-0.13,"c",0.648],src:"ed/it_ribbon.webp",name:"リボン",at:[.24,-.4],rel:.32},
+  {id:"flowercrown",ey:[-0.07,"b",0.586],src:"ed/it_flowercrown.webp",name:"花かんむり",at:[0,-.41],rel:.62},{id:"glasses",ey:[0.0,"c",0.373],src:"ed/it_glasses.webp",name:"まるメガネ",at:[0,-.21],rel:.5},
+  {id:"heartglasses",ey:[0.0,"c",0.418],src:"ed/it_heartglasses.webp",name:"ハートのサングラス",at:[0,-.21],rel:.56},{id:"bowtie",ey:[0.27,"c",0.497],src:"ed/it_bowtie.webp",name:"蝶ネクタイ",at:[0,.0],rel:.34},
+  {id:"scarf",ey:[0.17,"t",0.805],src:"ed/it_scarf.webp",name:"マフラー",at:[0,.02],rel:.62},{id:"medal",ey:[0.36,"c",2.091],src:"ed/it_medal.webp",name:"メダル",at:[0,.12],rel:.22},
+  {id:"seed",ey:[0.42,"c",1.677],src:"ed/it_seed.webp",name:"ひまわりの種",at:[0,.1],rel:.16},{id:"strawberry",ey:[0.42,"c",1.261],src:"ed/it_strawberry.webp",name:"いちご",at:[0,.12],rel:.22},
+  {id:"cake",ey:[0.62,"c",1.08],src:"ed/it_cake.webp",name:"ショートケーキ",at:[.42,.32],rel:.34},{id:"onigiri",ey:[0.64,"c",0.903],src:"ed/it_onigiri.webp",name:"おにぎり",at:[.42,.34],rel:.3},
+  {id:"apron",ey:[0.2,"t",1.005],app:true,src:"ed/it_apron.webp",name:"エプロン",at:[0,.14],rel:.55},{id:"backpack",ey:[0.3,"c",1.234],app:true,src:"ed/it_backpack.webp",name:"リュック",at:[.36,.08],rel:.3},
+  {id:"bedhead",ey:[-0.2,"c",1.047],app:true,src:"ed/it_bedhead.webp",name:"ねぐせ",at:[0,-.47],rel:.24},{id:"kigurumi",ey:[0.06,"h",0.905],app:true,src:"ed/it_kigurumi.webp",name:"ひよこの着ぐるみ",at:[0,-.25],rel:.74},
+  {id:"mahou",ey:[-0.07,"b",0.891],app:true,src:"ed/it_mahou.webp",name:"まほうつかいの帽子",at:[0,-.5],rel:.52},{id:"tuxedo",ey:[0.17,"t",0.915],app:true,src:"ed/it_tuxedo.webp",name:"タキシード",at:[0,.08],rel:.5}],
  bg:["flowers","night","tatami","cafe","snow","party","beach"].map(k=>({id:k,src:`ed/bg_${k}.jpg`,t:`ed/bg_${k}_t.jpg`,name:k}))};
 const GAL_URL="https://oaiko-ai.yukiya1013.workers.dev/gal";
 const STICK=["","🎀","👑","🌸","🎩","🍓","⭐","🍀","🧢","🌻","💤","❤️"];
@@ -1856,8 +1857,8 @@ $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); 
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=10"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=10"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=11"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=11"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
 async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);
@@ -1877,7 +1878,7 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
     openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url)); };
   ED.post=async(jpg,txt,ph)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
     if(ph){ try{ const v=await (await fetch(GAL_URL.replace(/\/gal$/,""))).json(); if(!v.v||v.v<"1126c") return {msg:"写真を使ったカードの投稿は、いま準備中です。もう少し待ってね"}; }catch(e){ return {msg:"通信できませんでした"}; } }
-    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
+    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),a:GAL_UID,th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
       if(r.ok&&d.id){ track("post"); if(ED._th&&curTheme()) track("theme_join"); store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
       return {msg:d.error==="photo"?"写真に、人の顔や住所などがわかるものが写っているかもしれません。別の写真で試してね":d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
   ED.open({opener:$("#mkBtnTop")}); }
@@ -1905,12 +1906,18 @@ $("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。
     mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
   }catch(e){ mkMsg("通信できませんでした"); }
   bt.disabled=false; bt.textContent="「みんなのハム」に載せる"; };
+function toast(t){ let el=$("#ntoast"); if(!el){ el=document.createElement("div"); el.id="ntoast"; el.setAttribute("role","status"); el.style.cssText="position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 28px);transform:translateX(-50%);z-index:320;background:#3b2a20;color:#fff;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;transition:opacity .3s;pointer-events:none"; document.body.appendChild(el); } el.textContent=t; el.style.opacity=1; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.opacity=0,2600); }
+function pickDlg(msg,opts){ return new Promise(res=>{ const w=document.createElement("div"); w.className="ask"; w.setAttribute("role","alertdialog"); w.setAttribute("aria-modal","true");
+  w.innerHTML=`<div class="askc"><p></p><div class="askv">${opts.map((o,i)=>`<button type="button" data-i="${i}">${esc(o)}</button>`).join("")}<button type="button" class="no" data-i="-1">やめる</button></div></div>`; w.querySelector("p").textContent=msg;
+  const done=v=>{ w.remove(); removeEventListener("keydown",kd,true); res(v); }; const kd=e=>{ if(e.key==="Escape"){ e.stopPropagation(); e.preventDefault(); done(-1); } };
+  w.querySelectorAll("button").forEach(b=>b.onclick=()=>done(+b.dataset.i)); w.addEventListener("pointerdown",e=>e.stopPropagation());
+  addEventListener("keydown",kd,true); document.body.appendChild(w); w.querySelector("button").focus(); }); }
 function askDlg(msg,okLabel){ return new Promise(res=>{ const w=document.createElement("div"); w.className="ask"; w.setAttribute("role","alertdialog"); w.setAttribute("aria-modal","true");
   w.innerHTML=`<div class="askc"><p></p><div class="askb"><button type="button" class="no">やめる</button><button type="button" class="yes"></button></div></div>`; w.querySelector("p").textContent=msg; w.querySelector(".yes").textContent=okLabel||"OK";
   const done=v=>{ w.remove(); removeEventListener("keydown",kd,true); res(v); }; const kd=e=>{ if(e.key==="Escape"){ e.stopPropagation(); e.preventDefault(); done(false); } };
   w.querySelector(".no").onclick=()=>done(false); w.querySelector(".yes").onclick=()=>done(true); w.addEventListener("pointerdown",e=>e.stopPropagation());
   addEventListener("keydown",kd,true); document.body.appendChild(w); w.querySelector(".yes").focus(); }); }
-async function confirmPost(){ if(store.get("galOk",0)) return true; const ok=await askDlg("「みんなのハム」に載せると、カードの絵・名前・ひとことが、だれでも見られるページに公開されます。\n本名・住所・SNSのIDなどが入っていないか、確かめてね。","載せる"); if(ok) store.set("galOk",1); return ok; }
+async function confirmPost(){ if(store.get("galOk2",0)) return true; const ok=await askDlg("「みんなのハム」のやくそく\n\n・カードの絵・名前・ひとことは、だれでも見られるページに公開されます\n・本名・住所・学校・SNSのID・人の顔など、身元がわかるものは載せない\n・悪口・不快な内容・宣伝は載せない（見つけたら削除します）\n・ほかの人の写真や絵を勝手に使わない\n\nやくそくを守って載せますか？","守って載せる"); if(ok) store.set("galOk2",1); return ok; }
 $("#mkApp").onclick=()=>{ closeMk(); setTimeout(()=>$("#applink").onclick(new Event("click")),80); };
 // SNSで出る絵（1200×630）：カードを真ん中に、うしろはぼかし
 function ogImage(jpg){ return new Promise((ok,ng)=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement("canvas"); c.width=1200; c.height=630; const g=c.getContext("2d");
@@ -1931,6 +1938,8 @@ function renderTheme(){ const t=curTheme(), el=$("#galTheme"); if(!el) return; e
   el.innerHTML=`<div><small>今週のお題（〜${md(t.to)}）</small><b>${esc(t.name)}</b><span>${esc(t.hint)}</span></div><button type="button" class="t" id="thJoin">参加する</button><button type="button" class="t" id="thOnly" aria-pressed="${gal.th?"true":"false"}">お題の投稿だけ</button>`;
   $("#thJoin").onclick=()=>{ gal.joinTh=true; openEd(); }; $("#thOnly").onclick=()=>{ gal.th=gal.th?"":t.id; galLoad(true); renderTheme(); }; }
 // みんなのハム
+const GAL_UID=(()=>{ let u=store.get("galUid",""); if(!/^[a-z0-9]{12,32}$/.test(u)){ u=(Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)).slice(0,20); store.set("galUid",u); } return u; })();
+const galHide=new Set(store.get("galHide",[])), galBlock=new Set(store.get("galBlock",[]));
 let GAL_ONLY=INAPP&&Q.get("gal")==="1"; // アプリのホームから「みんなのハム」だけ見にきたとき：とじたらアプリにもどる
 const gal={s:"new",next:0,busy:false,focus:Q.get("g")||null,liked:new Set(store.get("galLiked",[]))};
 async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$("#galGrid");
@@ -1938,8 +1947,8 @@ async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$(
   try{ let items=[];
     if(reset && gal.focus){ const r=await fetch(`${GAL_URL}/list?id=${encodeURIComponent(gal.focus)}`); const d=await r.json(); items=items.concat((d.items||[]).map(x=>Object.assign(x,{hl:1}))); }
     const r=await fetch(`${GAL_URL}/list?s=${gal.s}&c=${gal.next||0}${gal.th?"&th="+gal.th:""}`); const d=await r.json();
-    items=items.concat((d.items||[]).filter(x=>!items.some(y=>y.id===x.id))); gal.next=d.next;
-    if(reset) grid.innerHTML=""; grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿を知らせる">…</button></div></div>`).join(""));
+    items=items.concat((d.items||[]).filter(x=>!items.some(y=>y.id===x.id))); gal.next=d.next; items=items.filter(x=>!galHide.has(x.id)&&!(x.a&&galBlock.has(x.a)));
+    if(reset) grid.innerHTML=""; grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}" data-a="${esc(x.a||"")}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿について（知らせる・表示しない）">…</button></div></div>`).join(""));
     $("#galEmpty").hidden=!!grid.children.length; $("#galMore").hidden=d.next==null;
     if(reset && gal.focus){ const el=grid.querySelector(".hl"); if(el) el.scrollIntoView({block:"nearest"}); }
   }catch(e){ if(reset){ grid.innerHTML=`<p class="note" role="alert">読みこめませんでした。通信を確かめてね <button type="button" class="t" id="galRetry">もう一度</button></p>`; const b=$("#galRetry"); if(b) b.onclick=()=>galLoad(true); } }
@@ -1970,8 +1979,13 @@ $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[da
   if(!lk&&!rp&&e.target.tagName==="IMG"){ const gi=e.target.closest(".gi"); if(gi) galView(gi.dataset.id); return; }
   if(lk){ const id=lk.dataset.lk; if(gal.liked.has(id)) return; gal.liked.add(id); store.set("galLiked",[...gal.liked].slice(-300)); lk.classList.add("on"); const b=lk.querySelector("b"); b.textContent=(+b.textContent||0)+1; haptic("light");
     fetch(GAL_URL+"/like",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); }
-  if(rp){ if(!await askDlg("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）","知らせる")) return; const id=rp.dataset.rp;
-    fetch(GAL_URL+"/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); const it=rp.closest(".gi"); if(it) it.remove(); } });
+  if(rp){ const id=rp.dataset.rp, it=rp.closest(".gi"), a=it&&it.dataset.a;
+    const k=await pickDlg("この投稿について",["いやな投稿として知らせる","この投稿を表示しない"].concat(a?["この人の投稿をすべて表示しない"]:[]));
+    if(k<0) return;
+    if(k===0){ fetch(GAL_URL+"/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); galHide.add(id); toast("知らせました。ありがとう。この投稿は表示しません"); }
+    if(k===1){ galHide.add(id); toast("この投稿は表示しません"); }
+    if(k===2){ galBlock.add(a); store.set("galBlock",[...galBlock].slice(-300)); $("#galGrid").querySelectorAll(".gi").forEach(x=>{ if(x.dataset.a===a) x.remove(); }); toast("この人の投稿は、表示しません"); }
+    store.set("galHide",[...galHide].slice(-500)); if(it) it.remove(); $("#galEmpty").hidden=!!$("#galGrid").children.length; } });
 if(Q.get("g")||Q.get("gal")==="1") setTimeout(()=>openMk("gal"),1500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });

@@ -75,7 +75,7 @@ const BL=new Map(), BK=new Map(); let bn=0;
 const intern=v=>{ let k=BK.get(v); if(!k){ k="@b"+(++bn); BK.set(v,k); BL.set(k,v); } return k; };
 function snapshot(){ return JSON.stringify(S,(k,v)=>typeof v==="string"&&v.length>200&&v.startsWith("data:")?intern(v):v); }
 function parseS(t){ return JSON.parse(t,(k,v)=>typeof v==="string"&&v.startsWith("@b")&&BL.has(v)?BL.get(v):v); }
-function commit(){ hist.push(snapshot()); if(hist.length>60) hist.shift(); fut=[]; save(); updBtns(); }
+function commit(){ if(ED._sess&&!ED._sess.edits++){ ED.track&&ED.track("card_edit"); const d=$("#edDone"); if(d){ d.classList.add("pulse"); setTimeout(()=>d.classList.remove("pulse"),6000); } } hist.push(snapshot()); if(hist.length>60) hist.shift(); fut=[]; save(); updBtns(); }
 function undo(){ if(hist.length<2) return; fut.push(hist.pop()); S=parseS(hist[hist.length-1]); sel=null; refresh(); save(); }
 function redo(){ if(!fut.length) return; const s=fut.pop(); hist.push(s); S=parseS(s); sel=null; refresh(); save(); }
 function save(){ try{ const t=JSON.stringify(S); if(t.length<3.5e6) localStorage.setItem("oaiko_ed",t); else localStorage.removeItem("oaiko_ed"); }catch(e){ try{ localStorage.removeItem("oaiko_ed"); }catch(_){} } }
@@ -180,8 +180,11 @@ function penLayer(){ let L=S.layers.find(l=>l.type==="draw"&&l.id===ED._pen); if
 // ---------- 追加 ----------
 function add(L){ L.id=uid(); L.x=L.x==null?W()/2:L.x; L.y=L.y==null?H()*.5:L.y; L.r=L.r||0; S.layers.push(L); sel=L.id; commit(); panel(); draw(); }
 ED.addHam=(h,o={})=>add(Object.assign({type:"ham",src:h.src,w:.62,y:H()*.56,tint:{h:0,s:100,b:100}},o));
+// きせかえの高さ：その子の「目の高さ」から測る（b=下はし・t=上はし・c=まんなか・h=着ぐるみの顔の穴）
+function eyOff(it,ey,w,h){ const [v,m,asp]=it.ey, ih=(it.rel||.4)*w*asp, y=(ey-.5+v)*h; return m==="b"?y-ih/2:m==="t"?y+ih/2:m==="h"?y-.075*ih:y; }
+function hamEy(L){ const src=String(L&&L.src||"").split("?")[0]; const a=HAMS.find(h=>String(h.src).split("?")[0]===src); return a&&a.ey!=null?a.ey:(L&&L.type==="ham"?.23:null); }
 ED.addItem=it=>{ const L=selL(); const anchor=L&&L.type==="ham"?L:S.layers.slice().reverse().find(l=>l.type==="ham");
-  let o={}; if(anchor && it.at){ const [w,h]=layerSize(anchor); const c=Math.cos(anchor.r||0), s=Math.sin(anchor.r||0); const ax=it.at[0]*w*(anchor.flip?-1:1), ay=it.at[1]*h; o={x:anchor.x+ax*c-ay*s, y:anchor.y+ax*s+ay*c, w:(anchor.w||.6)*(it.rel||.4), r:anchor.r||0}; }
+  let o={}; if(anchor && it.at){ const [w,h]=layerSize(anchor); const c=Math.cos(anchor.r||0), s=Math.sin(anchor.r||0); const aey=hamEy(anchor), ax=it.at[0]*w*(anchor.flip?-1:1), ay=(it.ey!=null&&aey!=null)?eyOff(it,aey,w,h):it.at[1]*h; o={x:anchor.x+ax*c-ay*s, y:anchor.y+ax*s+ay*c, w:(anchor.w||.6)*(it.rel||.4), r:anchor.r||0}; }
   add(Object.assign({type:"item",src:it.src,w:it.w||.28},o)); };
 ED.addText=(o={})=>{ add(Object.assign({type:"text",text:"テキスト",font:"Zen Maru Gothic",size:96,color:"#3b2a20",stroke:"#ffffff",bold:true,y:H()*.18},o)); editText(); };
 // ---------- UI ----------
@@ -206,7 +209,7 @@ function build(){
   cv=$("#edC"); ctx=cv.getContext("2d"); ov=$("#edO"); octx=ov.getContext("2d"); stageEl=$("#edStage");
   cv.addEventListener("pointerdown",onDown); cv.addEventListener("pointermove",onMove); ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,onUp));
   root.addEventListener("pointerdown",e=>e.stopPropagation()); root.addEventListener("wheel",e=>{ const L=selL(); if(!L) return; e.preventDefault(); gest={size0:L.size,w0:L.w||.5}; scaleL(L,e.deltaY<0?1.06:.94); gest=null; draw(); clearTimeout(root._w); root._w=setTimeout(commit,300); },{passive:false});
-  $("#edX").onclick=()=>ED.close(); $("#edZ").onclick=()=>{ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; TPLS[0].f(s); S=s; sel=null; tool="ham"; penOn=false; commit(); refresh(); toast("最初からにしました。左の矢印で、前の状態に戻せます"); }; $("#edU").onclick=undo; $("#edR").onclick=redo; $("#edDone").onclick=finish; $("#edBack").onclick=()=>{ $("#edDoneSheet").hidden=true; $("#edDone").focus(); };
+  $("#edX").onclick=async()=>{ const ss=ED._sess; if(ss&&ss.edits&&!ss.done){ const ok=await edAsk("つくったカードを、完成させる？\n（とじても、下書きは残ります）","完成させる"); if(ok){ finish(); return; } ED.track&&ED.track("card_exit"); } ED.close(); }; $("#edZ").onclick=()=>{ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; TPLS[0].f(s); S=s; sel=null; tool="ham"; penOn=false; commit(); refresh(); toast("最初からにしました。左の矢印で、前の状態に戻せます"); }; $("#edU").onclick=undo; $("#edR").onclick=redo; $("#edDone").onclick=finish; $("#edBack").onclick=()=>{ $("#edDoneSheet").hidden=true; $("#edDone").focus(); };
   $("#edTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ tool=b.dataset.t; penOn=tool==="pen"; if(penOn) sel=null; if(tool==="ham"&&!(selL()&&/ham|photo|snap/.test(selL().type))){ const h=[...S.layers].reverse().find(l=>l.type==="ham"||l.type==="photo"||l.type==="snap"); if(h) sel=h.id; } panel(); draw(); });
   $("#edFile").onchange=onFile;
   $("#edTabs").addEventListener("keydown",e=>{ if(!/^Arrow(Left|Right)$/.test(e.key)) return; const bs=[...$("#edTabs").querySelectorAll("button")], i=bs.indexOf(document.activeElement); if(i<0) return; e.preventDefault(); const n=bs[(i+(e.key==="ArrowLeft"?-1:1)+bs.length)%bs.length]; n.click(); n.focus(); });
@@ -370,14 +373,14 @@ const TPLS=[
 const nm=()=>(ED.name&&ED.name())||"うちの子";
 function ham(s,o){ const h=ED.curHam?ED.curHam():H0(); return Object.assign({id:uid(),type:"ham",src:h.src,w:.62,x:s.W/2,y:s.H*.55,r:0,tint:{h:0,s:100,b:100}},o); }
 function txt(s,t,o){ return Object.assign({id:uid(),type:"text",text:t,font:"Zen Maru Gothic",size:80,color:"#3b2a20",stroke:"#ffffff",bold:true,x:s.W/2,y:s.H*.2,r:0},o); }
-function itemOn(s,h,it){ const im=img(h.src); const w=h.w*s.W, hh=im?w*im.height/im.width:w; return {id:uid(),type:"item",src:it.src,x:h.x+(it.at?it.at[0]*w:0),y:h.y+(it.at?it.at[1]*hh:-hh*.45),w:h.w*(it.rel||.4),r:0}; }
+function itemOn(s,h,it){ const im=img(h.src); const w=h.w*s.W, hh=im?w*im.height/im.width:w; const e=hamEy(h); return {id:uid(),type:"item",src:it.src,x:h.x+(it.at?it.at[0]*w:0),y:h.y+((it.ey!=null&&e!=null)?eyOff(it,e,w,hh):(it.at?it.at[1]*hh:-hh*.45)),w:h.w*(it.rel||.4),r:0}; }
 function applyTpl(t){ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; t.f(s); s.tpl=TPLS.indexOf(t); S=s; sel=null; ED._pen=null; commit(); refresh(); }
 // ---------- 完成 ----------
 function exportCanvas(w){ const c=document.createElement("canvas"); c.width=W(); c.height=H(); const g=c.getContext("2d"); render(g,true);
   if(w&&w!==W()){ const d=document.createElement("canvas"); d.width=w; d.height=Math.round(w*H()/W()); d.getContext("2d").drawImage(c,0,0,d.width,d.height); return d; } return c; }
 function watermark(c){ const g=c.getContext("2d"), k=c.width/1080; g.save(); g.font=`700 ${26*k}px "Zen Maru Gothic", sans-serif`; g.textAlign="right"; g.textBaseline="bottom"; g.fillStyle="rgba(255,255,255,.85)"; g.shadowColor="rgba(0,0,0,.35)"; g.shadowBlur=6*k; g.fillText("#おあいこ  oaiko-hamu.com/nade",c.width-24*k,c.height-20*k); g.restore(); return c; }
 let outPng=null, postedId=null;
-function finish(){ ED.track&&ED.track("card_done"); const th=ED.theme&&ED.theme(), tl=$("#edThL"); tl.hidden=!th; if(th){ $("#edTh").checked=!!ED._th; tl.querySelector("span").textContent=`今週のお題「${th.name}」に参加する（${th.tag}）`; $("#edTh").onchange=()=>{ ED._th=$("#edTh").checked; }; }
+function finish(){ ED.track&&ED.track("card_done"); if(ED._sess) ED._sess.done=true; const th=ED.theme&&ED.theme(), tl=$("#edThL"); tl.hidden=!th; if(th){ $("#edTh").checked=!!ED._th; tl.querySelector("span").textContent=`今週のお題「${th.name}」に参加する（${th.tag}）`; $("#edTh").onchange=()=>{ ED._th=$("#edTh").checked; }; }
   sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
   const ph=usesPhoto(); $("#edPost").hidden=false; $("#edPostNote").textContent=(ph?"写真には、人の顔・名札・住所や窓の外の景色など、身元がわかるものが写っていないか確かめてね。写真は載せる前に自動で確認します。":"")+"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。";
   $("#edDoneSheet").hidden=false; setTimeout(()=>$("#edShare").focus(),40); $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
@@ -393,7 +396,8 @@ const noGest=e=>{ if(root&&!root.hidden) e.preventDefault(); };
 let opener=null, inerted=[];
 function setInert(on){ if(on){ inerted=[...document.body.children].filter(x=>x!==root&&x.tagName!=="SCRIPT"&&!x.inert); inerted.forEach(x=>x.inert=true); } else { inerted.forEach(x=>x.inert=false); inerted=[]; } }
 ED.open=async(opt={})=>{ if(!root) build(); opener=opt.opener||document.activeElement; root.hidden=false; document.documentElement.classList.add("edopen"); zoomLock(true); setInert(true); try{ window.scrollTo(0,0); }catch(e){}
-  let restored=false; if(!S){ S=load()||null; restored=!!S; if(!S){ S=blank(); TPLS[0].f(S); } hist=[snapshot()]; fut=[]; }
+  ED._sess={edits:0,done:false};
+  let restored=false; if(!S){ S=load()||null; restored=!!S; if(!S){ S=blank(); TPLS[1].f(S); S.tpl=1; } hist=[snapshot()]; fut=[]; }
   if(!restored&&ED.appWear&&!ED._wearDone){ ED._wearDone=1; const it=ITEMS.find(h=>h.id===ED.appWear); if(it) setTimeout(()=>{ const h=S.layers.find(l=>l.type==="ham"); if(h) sel=h.id; ED.addItem(it); sel=null; draw(); toast(`アプリで着ている「${it.name}」をのせました`); },400); }
   setTimeout(()=>{ const t=$("#edTitle"); if(t&&t.offsetParent) t.focus({preventScroll:true}); else { const x=$("#edX"); if(x) x.focus({preventScroll:true}); } },50);
   if(restored&&ED.curHam){ const cur=ED.curHam(), hs=S.layers.filter(l=>l.type==="ham"); if(hs.length&&!hs.some(l=>String(l.src).split("?")[0]===String(cur.src).split("?")[0])) draftBar(); }

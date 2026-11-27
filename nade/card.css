@@ -103,3 +103,4 @@ html.edopen,html.edopen body{overflow:hidden;overscroll-behavior:none}
 
 .edth{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;background:#3a2c22;border:1px solid #e8954c;border-radius:12px;padding:10px 12px;margin:6px 0}.edth input{width:20px;height:20px;accent-color:#e8954c}
 .thb.lock{position:relative}.thb.lock img{opacity:.45;filter:grayscale(.6)}.thb.lock small{position:absolute;left:4px;bottom:4px;font-size:9px;background:#e8954c;color:#fff;border-radius:6px;padding:1px 5px}
+#ed .edgo.pulse{animation:edpl 1.2s ease-in-out 4;box-shadow:0 0 0 4px #ffd6a8}
