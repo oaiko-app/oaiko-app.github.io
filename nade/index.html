@@ -434,6 +434,9 @@ function flushEv(){ if(!EVQ.length||/^(localhost|127\.0\.0\.1)$/.test(location.h
   try{ if(navigator.sendBeacon) navigator.sendBeacon("https://oaiko-ai.yukiya1013.workers.dev/gal/ev",b); else fetch("https://oaiko-ai.yukiya1013.workers.dev/gal/ev",{method:"POST",body:b,keepalive:true}); }catch(e){} }
 addEventListener("visibilitychange",()=>{ if(document.hidden) flushEv(); }); setTimeout(()=>track("view"),800); addEventListener("pagehide",flushEv); setInterval(flushEv,30000);
 function toApp(m){ if(!INAPP) return; try{ parent.postMessage(Object.assign({src:"nade"},m),"*"); }catch(e){} }
+// 外のページを開く：アプリの中では、アプリに頼んでSafari/Xアプリで開く（画面ごと外に飛ばない）
+function openOut(u){ if(INAPP){ toApp({t:"open",url:u}); return; } window.open(u,"_blank","noopener"); }
+if(INAPP) document.addEventListener("click",e=>{ const a=e.target.closest&&e.target.closest("a[href^='http']"); if(!a||a.id==="mvStore") return; e.preventDefault(); toApp({t:"open",url:a.href}); },true);
 
 // ---------- 保存 ----------
 const store={get(k,d){try{const v=localStorage.getItem("oaiko_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("oaiko_"+k,JSON.stringify(v))}catch(e){}}};
@@ -652,7 +655,7 @@ async function shareSecret(){
   try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-nade.png",{type:"image/png"});
     if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; }
     if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
-  window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener");
+  openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url));
 }
 $("#sShare").onclick=shareSecret;
 $("#sApp").onclick=()=>{ hideSecret(); setTimeout(()=>$("#applink").onclick(new Event("click")),380); };
@@ -1846,7 +1849,7 @@ function mkMsg(t){ $("#mkMsg").textContent=t||""; }
 function openMk(tab){ if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; mk.n=life.name||""; $("#mkN").value=mk.n; $("#mkL").value=mk.l; mk.pos=null; mk.postId=null; mkMsg("");
   $("#mk").hidden=false; mkChips(); setTab(tab||"mk"); openDlg($("#mk"),$("#mkBtnTop"),closeMk);
   $("#mkPrev").removeAttribute("src"); snapCard(sn=>{ mk.snap=sn; mkRender(); }); }
-function closeMk(){ closeDlg(); $("#mk").hidden=true; }
+function closeMk(){ closeDlg(); $("#mk").hidden=true; if(GAL_ONLY){ GAL_ONLY=false; save(); toApp({t:"close"}); } }
 function setTab(t){ const g=t==="gal"; $("#tabMk").setAttribute("aria-selected",String(!g)); $("#tabGal").setAttribute("aria-selected",String(g)); $("#mkPane").hidden=g; $("#galPane").hidden=!g; if(g){ track("gal_open"); renderTheme(); galLoad(true); setTimeout(()=>$("#tabGal").focus({preventScroll:true}),80); } }
 $("#tabMk").onclick=()=>{ closeMk(); openEd(); }; $("#tabGal").onclick=()=>setTab("gal"); $("#galMake").onclick=()=>{ closeMk(); openEd(); };
 $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); $("#mkClose").onclick=closeMk;
@@ -1871,7 +1874,7 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
     try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-card.png",{type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
     const a=document.createElement("a"); a.href=png; a.download="oaiko-card.png"; document.body.appendChild(a); a.click(); a.remove();
-    window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+    openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url)); };
   ED.post=async(jpg,txt,ph)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
     if(ph){ try{ const v=await (await fetch(GAL_URL.replace(/\/gal$/,""))).json(); if(!v.v||v.v<"1126c") return {msg:"写真を使ったカードの投稿は、いま準備中です。もう少し待ってね"}; }catch(e){ return {msg:"通信できませんでした"}; } }
     try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
@@ -1892,7 +1895,7 @@ $("#mkShare").onclick=async()=>{ const c=await drawCard(1080), png=c.toDataURL("
     if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; }
     if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
   const a=document.createElement("a"); a.href=png; a.download="oaiko-uchinoko.png"; a.click();
-  window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+  openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url)); };
 $("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。少し待ってね"); return; }
   if(!await confirmPost()) return;
   const bt=$("#mkPost"); bt.disabled=true; bt.textContent="載せています…";
@@ -1928,6 +1931,7 @@ function renderTheme(){ const t=curTheme(), el=$("#galTheme"); if(!el) return; e
   el.innerHTML=`<div><small>今週のお題（〜${md(t.to)}）</small><b>${esc(t.name)}</b><span>${esc(t.hint)}</span></div><button type="button" class="t" id="thJoin">参加する</button><button type="button" class="t" id="thOnly" aria-pressed="${gal.th?"true":"false"}">お題の投稿だけ</button>`;
   $("#thJoin").onclick=()=>{ gal.joinTh=true; openEd(); }; $("#thOnly").onclick=()=>{ gal.th=gal.th?"":t.id; galLoad(true); renderTheme(); }; }
 // みんなのハム
+let GAL_ONLY=INAPP&&Q.get("gal")==="1"; // アプリのホームから「みんなのハム」だけ見にきたとき：とじたらアプリにもどる
 const gal={s:"new",next:0,busy:false,focus:Q.get("g")||null,liked:new Set(store.get("galLiked",[]))};
 async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$("#galGrid");
   if(reset){ gal.next=0; grid.innerHTML=`<p class="note" role="status">カードを読み込んでいます…</p>`; $("#galEmpty").hidden=true; } grid.setAttribute("aria-busy","true");
@@ -1952,8 +1956,9 @@ function galView(id){ track("gal_view"); const items=[...$("#galGrid").querySele
     img.src=src; img.alt=alt; lk.querySelector("b").textContent=b?b.textContent:"0"; lk.classList.toggle("on",gal.liked.has(id));
     lk.onclick=()=>{ const o=it.querySelector("[data-lk]"); if(o&&!gal.liked.has(id)){ o.click(); setTimeout(show,30); } };
     v.querySelector(".gvs").onclick=async()=>{ track("share"); const url=`${GAL_URL}/p/${id}`, text=`「みんなのハム」で見つけた子 #おあいこ #みんなのハム`;
+      if(INAPP){ toApp({t:"share",text:text+"\n"+url}); return; }
       try{ if(navigator.share){ await navigator.share({text:text+"\n",url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
-      window.open("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url),"_blank","noopener"); };
+      openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url)); };
     v.querySelector(".gvp").disabled=i<=0; v.querySelector(".gvn").disabled=i>=items.length-1; }
   function go(d){ const j=i+d; if(j<0||j>=items.length) return; i=j; show(); }
   function close(){ v.hidden=true; removeEventListener("keydown",kd,true); const o=items[i]&&items[i].querySelector("img"); if(o) o.focus({preventScroll:true}); }
@@ -1967,7 +1972,7 @@ $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[da
     fetch(GAL_URL+"/like",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); }
   if(rp){ if(!await askDlg("この投稿を、いやな投稿として知らせますか？\n（悪口・個人情報・不快な内容など）","知らせる")) return; const id=rp.dataset.rp;
     fetch(GAL_URL+"/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})}).catch(()=>{}); const it=rp.closest(".gi"); if(it) it.remove(); } });
-if(Q.get("g")) setTimeout(()=>openMk("gal"),1500);
+if(Q.get("g")||Q.get("gal")==="1") setTimeout(()=>openMk("gal"),1500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 }
