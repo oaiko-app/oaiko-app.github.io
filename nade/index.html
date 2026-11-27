@@ -247,6 +247,18 @@
   #bNcount.max{color:#c0392b;font-weight:700}
   #bMove{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
   #bHow{margin:10px 0 0;font-size:11px;color:#8a7262;line-height:1.6}
+  #zkOpen{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;min-height:46px;background:#f3ebe1;color:#3b2a20;font:inherit;font-weight:800;font-size:14px}#zkOpen b{color:#b8743c;margin-left:4px}
+  #zk{position:fixed;inset:0;z-index:60;background:#f7f2ea;color:#3b2a20;display:flex;flex-direction:column}
+  #zk[hidden]{display:none}
+  #zk .zkh{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 12px) 16px 8px}#zk .zkh h2{flex:1;margin:0;font-size:19px}#zk .zkh button{width:40px;height:40px;border-radius:50%;border:0;background:#e9dfd2;font:inherit;font-size:18px;color:#3b2a20}
+  #zk .zks{padding:0 16px 8px;font-size:12px;color:#8a7262;margin:0}
+  #zk .zkg{flex:1;overflow:auto;padding:4px 16px calc(env(safe-area-inset-bottom) + 20px);display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start}
+  #zk .zc{border:0;background:#fffdf9;border-radius:14px;padding:6px 6px 8px;font:inherit;color:#3b2a20;display:flex;flex-direction:column;gap:4px;text-align:left;box-shadow:0 2px 8px rgba(60,40,20,.08);position:relative}
+  #zk .zc .zi{width:100%;aspect-ratio:1;border-radius:10px;background:#efe5d8 center/cover no-repeat;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #zk .zc .zi img{width:86%;height:86%;object-fit:contain}
+  #zk .zc small{font-size:10px;color:#b8743c;font-weight:700}#zk .zc b{font-size:12px;line-height:1.3}
+  #zk .zc.no{background:#f1ebe2;box-shadow:none}#zk .zc.no .zi img{filter:brightness(0) opacity(.15)}#zk .zc.no b{color:#a8998b}#zk .zc.no span{font-size:10px;color:#8a7262;line-height:1.35}
+  #zk .zc em{position:absolute;top:4px;right:4px;font-style:normal;font-size:9px;font-weight:800;background:#e8954c;color:#fff;border-radius:999px;padding:1px 6px}
   #secList{margin:8px 0 0;font-size:11px;color:#8a7262;line-height:1.55;display:flex;flex-direction:column;gap:1px}
   #secList b{color:#3b2a20;font-size:12px}#secList .got{color:#b8743c;font-weight:700}#secList small{margin-top:4px;font-size:10px}
   #bodySheet{max-height:min(58%,420px);overflow-y:auto;overscroll-behavior:contain}
@@ -345,6 +357,7 @@
     <button class="btn" id="bodyBtn">この子のこと</button>
     <button class="btn" id="snd" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>音 オフ</button>
   </div>
+  <div id="zk" hidden role="dialog" aria-modal="true" aria-label="かくし図鑑"><div class="zkh"><h2>かくし図鑑</h2><button type="button" id="zkX" aria-label="とじる">×</button></div><p class="zks" id="zkS"></p><div class="zkg" id="zkG"></div></div>
   <div id="bodySheet" role="dialog" aria-modal="true" aria-label="この子のこと">
     <h3>この子のこと</h3>
     <label for="bN">名前 <span id="bNcount">0/8文字</span></label>
@@ -360,7 +373,7 @@
     <p style="margin:6px 0 0;font-size:11px;color:#8a7262;text-align:right">変更は自動で保存されます</p>
     <button id="bMove">この子を、アプリにつれていく →</button>
     <details><summary>遊び方</summary><p id="bHow">　なでる：ゆっくりドラッグ（頭と背中がすき・足はいや）／起こす：2回つづけてタップ／種：下の「種をあげる」</p>
-    </details><details id="secWrap"><summary id="secSum">かくし図鑑</summary><div id="secList"></div></details>
+    </details><button type="button" id="zkOpen">かくし図鑑を見る <b id="zkN"></b></button><details id="secWrap" hidden><summary id="secSum">かくし図鑑</summary><div id="secList"></div></details>
   </div>
   <div id="sheet">
     <h3>テスト用の設定</h3>
@@ -654,13 +667,13 @@ function showPill(x){
 // 見つけたかくしハムの写真を、カードで使えるように小さくして残す
 function saveSecImg(id,u){ if(INAPP||!u||!/^data:image/.test(u)) return; const im=new Image(); im.onload=()=>{ try{ const c=document.createElement("canvas"), k=Math.min(1,420/im.width); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height);
   const m=store.get("secimg",{})||{}; m[id]=c.toDataURL("image/jpeg",.82); const ks=Object.keys(m); while(ks.length>14){ delete m[ks.shift()]; } store.set("secimg",m); }catch(e){} }; im.src=u; }
-function showSecret(x,img){ if(x&&!x.img&&!x.tint) saveSecImg(x.id,img); setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
+function showSecret(x,img,replay){ if(x&&!x.img&&!x.tint) saveSecImg(x.id,img); setTimeout(()=>{ if(!$("#secret").hidden) openDlg($("#secret"),null,()=>$("#sClose").click()); },50);
   $("#sCount").textContent=lastN?`${lastN}回なでたら、こうなった`:(x.how?`${x.how}、こうなった`:"");
   $("#sNote").textContent=x.tint?TINT_NOTE:""; $("#sNote").hidden=!x.tint;
   $("#sFound").textContent=`このページのかくし図鑑 ${SEC_ALL.filter(y=>secSeen.has(y.id)).length}/${SEC_ALL.length}`;
   secCur={x,img}; $("#sNo").textContent=`かくし図鑑 No.${x.no}`; $("#sName").textContent=x.name; $("#sDesc").textContent=x.desc;
   const im=$("#sImg"); if(img){ im.src=img; im.style.display=""; } else im.style.display="none";
-  cmdOnSecret(x);
+  if(replay){ const sc=$("#sCmd"); if(sc) sc.hidden=true; } else cmdOnSecret(x);
   const el=$("#secret"); el.hidden=false; requestAnimationFrame(()=>el.classList.add("show")); haptic("medium");
 }
 function hideSecret(){ closeDlg(); if(!INAPP) setTimeout(showAL,1500); const el=$("#secret"); el.classList.remove("show"); setTimeout(()=>{ el.hidden=true; },350); }
@@ -1519,7 +1532,7 @@ function unlock(x,opt={}){
   if(!secSeen.has(x.id)){ if(!opt.nade) lastN=0; secSeen.add(x.id); if(!INAPP) store.set("sec",[...secSeen]); renderSecList(); setTimeout(()=>{ if(x.img) showSecret(x,x.img); else snapHam(img=>showSecret(x,img),opt.fx); },opt.wait||1700); }
   else if(opt.nade) setTimeout(()=>showPill(x),1400);
 }
-function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_ALL.filter(x=>secSeen.has(x.id)).length; const sm=$("#secSum"); if(sm) sm.textContent=`かくし図鑑 ${n}/${SEC_ALL.length}`;
+function renderSecList(){ const el=$("#secList"); if(!el) return; const n=SEC_ALL.filter(x=>secSeen.has(x.id)).length; const sm=$("#secSum"); if(sm) sm.textContent=`かくし図鑑 ${n}/${SEC_ALL.length}`; const zn=$("#zkN"); if(zn) zn.textContent=`${n}/${SEC_ALL.length}`;
   el.innerHTML=`<b>このページのかくし図鑑 ${n}/${SEC_ALL.length}</b>`+SEC_ALL.map(x=>secSeen.has(x.id)?`<span class="got">No.${x.no} ${x.name}</span>`:`<span>？？？ … ${x.hint}</span>`).join("")+`<small>${TINT_NOTE}</small>`; }
 function sceneKey(){ return "scene_"+SCENE; }
 // かくしコマンド：コントローラーで「← → A B」と入れると、本物の鏡餅になる
@@ -2043,6 +2056,27 @@ if(Q.get("g")||Q.get("gal")==="1") setTimeout(()=>openMk("gal"),1500);
 setTimeout(async()=>{ const ids=store.get("mkPosts",[]); if(!ids.length) return; try{ const d=await (await fetch(`${GAL_URL}/list?ids=${ids.join(",")}`)).json(); const seen=store.get("myLk",{})||{}; let add=0, tot=0; (d.items||[]).forEach(x=>{ tot+=x.lk||0; add+=Math.max(0,(x.lk||0)-(seen[x.id]||0)); seen[x.id]=x.lk||0; }); store.set("myLk",seen); if(add>0&&!INAPP){ toast(`みんなのハムで、あなたのカードに いいねが ${add} つきました`); } }catch(e){} },2500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
+// ===== かくし図鑑（見つけた子を、あとから見かえす） =====
+const ZK_TP={doku:"hue-rotate(250deg) saturate(1.5)",doku_game:"hue-rotate(120deg) saturate(1.6)",doku_aka:"sepia(1) hue-rotate(-40deg) saturate(3)",doku_mido:"sepia(1) hue-rotate(60deg) saturate(2)",doku_yami:"brightness(.45) hue-rotate(250deg) saturate(1.4)"};
+function zkHam(){ const h=ED_ASSETS.ham.find(x=>x.sp===sp&&!x.pose)||ED_ASSETS.ham.find(x=>x.sp==="kinkuma"); return h?h.src:""; }
+function zkImg(x){ if(x.img) return {src:x.img,cover:true}; const saved=store.get("secimg",{})||{}; if(saved[x.id]) return {src:saved[x.id],cover:true}; return {src:zkHam(),f:ZK_TP[x.id]||""}; }
+function zkTint(src,f){ return new Promise(ok=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement("canvas"); c.width=520; c.height=520; const g=c.getContext("2d"); g.fillStyle="#efe5d8"; g.fillRect(0,0,520,520); const k=Math.min(460/im.width,460/im.height); if(f) g.filter=f; g.drawImage(im,(520-im.width*k)/2,(520-im.height*k)/2,im.width*k,im.height*k); ok(c.toDataURL("image/jpeg",.88)); }catch(e){ ok(null); } }; im.onerror=()=>ok(null); im.src=src; }); }
+const ZK_NEW=SEC_ALL.filter(x=>x.from).sort((a,b)=>a.from<b.from?1:-1)[0];
+function openZk(){ const g=$("#zkG"), n=SEC_ALL.filter(x=>secSeen.has(x.id)).length;
+  $("#zkS").textContent=`見つけた子 ${n}/${SEC_ALL.length}　さわると、もう一度カードを見られます`;
+  g.innerHTML=SEC_ALL.map(x=>{ const got=secSeen.has(x.id), m=zkImg(x), nw=ZK_NEW&&x.id===ZK_NEW.id?`<em>${got?"今週":"今週の新顔"}</em>`:"";
+    const pic=m.cover?`<div class="zi" style="background-image:url('${m.src}')"></div>`:`<div class="zi"><img src="${m.src}" alt="" style="${got&&m.f?`filter:${m.f}`:""}"></div>`;
+    return got?`<button type="button" class="zc" data-zk="${x.id}">${nw}${pic}<small>No.${x.no}</small><b>${esc(x.name)}</b></button>`
+      :`<div class="zc no">${nw}${m.cover?`<div class="zi"><img src="${zkHam()}" alt=""></div>`:pic}<small>No.${x.no}</small><b>？？？</b><span>${esc(x.hint||"")}</span></div>`; }).join("")
+    +`<p class="zks" style="grid-column:1/-1;padding:6px 0 0">${TINT_NOTE}</p>`;
+  const z=$("#zk"); z.hidden=false; openDlg(z,$("#zkOpen"),closeZk); track("zk_open"); }
+function closeZk(){ closeDlg(); $("#zk").hidden=true; }
+$("#zkX").onclick=closeZk;
+$("#zk").addEventListener("pointerdown",e=>e.stopPropagation());
+$("#zkG").addEventListener("click",async e=>{ const b=e.target.closest("[data-zk]"); if(!b) return; const x=SEC_ALL.find(y=>y.id===b.dataset.zk); if(!x) return; const m=zkImg(x);
+  const img=m.cover?m.src:await zkTint(m.src,m.f); closeZk(); lastN=0; showSecret(x,img,true); });
+$("#zkOpen").onclick=()=>{ if(typeof closeBody==="function") closeBody(); setTimeout(openZk,260); };
+
 // ===== 下タブの画面（案B）：ボタンを下のタブにまとめる =====
 (()=>{ const tb=$("#tabbar"); if(!tb) return; app.classList.add("uib");
   $("#chgSp").appendChild($("#top")); $("#chgSc").appendChild($("#scenes"));
