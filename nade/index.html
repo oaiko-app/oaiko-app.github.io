@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <script>if(/[?&]card=1/.test(location.search)&&/[?&]app=1/.test(location.search)&&window.parent!==window)document.documentElement.classList.add("cardonly")</script>
-<style>html.cardonly,html.cardonly body{background:#2b2420!important}html.cardonly #app{visibility:hidden!important}</style>
+<style>html.cardonly,html.cardonly body{background:#2b2420!important}html.cardonly #app{visibility:hidden!important}  #sCmd{margin:0;background:#f6efe6;border-radius:14px;padding:10px 12px;color:#3b2a20;text-align:left}
+  #sCmd .ct{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
+  #sCmd .ct svg{width:18px;height:18px;flex:none}
+  #sCmd .keys{display:flex;gap:6px;justify-content:center;margin:8px 0 6px}
+  #sCmd .keys i{font-style:normal;min-width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;background:#fff;box-shadow:0 2px 0 #e0d2c2}
+  #sCmd .keys i.q{background:transparent;box-shadow:inset 0 0 0 1.5px #d9c8b6;color:#b8a592}
+  #sCmd .cd{font-size:11.5px;line-height:1.6;color:#6b5140;margin:0}
+  #sCmd button{display:block;width:100%;margin-top:8px;border:1.5px solid #3b2a20;border-radius:12px;min-height:40px;background:#fff;color:#3b2a20;font:inherit;font-size:13px;font-weight:700}
+</style>
 <meta name="apple-itunes-app" content="app-id=6836835986">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2a1e16">
@@ -395,7 +403,7 @@
     <p id="sCount" style="margin:0;text-align:center;font-weight:800;color:#b8743c;font-size:17px"></p>
     <p class="slv"><span id="sName"></span><small id="sDesc"></small></p>
     <p id="sNote" hidden style="margin:0;font-size:11px;line-height:1.5;color:#8a7262;text-align:center"></p>
-    <p id="sCmd" hidden style="margin:0;font-size:12px;line-height:1.6;color:#5a4a3a;text-align:center;background:#f6efe6;border-radius:10px;padding:6px 8px"></p>
+    <div id="sCmd" hidden></div>
     <p id="sFound" style="margin:0;font-size:12px;color:#b8743c;text-align:center;font-weight:700"></p>
     <button id="sShare">カードにする</button>
     <button id="sApp">アプリで、のこりのかくし図鑑を集める →</button>
@@ -1555,9 +1563,15 @@ function cmdBond(){ if(cmdBond._done||DLG||life.nade%6) return; const n=Math.rou
 function cmdPartHint(x){ const k=Math.min(x.c.length-1,(cmdPart[x.c]||0)); return [...x.c].map((c,i)=>i<k?ARW[c]:"＿").join(" "); }
 function cmdOnSecret(found){ const el=$("#sCmd"); if(!el) return; const x=cmdOpen().find(y=>y.id!==found.id&&!cmdTold.has(y.c));
   if(!x){ el.hidden=true; return; } cmdPart[x.c]=Math.min(x.c.length-1,(cmdPart[x.c]||0)+1); store.set("cmdPart",cmdPart);
-  el.textContent=`ひみつのコマンドのかけら：${cmdPartHint(x)}`; el.hidden=false; }
+  const k=Math.min(x.c.length-1,cmdPart[x.c]), left=x.c.length-k;
+  el.innerHTML=`<div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="6"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="11" r=".6" fill="currentColor"/><circle cx="18" cy="13" r=".6" fill="currentColor"/></svg>ひみつのコマンドが、すこしわかった</div>
+  <div class="keys">${[...x.c].map((c,i)=>i<k?`<i>${ARW[c]}</i>`:`<i class="q">？</i>`).join("")}</div>
+  <p class="cd">右上のコントローラーで、この順に押すと、べつのかくしハムに会えます。のこり${left}こは、かくしハムを見つけるたびに、1つずつわかります。</p>
+  <button type="button" id="sCmdGo">コントローラーで ためす</button>`;
+  el.hidden=false; $("#sCmdGo").onclick=()=>{ $("#sClose").click(); setTimeout(()=>$("#padBtn")&&$("#padBtn").click(),350); }; }
 function padHintRender(){ const el=$("#padHint"); if(!el) return; const t=cmdOpen().filter(x=>cmdTold.has(x.c));
-  el.textContent=t.length?"ハムから聞いた合図："+t.map(x=>cmdTxt(x.c)).join(" ／ "):""; }
+  const pt=cmdOpen().filter(x=>!cmdTold.has(x.c)&&cmdPart[x.c]);
+  el.textContent=[t.length?"ハムから聞いた合図："+t.map(x=>cmdTxt(x.c)).join(" ／ "):"", pt.length?"わかっているかけら："+pt.map(x=>cmdPartHint(x).replace(/＿/g,"？")).join(" ／ "):""].filter(Boolean).join("　"); }
 function padPress(k){
   haptic("light"); const now=Date.now(); padLog=padLog.filter(x=>now-x.t<5000); padLog.push({k,t:now});
   const before=padLog.length-1; let q=padLog.map(x=>x.k).join(""); while(q && !PAD_CMDS.some(c=>c.startsWith(q))) q=q.slice(1); padLog=padLog.slice(padLog.length-q.length);
