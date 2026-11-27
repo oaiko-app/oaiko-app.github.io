@@ -267,6 +267,40 @@
   #sApp{border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
   #app.inapp #sApp{display:none}
   .mvwhat{margin:2px 0 4px;padding:8px 10px;background:#f6efe6;border-radius:12px;font-size:12px;text-align:left;line-height:1.7}
+
+  /* ===== 下タブの画面（案B） ===== */
+  #tabbar{display:none}
+  #app.uib #tabbar{display:flex;position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);height:62px;z-index:9;background:rgba(255,253,249,.94);border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.18);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #tabbar button{flex:1;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:#8a7262;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;padding:0 2px}
+  #tabbar button svg{width:22px;height:22px}
+  #tabbar button.on{color:#d07a35}
+  #app.uib #bodyBtn{background:none!important;box-shadow:none!important;border:0!important;min-height:0!important;padding:0 2px!important;color:#8a7262!important;font-size:11px!important;margin:0!important}
+  #app.uib #logo{display:block;position:absolute;left:14px;top:calc(env(safe-area-inset-top) + 12px);height:30px;z-index:6;filter:drop-shadow(0 1px 6px rgba(255,255,255,.9));pointer-events:none}
+  #logo{display:none}
+  #app.uib.inapp #logo{display:none}
+  #app.uib #bondPill{top:calc(env(safe-area-inset-top) + 50px)!important;bottom:auto!important;left:12px!important}
+  #app.uib.inapp #bondPill{top:calc(env(safe-area-inset-top) + 58px)!important}
+  #app.uib #mkBtnTop,#app.uib #galBtnTop{display:none!important}
+  #app.uib #tr{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:6;display:flex;gap:8px}
+  #app.uib #tr #padBtn,#app.uib #tr #snd{position:static!important;width:44px!important;height:44px!important;min-height:44px!important;padding:0!important;border-radius:50%!important;opacity:1!important;background:rgba(255,253,249,.9)!important;color:#3b2a20!important;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.14)!important;font-size:0!important;margin:0!important}
+  #app.uib #tr #snd .ic,#app.uib #tr #padBtn .ic{width:22px;height:22px;margin:0}
+  #app.uib #bar{left:auto!important;right:12px!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom) + 84px)!important;padding:0!important;background:none!important;width:auto!important}
+  #app.uib #seed{background:#e8954c!important;color:#fff!important;box-shadow:0 6px 16px rgba(208,122,53,.35)!important;border:0!important}
+  #app.uib #hint{bottom:calc(env(safe-area-inset-bottom) + 140px)!important}
+  #app.uib #applink{top:calc(env(safe-area-inset-top) + 88px)!important;bottom:auto!important}
+  #app.uib #pill{bottom:calc(env(safe-area-inset-bottom) + 140px)!important}
+  #app.uib #sndTip{top:calc(env(safe-area-inset-top) + 62px)!important;bottom:auto!important}
+  #app.uib #say{top:calc(env(safe-area-inset-top) + 96px)!important}
+  #chg{display:none}
+  #app.uib #chg{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 80px);z-index:9;background:#fffdf9;border-radius:20px;padding:12px 12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+  #app.uib #chg:not([hidden]){display:block;max-height:calc(100% - 100px);overflow:auto}
+  #chg h3{margin:0 0 6px;font-size:15px;display:flex;align-items:center}#chg h3 span{flex:1}
+  #chg h3 button{border:0;background:#efe7dc;border-radius:50%;width:32px;height:32px;font:inherit;font-size:16px}
+  #chg .cl{margin:8px 0 4px;font-size:12px;font-weight:700;color:#b8743c}
+  #app.uib #chg #top,#app.uib #chg #scenes{position:static!important;padding:0!important;background:none!important;display:flex;flex-wrap:wrap;gap:6px;overflow:visible;-webkit-mask-image:none;mask-image:none;top:auto!important}
+  #app.uib.inapp #chg #top,#app.uib.inapp #chg .clsp{display:none!important}
+  #app.uib.sheetopen #tabbar,#app.uib.padopen #tabbar,#app.uib.sheetopen #chg,#app.uib.padopen #chg{display:none!important}
+  #app.uib.calm #tabbar,#app.uib.calm #tr,#app.uib.calm #logo{opacity:0;pointer-events:none;transition:opacity 1.2s}
 </style>
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://oaiko-hamu.com/nade/">
@@ -291,8 +325,11 @@
     <div id="night"></div>
     <img id="hand" alt="">
   </div>
+  <img id="logo" src="img/logo.webp" alt="おあいこ">
   <div id="top"></div>
   <div id="scenes"></div>
+  <div id="tr"></div>
+  <div id="chg" hidden role="dialog" aria-label="ハムと場所をかえる"><h3><span>かえる</span><button type="button" id="chgX" aria-label="とじる">×</button></h3><p class="cl clsp">ハムの種類</p><div id="chgSp"></div><p class="cl">場所</p><div id="chgSc"></div></div>
   <div id="status"><span id="clock" class="pill"></span><span><span id="hearts" class="pill"></span><button id="gear" aria-label="テスト設定">⚙</button></span></div>
   <div id="say" role="status" aria-live="polite"></div>
   <button id="petBtn" class="sronly">やさしくなでる（頭）</button>
@@ -301,6 +338,7 @@
   <div id="glow"></div>
   <div id="hint"><span id="hintMain">指で、ゆっくりなでてみて</span><br><span style="font-size:12px;font-weight:400">毛なみが指についてくる。頭がすき、足はいや</span></div>
   <button id="close">‹ もどる</button>
+  <nav id="tabbar" aria-label="メニュー"><button type="button" data-tb="nade" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5V4a1.5 1.5 0 0 1 3 0v7.5"/><path d="M14 11.5V5.5a1.5 1.5 0 0 1 3 0V14"/><path d="M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.9-2.6L4.4 14a1.5 1.5 0 0 1 2.4-1.8L8 14"/></svg>なでる</button><button type="button" data-tb="chg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>かえる</button><button type="button" data-tb="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>カード</button><button type="button" data-tb="gal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>みんなのハム</button></nav>
   <div id="bar">
     <button class="btn" id="seed"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 3 4 7 3 11-1 3-2 5-3 7-1-2-2-4-3-7-1-4 0-8 3-11z"/></svg>種をあげる</button>
     <button class="btn" id="bodyBtn">この子のこと</button>
@@ -1997,6 +2035,23 @@ $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[da
 if(Q.get("g")||Q.get("gal")==="1") setTimeout(()=>openMk("gal"),1500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
+// ===== 下タブの画面（案B）：ボタンを下のタブにまとめる =====
+(()=>{ const tb=$("#tabbar"); if(!tb) return; app.classList.add("uib");
+  $("#chgSp").appendChild($("#top")); $("#chgSc").appendChild($("#scenes"));
+  $("#tr").appendChild($("#padBtn")); $("#tr").appendChild($("#snd"));
+  const bb=$("#bodyBtn"); bb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px"><circle cx="12" cy="13" r="7"/><circle cx="7" cy="6" r="2"/><circle cx="17" cy="6" r="2"/></svg>この子'; bb.style.cssText+=";display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:1"; tb.appendChild(bb);
+  const chg=$("#chg"), on=k=>tb.querySelectorAll("[data-tb]").forEach(b=>b.classList.toggle("on",b.dataset.tb===k));
+  const closeChg=()=>{ chg.hidden=true; on("nade"); };
+  $("#chgX").onclick=closeChg;
+  chg.addEventListener("click",e=>{ if(e.target.closest(".chip,.toK")) setTimeout(()=>{ const k=$("#scenes .toK"); if(!(k&&k.offsetParent)) closeChg(); },350); });
+  tb.addEventListener("pointerdown",e=>e.stopPropagation()); chg.addEventListener("pointerdown",e=>e.stopPropagation());
+  tb.querySelectorAll("[data-tb]").forEach(b=>b.onclick=()=>{ const k=b.dataset.tb; haptic("light");
+    if(k==="chg"){ if(chg.hidden){ chg.hidden=false; on("chg"); renderScenes&&renderScenes(); } else closeChg(); return; }
+    closeChg(); if(k==="card") openEd(); else if(k==="gal") openMk("gal"); });
+  addEventListener("keydown",e=>{ if(e.key==="Escape"&&!chg.hidden) closeChg(); });
+  app.addEventListener("pointerdown",e=>{ if(!chg.hidden&&!chg.contains(e.target)&&!tb.contains(e.target)) closeChg(); },true);
+})();
+
 }
 </script>
 </body>
