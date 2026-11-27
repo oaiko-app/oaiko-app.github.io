@@ -163,6 +163,7 @@
   #galGrid .gi img{width:100%;aspect-ratio:4/5;object-fit:contain;display:block;background:#efe5d8;margin:0;border-radius:0}
   #galSort button{border:1px solid #e3d3c3;background:#fff;color:#3b2a20;border-radius:999px;min-height:36px;padding:0 16px;font:inherit;font-weight:700;font-size:13px}
   #galSort button[aria-pressed="true"]{background:#3b2a20;color:#fff;border-color:#3b2a20}
+  .gi .gn{margin:6px 8px 0;font-size:13px;line-height:1.3;color:#3b2a20;display:flex;flex-direction:column;min-height:2.6em}.gi .gn b{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gi .gn small{font-size:11px;color:#8a7262;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .gi .gb{display:flex;align-items:center;gap:4px;padding:4px}
   .gi .gb button{border:0;background:none;font:inherit;min-height:36px;min-width:36px;border-radius:10px;color:#8a7262;font-size:13px}
   .gi .gb .lk{font-weight:800;color:#c0566b}.gi .gb .lk.on{background:#ffe9ee}
@@ -1812,6 +1813,9 @@ if($("#alX")) $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $(
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
 if(!INAPP) setTimeout(showAL,45000);
 // アプリのホームの姿でカードをつくる：アプリから絵を受けとって、ハムの先頭に入れる
+// アプリから「カードをつくる」で来たとき：なでる画面は見せずに、カードの画面だけ出す。とじたらアプリへもどる
+const CARD_ONLY=INAPP&&Q.get("card")==="1";
+if(CARD_ONLY){ const cv=document.createElement("div"); cv.id="cardCover"; cv.style.cssText="position:fixed;inset:0;z-index:9999;background:#2b2420;color:#f1e9df;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700"; cv.textContent="カードをひらいています…"; document.body.appendChild(cv); setTimeout(()=>{ if(cv.isConnected) cv.remove(); },15000); }
 let APP_HAM=null; const APPH=INAPP&&Q.get("apph")==="1";
 if(INAPP) addEventListener("message",e=>{ if(e.source!==window.parent) return; const m=e.data; if(!m||m.src!=="app"||m.t!=="appham"||APP_HAM) return;
   if(typeof m.img!=="string"||!/^data:image\/(png|webp);base64,/.test(m.img)||m.img.length>3e6) return;
@@ -1902,8 +1906,8 @@ $("#mkBtnTop").onclick=()=>openEd(); $("#galBtnTop").onclick=()=>openMk("gal"); 
 // うちの子カード v2（エディタ）。はじめて開くときだけ読みこむ
 let edLoading=null;
 function loadEd(){ if(window.OAIKO_ED&&window.OAIKO_ED.open) return Promise.resolve(); if(edLoading) return edLoading;
-  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=11"; document.head.appendChild(l);
-    const sc=document.createElement("script"); sc.src="card.js?v=11"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
+  edLoading=new Promise((res,rej)=>{ const l=document.createElement("link"); l.rel="stylesheet"; l.href="card.css?v=12"; document.head.appendChild(l);
+    const sc=document.createElement("script"); sc.src="card.js?v=12"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); return edLoading; }
 async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); hideHand(0); FUR.down=false; const bt=$("#mkBtnTop"); bt.disabled=true;
   try{ await loadEd(); }catch(e){ bt.disabled=false; return; } bt.disabled=false; const ED=window.OAIKO_ED;
   ED.setAssets(ED_ASSETS);
@@ -1915,6 +1919,7 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
   ED.snap=done=>snapCard(sn=>done(sn&&sn.url));
   ED.toApp=()=>setTimeout(()=>$("#applink").onclick(new Event("click")),120);
   ED.track=track; ED.theme=curTheme; ED._th=!!curTheme(); if(gal.joinTh){ gal.joinTh=false; ED._th=true; }
+  ED.user=()=>(INAPP&&Q.get("u"))?Q.get("u").slice(0,8):store.get("galUser",""); ED.setUser=v=>store.set("galUser",v);
   ED.appOwn=()=>APP_OWN; ED.appWear=APP_WEAR_ITEM; ED.inApp=INAPP;
   ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; track("share"); const th=curTheme(), url=postId?`${GAL_URL}/p/${postId}`:"https://oaiko-hamu.com/nade/"; const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム${ED._th&&th?" "+th.tag:""}`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
     if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
@@ -1922,12 +1927,13 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
     const a=document.createElement("a"); a.href=png; a.download="oaiko-card.png"; document.body.appendChild(a); a.click(); a.remove();
     openOut("https://x.com/intent/post?text="+encodeURIComponent(text+"\n")+"&url="+encodeURIComponent(url)); };
-  ED.post=async(jpg,txt,ph)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
+  ED.post=async(jpg,txt,ph,uname)=>{ if(!await confirmPost()) return {msg:"載せるのをやめました"};
     if(ph){ try{ const v=await (await fetch(GAL_URL.replace(/\/gal$/,""))).json(); if(!v.v||v.v<"1126c") return {msg:"写真を使ったカードの投稿は、いま準備中です。もう少し待ってね"}; }catch(e){ return {msg:"通信できませんでした"}; } }
-    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),a:GAL_UID,th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
-      if(r.ok&&d.id){ track("post"); if(ED._th&&curTheme()) track("theme_join"); store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); haptic("medium"); return {id:d.id}; }
+    try{ const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:jpg,og:await ogImage(jpg).catch(()=>""),a:GAL_UID,u:uname||"",th:ED._th&&curTheme()?curTheme().id:"",n:life.name||"うちの子",l:txt||"",sp,ph:ph?1:0})}); const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.id){ track("post"); if(ED._th&&curTheme()) track("theme_join"); store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); toApp({t:"posted",id:d.id}); haptic("medium"); return {id:d.id}; }
       return {msg:d.error==="photo"?"写真に、人の顔や住所などがわかるものが写っているかもしれません。別の写真で試してね":d.error==="ng"?"カードの文字に、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね"}; }catch(e){ return {msg:"通信できませんでした"}; } };
-  ED.open({opener:$("#mkBtnTop")}); }
+  if(CARD_ONLY&&!ED._co){ ED._co=1; const oc=ED.close; ED.close=()=>{ oc(); save(); toApp({t:"close"}); }; }
+  ED.open({opener:$("#mkBtnTop")}); const cv=$("#cardCover"); if(cv) setTimeout(()=>cv.remove(),250); }
 $("#mk").addEventListener("pointerdown",e=>e.stopPropagation());
 $("#mkN").addEventListener("compositionend",e=>$("#mkN").oninput(e));
 $("#mkN").oninput=e=>{ if(e.isComposing) return; const v=graph(e.target.value).slice(0,8).join(""); if(v!==e.target.value) e.target.value=v; mk.n=v.trim(); life.name=mk.n; save(); nameCount(); nameChanged(); $("#bN").value=mk.n; if(/^(はむぷたー|ハムプター|はむぷた|hampter)$/i.test(mk.n)) unlock(SECRET.hampter,{wait:900}); clearTimeout(mkRender._t); mkRender._t=setTimeout(mkRender,250); };
@@ -1948,7 +1954,7 @@ $("#mkPost").onclick=async()=>{ if(!mk.snap){ mkMsg("写真の準備中です。
   const bt=$("#mkPost"); bt.disabled=true; bt.textContent="載せています…";
   try{ const c=await drawCard(540); const r=await fetch(GAL_URL+"/post",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({img:c.toDataURL("image/jpeg",.82),n:mk.n||NM(),l:mk.l,sp})});
     const d=await r.json().catch(()=>({}));
-    if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました"; return; }
+    if(r.ok&&d.id){ mk.postId=d.id; store.set("mkPosts",(store.get("mkPosts",[])).concat(d.id).slice(-20)); toApp({t:"posted",id:d.id}); mkMsg("載せました！「カードをシェアする」で、この子のページも広められます"); haptic("medium"); bt.textContent="載せました"; return; }
     mkMsg(d.error==="ng"?"名前かひとことに、載せられない言葉が入っているみたい":d.error==="limit"?"今日はもう10回載せました。また明日":"うまく載せられませんでした。少したってから試してね");
   }catch(e){ mkMsg("通信できませんでした"); }
   bt.disabled=false; bt.textContent="「みんなのハム」に載せる"; };
@@ -1994,7 +2000,7 @@ async function galLoad(reset){ if(gal.busy) return; gal.busy=true; const grid=$(
     if(reset && gal.focus){ const r=await fetch(`${GAL_URL}/list?id=${encodeURIComponent(gal.focus)}`); const d=await r.json(); items=items.concat((d.items||[]).map(x=>Object.assign(x,{hl:1}))); }
     const r=await fetch(`${GAL_URL}/list?s=${gal.s}&c=${gal.next||0}${gal.th?"&th="+gal.th:""}`); const d=await r.json();
     items=items.concat((d.items||[]).filter(x=>!items.some(y=>y.id===x.id))); gal.next=d.next; items=items.filter(x=>!galHide.has(x.id)&&!(x.a&&galBlock.has(x.a)));
-    if(reset) grid.innerHTML=""; grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}" data-a="${esc(x.a||"")}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿について（知らせる・表示しない）">…</button></div></div>`).join(""));
+    if(reset) grid.innerHTML=""; grid.insertAdjacentHTML("beforeend",items.map(x=>`<div class="gi ${x.hl?"hl":""}" data-id="${x.id}" data-a="${esc(x.a||"")}"><img loading="lazy" src="${GAL_URL}/img/${x.id}" alt="${esc(x.n)}のカード"><p class="gn"><b>${esc(x.n||"")}</b>${x.u?`<small>${esc(x.u)}さんの子</small>`:""}</p><div class="gb"><button class="lk ${gal.liked.has(x.id)?"on":""}" data-lk="${x.id}" aria-label="いいね">♡ <b>${x.lk||0}</b></button><span></span><button data-rp="${x.id}" aria-label="この投稿について（知らせる・表示しない）">…</button></div></div>`).join(""));
     $("#galEmpty").hidden=!!grid.children.length; $("#galMore").hidden=d.next==null;
     if(reset && gal.focus){ const el=grid.querySelector(".hl"); if(el) el.scrollIntoView({block:"nearest"}); }
   }catch(e){ if(reset){ grid.innerHTML=`<p class="note" role="alert">読みこめませんでした。通信を確かめてね <button type="button" class="t" id="galRetry">もう一度</button></p>`; const b=$("#galRetry"); if(b) b.onclick=()=>galLoad(true); } }
@@ -2033,6 +2039,8 @@ $("#galGrid").addEventListener("click",async e=>{ const lk=e.target.closest("[da
     if(k===2){ galBlock.add(a); store.set("galBlock",[...galBlock].slice(-300)); $("#galGrid").querySelectorAll(".gi").forEach(x=>{ if(x.dataset.a===a) x.remove(); }); toast("この人の投稿は、表示しません"); }
     store.set("galHide",[...galHide].slice(-500)); if(it) it.remove(); $("#galEmpty").hidden=!!$("#galGrid").children.length; } });
 if(Q.get("g")||Q.get("gal")==="1") setTimeout(()=>openMk("gal"),1500);
+// 自分の投稿に、いいねがついたら知らせる（前に見たときからふえた分）
+setTimeout(async()=>{ const ids=store.get("mkPosts",[]); if(!ids.length) return; try{ const d=await (await fetch(`${GAL_URL}/list?ids=${ids.join(",")}`)).json(); const seen=store.get("myLk",{})||{}; let add=0, tot=0; (d.items||[]).forEach(x=>{ tot+=x.lk||0; add+=Math.max(0,(x.lk||0)-(seen[x.id]||0)); seen[x.id]=x.lk||0; }); store.set("myLk",seen); if(add>0&&!INAPP){ toast(`みんなのハムで、あなたのカードに いいねが ${add} つきました`); } }catch(e){} },2500);
 window.__nade={get state(){return state},zoneAt,get bond(){return life.bond},geo:()=>({HC,HF,HR,HB,B:life.body,r:box.getBoundingClientRect()})};
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ renderAll(); cur.play().catch(()=>{}); } });
 // ===== 下タブの画面（案B）：ボタンを下のタブにまとめる =====

@@ -198,6 +198,7 @@ function build(){
   <nav class="edtabs" id="edTabs" role="tablist" aria-label="編集の道具">${[["tpl","テンプレ"],["ham","ハム"],["item","きせかえ"],["bg","背景"],["text","文字"],["pen","ペン"],["fx","仕上げ"]].map(([k,n])=>`<button data-t="${k}" role="tab" aria-selected="false" aria-pressed="false">${IC[k]}<span>${n}</span></button>`).join("")}</nav>
   <div class="edsheet" id="edDoneSheet" hidden><div class="edsc"><img id="edOut" alt="できあがったカード"><p class="edmsg" id="edMsg" role="status"></p><label class="edth" id="edThL" hidden><input type="checkbox" id="edTh"><span></span></label>
     <button class="edbtn main" id="edShare">${IC.share}画像を保存・シェア</button>
+    <label class="edown"><span>載せるときの、あなたの呼び名（なくてもOK）</span><input type="text" id="edU" maxlength="8" placeholder="例：じん" autocomplete="off"></label>
     <button class="edbtn" id="edPost">${IC.post}「みんなのハム」に載せる</button>
     <p class="ednote" id="edPostNote">載せると、カードの絵・名前が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。</p>
     <button class="edbtn app" id="edApp">${IC.app}この子と、アプリで暮らす</button>
@@ -383,10 +384,10 @@ let outPng=null, postedId=null;
 function finish(){ ED.track&&ED.track("card_done"); if(ED._sess) ED._sess.done=true; const th=ED.theme&&ED.theme(), tl=$("#edThL"); tl.hidden=!th; if(th){ $("#edTh").checked=!!ED._th; tl.querySelector("span").textContent=`今週のお題「${th.name}」に参加する（${th.tag}）`; $("#edTh").onchange=()=>{ ED._th=$("#edTh").checked; }; }
   sel=null; draw(); const c=watermark(exportCanvas()); outPng=c.toDataURL("image/png"); $("#edOut").src=outPng; postedId=null; $("#edMsg").textContent="";
   const ph=usesPhoto(); $("#edPost").hidden=false; $("#edPostNote").textContent=(ph?"写真には、人の顔・名札・住所や窓の外の景色など、身元がわかるものが写っていないか確かめてね。写真は載せる前に自動で確認します。":"")+"載せると、カードの絵が、だれでも見られるページに公開されます。本名・住所・SNSのIDなどは入れないでください。1日10回まで。";
-  $("#edDoneSheet").hidden=false; setTimeout(()=>$("#edShare").focus(),40); $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
+  $("#edU").value=(ED.user&&ED.user())||""; $("#edDoneSheet").hidden=false; const ea=$("#edApp"); if(ea){ ea.hidden=!!ED.inApp; if(ea.nextElementSibling) ea.nextElementSibling.hidden=!!ED.inApp; } setTimeout(()=>$("#edShare").focus(),40); $("#edPost").disabled=false; $("#edPost").lastChild.textContent="「みんなのハム」に載せる";
   $("#edShare").classList.remove("pulse"); $("#edShare").lastChild.textContent="画像を保存・シェア"; $("#edShare").onclick=()=>ED.share&&ED.share(outPng,postedId);
   $("#edPost").onclick=async()=>{ if(!ED.post) return; const bt=$("#edPost"); bt.disabled=true; bt.lastChild.textContent="載せています…"; const j=watermark(exportCanvas(540)).toDataURL("image/jpeg",.84);
-    const r=await ED.post(j, texts(), usesPhoto()); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました！ 載せたことを、SNSでもシェアできます"; bt.lastChild.textContent="載せました"; const sh=$("#edShare"); sh.lastChild.textContent="載せたことをシェア"; sh.classList.add("pulse"); setTimeout(()=>sh.focus(),50); } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
+    const uv=($("#edU").value||"").trim().slice(0,8); ED.setUser&&ED.setUser(uv); const r=await ED.post(j, texts(), usesPhoto(), uv); if(r&&r.id){ postedId=r.id; $("#edMsg").textContent="載せました！ 載せたことを、SNSでもシェアできます"; bt.lastChild.textContent="載せました"; const sh=$("#edShare"); sh.lastChild.textContent="載せたことをシェア"; sh.classList.add("pulse"); setTimeout(()=>sh.focus(),50); } else { $("#edMsg").textContent=r&&r.msg||"うまく載せられませんでした"; bt.disabled=false; bt.lastChild.textContent="「みんなのハム」に載せる"; } };
   $("#edApp").onclick=()=>{ ED.close(); ED.toApp&&ED.toApp(); }; }
 function texts(){ return S.layers.filter(l=>l.type==="text").map(l=>l.text).join(" ").slice(0,60); }
 // ---------- 開く・閉じる ----------
