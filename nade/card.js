@@ -371,7 +371,7 @@ const TPLS=[
  {n:"おたんじょうび",d:"お祝いカード",f:s=>{ const bg=BGS.find(b=>/party/.test(b.id)); s.bg=bg?{t:"img",src:bg.src}:{t:"grad",a:"#fff7d6",b:"#ffe59a"}; const h=ham(s,{w:.62,y:s.H*.6}); s.layers=[h,txt(s,"Happy Birthday",{y:s.H*.15,size:120,font:"Hachi Maru Pop",color:"#ffffff",stroke:"#e8924a"})]; const hat=ITEMS.find(i=>/party/.test(i.id)); if(hat) s.layers.push(itemOn(s,h,hat)); }},
 ];
 const nm=()=>(ED.name&&ED.name())||"うちの子";
-function ham(s,o){ const h=ED.curHam?ED.curHam():H0(); return Object.assign({id:uid(),type:"ham",src:h.src,w:.62,x:s.W/2,y:s.H*.55,r:0,tint:{h:0,s:100,b:100}},o); }
+function ham(s,o){ const h=ED.curHam?ED.curHam():H0(); const L=Object.assign({id:uid(),type:"ham",src:h.src,w:.62,x:s.W/2,y:s.H*.55,r:0,tint:{h:0,s:100,b:100}},o); if(h.asp&&h.asp>1.45) L.w*=1.45/h.asp; return L; }
 function txt(s,t,o){ return Object.assign({id:uid(),type:"text",text:t,font:"Zen Maru Gothic",size:80,color:"#3b2a20",stroke:"#ffffff",bold:true,x:s.W/2,y:s.H*.2,r:0},o); }
 function itemOn(s,h,it){ const im=img(h.src); const w=h.w*s.W, hh=im?w*im.height/im.width:w; const e=hamEy(h); return {id:uid(),type:"item",src:it.src,x:h.x+(it.at?it.at[0]*w:0),y:h.y+((it.ey!=null&&e!=null)?eyOff(it,e,w,hh):(it.at?it.at[1]*hh:-hh*.45)),w:h.w*(it.rel||.4),r:0}; }
 function applyTpl(t){ const s=blank(); s.W=S.W; s.H=S.H; s.ratio=S.ratio; t.f(s); s.tpl=TPLS.indexOf(t); S=s; sel=null; ED._pen=null; commit(); refresh(); }

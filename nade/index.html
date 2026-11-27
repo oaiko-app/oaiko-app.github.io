@@ -447,6 +447,7 @@ const APP_OWN=(()=>{ let a=(Q.get("own")||"").split(",").filter(Boolean); if(INA
 const APP_WEAR_ITEM=INAPP?(APP_MAP[Q.get("wear")]||""):"";
 function freshLife(){const n=Date.now();return{bond:12,fed:n-8*H,cleaned:n-10*H,visit:n,pets:0,timeMode:"real"};}
 let life=store.get("life",null)||freshLife();
+if(INAPP){ const an=(Q.get("n")||"").trim().slice(0,8); if(an) life.name=an; } // アプリの中では、アプリでつけた名前を使う
 const AWAY3=Date.now()-life.visit>3*24*H;
 const clampN=(v,a,b,d)=>{ v=parseFloat(v); return isFinite(v)?Math.max(a,Math.min(b,v)):d; };
 life.body=life.body||{s:1,c:1};
@@ -1772,7 +1773,13 @@ function showAL(){ if(!$("#pad").hidden||INAPP||$("#applink").classList.contains
 if($("#alX")) $("#alX").onclick=e=>{ e.preventDefault(); e.stopPropagation(); $("#applink").classList.remove("show"); app.classList.remove("alshow"); store.set("alX",Date.now()); };
 $("#applink").addEventListener("pointerdown",e=>e.stopPropagation());
 if(!INAPP) setTimeout(showAL,45000);
-if(Q.get("card")==="1") setTimeout(()=>{ if($("#loading").classList.contains("hide")) openEd(); else { const iv=setInterval(()=>{ if($("#loading").classList.contains("hide")){ clearInterval(iv); openEd(); } },400); } },600);
+// アプリのホームの姿でカードをつくる：アプリから絵を受けとって、ハムの先頭に入れる
+let APP_HAM=null; const APPH=INAPP&&Q.get("apph")==="1";
+if(INAPP) addEventListener("message",e=>{ if(e.source!==window.parent) return; const m=e.data; if(!m||m.src!=="app"||m.t!=="appham"||APP_HAM) return;
+  if(typeof m.img!=="string"||!/^data:image\/(png|webp);base64,/.test(m.img)||m.img.length>3e6) return;
+  APP_HAM={id:"apphome",sp:"app",src:m.img,name:"アプリのこの子",ey:typeof m.ey==="number"?m.ey:.3,asp:typeof m.asp==="number"?m.asp:null}; ED_ASSETS.ham.unshift(APP_HAM); });
+if(Q.get("card")==="1") setTimeout(()=>{ if($("#loading").classList.contains("hide")) openEdW(); else { const iv=setInterval(()=>{ if($("#loading").classList.contains("hide")){ clearInterval(iv); openEdW(); } },400); } },600);
+function openEdW(){ if(!APPH||APP_HAM) return openEd(); let n=0; const iv=setInterval(()=>{ if(APP_HAM||++n>12){ clearInterval(iv); openEd(); } },250); }
 if(INAPP && Q.get("wear")){ setTimeout(()=>$("#wearNote").classList.add("show"),1200); setTimeout(()=>$("#wearNote").classList.remove("show"),5200); }
 // テスト用の設定は #test のときだけ出す
 if(location.hash==="#test" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) app.classList.add("test");
@@ -1865,7 +1872,8 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
   ED.name=()=>life.name||"うちの子";
   ED.secrets=()=>{ const saved=store.get("secimg",{})||{}, TP={doku:{h:95,s:150,b:95},doku_game:{h:160,s:220,b:105},doku_aka:{h:25,s:200,b:95},doku_mido:{h:-90,s:140,b:92},doku_yami:{h:100,s:60,b:45}};
     return SEC_ALL.map(x=>{ const got=secSeen.has(x.id); if(x.img) return {id:x.id,no:x.no,name:x.name,got,kind:"img",src:x.img}; if(TP[x.id]) return {id:x.id,no:x.no,name:x.name,got,kind:"tint",tint:TP[x.id]}; return {id:x.id,no:x.no,name:x.name,got,kind:"snap",src:saved[x.id]||null}; }); };
-  ED.curHam=()=>ED_ASSETS.ham.find(h=>h.sp===sp&&!h.pose)||ED_ASSETS.ham[0];
+  ED.curHam=()=>(APP_HAM&&ED_ASSETS.ham.includes(APP_HAM))?APP_HAM:(ED_ASSETS.ham.find(h=>h.sp===sp&&!h.pose)||ED_ASSETS.ham[0]);
+  if(APP_HAM&&!APP_HAM.used){ APP_HAM.used=1; ED.reset(); }
   ED.snap=done=>snapCard(sn=>done(sn&&sn.url));
   ED.toApp=()=>setTimeout(()=>$("#applink").onclick(new Event("click")),120);
   ED.track=track; ED.theme=curTheme; ED._th=!!curTheme(); if(gal.joinTh){ gal.joinTh=false; ED._th=true; }
