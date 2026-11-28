@@ -290,7 +290,7 @@
   #mvQR canvas{width:156px;height:156px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #e3d3c3}
   #mvQR p{margin:4px 0 0;font-size:11px;color:#8a7262}
   #sApp{border:0;border-radius:14px;min-height:44px;background:#3d4470;color:#fff;font:inherit;font-size:14px;font-weight:700}
-  #app.inapp #sApp,#app.inapp #bMove,#app.inapp #zkOpen{display:none!important}
+  #app.inapp #sApp,#app.inapp #bMove,#app.inapp #zkOpen,#app.inapp #scenes .note,#app.inapp #scenes .toK{display:none!important}
   .mvwhat{margin:2px 0 4px;padding:8px 10px;background:#f6efe6;border-radius:12px;font-size:12px;text-align:left;line-height:1.7}
 
   /* ===== 下タブの画面（案B） ===== */
@@ -1774,7 +1774,7 @@ $("#tap").onclick=()=>{ $("#tap").style.display="none"; (loading?nxt:cur).play()
 // ---------- 種類 ----------
 async function loadSpecies(id){
   const my=++reqId; document.querySelectorAll("#top .chip").forEach(c=>c.classList.toggle("busy",c.dataset.id===id)); sp=id; $("#loading").classList.remove("hide","err"); $("#loading").textContent="よみこみ中…";
-  if(!GEO_SP[id]){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
+  if(!scOk(SCENE,id)){ if(SCENE){ SCENE=null; app.classList.remove("scene"); } if(!INAPP) store.set("scene",""); }
   applyGeo(); renderScenes();
   $("#loading").classList.remove("soft"); poster.onload=()=>{ if(my===reqId) $("#loading").classList.add("soft"); }; poster.src=`v/${id}/poster.jpg`; $("#bgblur").style.backgroundImage=`url(v/${id}/poster.jpg)`;
   document.querySelectorAll("#top .chip").forEach(c=>{ c.classList.toggle("on",c.dataset.id===id); if(c.dataset.id===id) c.scrollIntoView({inline:"nearest",block:"nearest"}); }); syncRadios();
@@ -1807,9 +1807,11 @@ const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
 SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
-function renderScenes(){ const ok=!!GEO_SP[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
-  let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!ok&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=ok; kb.hidden=ok; }
-  sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok; if(!ok) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); syncRadios(); }
+const SP_SCENES={djungarian:["pouch"],robo:["pouch"],campbell:["pouch"],longhair:["pouch"],pearl:["pouch"]}; // キンクマ以外で入れる場面
+const scOk=(id,s=sp)=>!id||id==="room"||!!GEO_SP[s]||(SP_SCENES[s]||[]).includes(id);
+function renderScenes(){ const full=!!GEO_SP[sp], ok=full||!!SP_SCENES[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
+  let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!full&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=full; kb.hidden=full; if(!full&&ok) n.innerHTML="<b>この子は、おへやとねぶくろで遊べます</b><span>ほかの場面は、キンクマで</span>"; }
+  sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok||!scOk(c.dataset.sc); if(c.hidden) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); syncRadios(); }
 // 種類・場面は「どれか1つ」を選ぶ（ラジオ）。矢印キーで移動できる
 function syncRadios(){ [[topBar,"ハムの種類"],[sceneBar,"場面"]].forEach(([g,lb])=>{ if(!g) return; g.setAttribute("role","radiogroup"); g.setAttribute("aria-label",lb);
   const cs=[...g.querySelectorAll(".chip")].filter(c=>!c.hidden); cs.forEach(c=>{ const on=c.classList.contains("on"); c.setAttribute("role","radio"); c.setAttribute("aria-checked",String(on)); c.removeAttribute("aria-pressed"); c.tabIndex=on?0:-1; });
@@ -1870,7 +1872,7 @@ const HASHCODE=(/^#m=(OAIKO-[A-Za-z0-9_-]+)$/.exec(location.hash)||[])[1]||null;
 const startScene=SCENES.some(([i])=>i!=="room"&&i!=="kagami"&&i===Q.get("scene"))?Q.get("scene"):null;
 const startSp=startScene?"kinkuma":(INAPP && okSp(Q.get("sp")))?Q.get("sp"):(okSp(store.get("sp","kinkuma"))?store.get("sp","kinkuma"):"kinkuma");
 fetch("v/meta.json").then(r=>r.json()).then(m=>{META=m;}).catch(()=>{}); // 切り替えのタイミング用。読み終わるのを待たずにハムを出す
-(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && GEO_SP[sp]) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
+(()=>{ layout(); Promise.resolve(loadSpecies(startSp)).then(()=>{ const last=!INAPP&&!startScene?store.get("scene",""):""; const sc=startScene||((last&&(last!=="kagami"||secSeen.has("kagami")))?last:null); if(sc && scOk(sc)) setScene(sc); }); tick(); if(HASHCODE&&!INAPP) setTimeout(()=>{ $("#applink").onclick(new Event("click")); $("#mvCode").value=HASHCODE; $("#mvCode").style.display="block"; $("#mvStore").style.display="block"; $("#mvCopy").textContent="ひきつぎコードをコピー（PCで作ったコード）"; },1200); })();
 renderSecList();
 if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__t={card:()=>secCur&&secretCard(secCur.x,secCur.img),req:s=>request(s),sleep:()=>{manualSleep=true;app.classList.add("sleeping")},wake:()=>{manualSleep=false;app.classList.remove("sleeping")},sec:()=>{secSeen.clear();goDoku(0)},doku:k=>goDoku(k),unl:id=>unlock(SECRET[id]),seen:()=>[...secSeen],foc:id=>focusables(document.getElementById(id)),graph:t=>graph(t),al:()=>{store.set("alX",0);showAL()},sp:()=>sp,ev:f=>eval("("+f+")")()};
 
