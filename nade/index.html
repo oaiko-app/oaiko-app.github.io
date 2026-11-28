@@ -712,11 +712,20 @@ function secretCard(x,img){
     const im=new Image(); im.onload=()=>{ g.save(); const r=60,X=190,Y=210,S=700; g.beginPath(); g.moveTo(X+r,Y); g.arcTo(X+S,Y,X+S,Y+S,r); g.arcTo(X+S,Y+S,X,Y+S,r); g.arcTo(X,Y+S,X,Y,r); g.arcTo(X,Y,X+S,Y,r); g.closePath(); g.clip(); g.drawImage(im,X,Y,S,S); g.restore(); fin(); }; im.onerror=fin; im.src=img;
   });
 }
+// シェアのリンクを、その子の画像がサムネに出るページにする（X・LINEで画像つきのカードになる）。だめなら、ふつうのURL
+async function shareUrl(png,title){ const def="https://oaiko-hamu.com/nade/";
+  try{ const im=new Image(); im.src=png; await im.decode();
+    const c=document.createElement("canvas"); c.width=1200; c.height=630; const x=c.getContext("2d");
+    x.fillStyle="#f6e3cb"; x.fillRect(0,0,1200,630); x.save(); x.filter="blur(28px)"; const k=Math.max(1200/im.width,630/im.height); x.drawImage(im,(1200-im.width*k)/2,(630-im.height*k)/2,im.width*k,im.height*k); x.restore();
+    x.fillStyle="rgba(255,246,234,.35)"; x.fillRect(0,0,1200,630); const h=590, w=im.width*h/im.height; x.drawImage(im,(1200-w)/2,20,w,h);
+    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
+    const r=await fetch(GAL_URL+"/share",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({og:c.toDataURL("image/jpeg",.82),t:title}),signal:ctl.signal});
+    const j=await r.json(); return j&&j.url?j.url:def; }catch(e){ return def; } }
 async function shareSecret(){
   if(!secCur) return; const {x,img}=secCur;
-  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`, url="https://oaiko-hamu.com/nade/";
+  const text=(lastN?`ハムスターを${lastN}回なでたら「${x.name}」になった。あなたは何回？`:x.how?`${x.how}「${x.name}」になった。かくし図鑑、あと何種？`:`ハムスターをなですぎたら「${x.name}」になった。`)+`\n${x.tag} #おあいこ`; let url="https://oaiko-hamu.com/nade/";
+  const png=await secretCard(x,img); url=await shareUrl(png,`${NM()}が「${x.name}」になった`);
   const full=`${text}\n${url}\n`; // URLのあとにも改行を入れて、次の文とくっつかないようにする
-  const png=await secretCard(x,img);
   if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
   try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-nade.png",{type:"image/png"});
     if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; }
@@ -1955,7 +1964,7 @@ async function openEd(){ track("card_open"); if(!$("#pad").hidden) closePad(); h
   ED.track=track; ED.theme=curTheme; ED._th=!!curTheme(); if(gal.joinTh){ gal.joinTh=false; ED._th=true; }
   ED.user=()=>(INAPP&&Q.get("u"))?Q.get("u").slice(0,8):store.get("galUser",""); ED.setUser=v=>store.set("galUser",v);
   ED.appOwn=()=>APP_OWN; ED.appWear=APP_WEAR_ITEM; ED.inApp=INAPP;
-  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; track("share"); const th=curTheme(), url=postId?`${GAL_URL}/p/${postId}`:"https://oaiko-hamu.com/nade/"; const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム${ED._th&&th?" "+th.tag:""}`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
+  ED.share=async(png,postId)=>{ const nm=life.name||"うちの子"; track("share"); const th=curTheme(); const url=postId?`${GAL_URL}/p/${postId}`:await shareUrl(png,`うちの子「${nm}」のカード`); const text=postId?`「みんなのハム」に、うちの子「${nm}」を載せたよ\nみんなの子も見てみて #おあいこ #みんなのハム${ED._th&&th?" "+th.tag:""}`:`うちの子「${nm}」のカードをつくった\nあなたのハムもつくってみて #おあいこ #うちのハム`, full=`${text}\n${url}\n`;
     if(INAPP){ toApp({t:"share",img:png,text:full}); return; }
     try{ const blob=await (await fetch(png)).blob(), file=new File([blob],"oaiko-card.png",{type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:full}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
