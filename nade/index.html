@@ -1807,10 +1807,10 @@ const topBar=$("#top");
 // ---------- 場面（キンクマだけ）：てのひら・だっこ・ひざの上 など ----------
 const sceneBar=$("#scenes");
 SCENES.forEach(([id,name])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=name; b.dataset.sc=id; b.onclick=()=>setScene(id==="room"?null:id); sceneBar.appendChild(b); });
-const SP_SCENES={djungarian:["pouch","greens"],robo:["pouch","greens"],campbell:["pouch","greens"],longhair:["pouch","greens"],pearl:["pouch","greens"]}; // キンクマ以外で入れる場面
+const SP_SCENES=Object.fromEntries(["djungarian","robo","campbell","longhair","pearl"].map(k=>[k,["palm","hug","lap","pouch","fence","greens"]])); // キンクマ以外で入れる場面
 const scOk=(id,s=sp)=>!id||id==="room"||!!GEO_SP[s]||(SP_SCENES[s]||[]).includes(id);
 function renderScenes(){ const full=!!GEO_SP[sp], ok=full||!!SP_SCENES[sp]; sceneBar.style.display=INAPP&&!ok?"none":"flex";
-  let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!full&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=full; kb.hidden=full; if(!full&&ok) n.innerHTML="<b>この子は、おへや・ねぶくろ・おやつで遊べます</b><span>ほかの場面は、キンクマで</span>"; }
+  let n=sceneBar.querySelector(".note"), kb=sceneBar.querySelector(".toK"); if(!full&&!n){ n=document.createElement("span"); n.className="note"; n.innerHTML="<b>この子は、おへやで遊べます</b><span>ほかの場面は、キンクマで</span>"; sceneBar.appendChild(n); kb=document.createElement("button"); kb.className="toK"; kb.textContent="キンクマにする →"; kb.onclick=()=>loadSpecies("kinkuma"); sceneBar.appendChild(kb); } if(n){ n.hidden=full||ok; kb.hidden=full||ok; }
   sceneBar.querySelectorAll(".chip").forEach(c=>{ c.hidden=!ok||!scOk(c.dataset.sc); if(c.hidden) return; c.setAttribute("aria-pressed",String((c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE)); c.classList.toggle("on",(c.dataset.sc==="room"&&!SCENE)||c.dataset.sc===SCENE); if(c.dataset.sc==="kagami") c.hidden=!secSeen.has("kagami"); }); const on=sceneBar.querySelector(".chip.on"); if(on) on.scrollIntoView({inline:"nearest",block:"nearest"}); syncRadios(); }
 // 種類・場面は「どれか1つ」を選ぶ（ラジオ）。矢印キーで移動できる
 function syncRadios(){ [[topBar,"ハムの種類"],[sceneBar,"場面"]].forEach(([g,lb])=>{ if(!g) return; g.setAttribute("role","radiogroup"); g.setAttribute("aria-label",lb);
